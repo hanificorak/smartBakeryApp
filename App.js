@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View, Platform, PermissionsAndroid } from 'react-native';
+import { ActivityIndicator, Alert, View, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import * as Location from 'expo-location'; // Expo Location paketi
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,8 +11,8 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import StockScreen from './screens/Stock/StockScreen';
 import DefinitionsScreen from './screens/Definitions/DefinitionsScreen';
-
-import Geolocation from 'react-native-geolocation-service';
+import EndofDayScreen from './screens/EndofDay/EndofDayScreen';
+import AddEndOfDayScreen from './screens/EndofDay/AddEndOfDayScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +27,7 @@ export default function App() {
         const savedToken = await AsyncStorage.getItem('token');
         setToken(savedToken);
       } catch (err) {
+        console.log(err);
       } finally {
         setLoading(false);
       }
@@ -32,43 +35,27 @@ export default function App() {
     checkToken();
   }, []);
 
-  // Konum izni isteme
-  const requestLocationPermission = async () => {
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: "Konum izni",
-          message: "Uygulama konumunuza erişmek istiyor",
-          buttonNeutral: "Sonra Sor",
-          buttonNegative: "İptal",
-          buttonPositive: "Tamam"
-        }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    }
-    return true; // iOS otomatik
-  };
-
-  // Konumu alma fonksiyonu
+  // Konumu alma fonksiyonu (expo-location ile)
   const getLocation = async () => {
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) {
-      Alert.alert('Uyarı', 'Konum izni reddedildi');
-      return;
-    }
+    try {
+      // İzin isteme
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Uyarı', 'Konum izni reddedildi');
+        return;
+      }
 
-    Geolocation.getCurrentPosition(
-      (position)  =>  {
-        setLocation(position.coords);
-         AsyncStorage.setItem('location',JSON.stringify(position.coords))
-      },
-      (error) => {
-        Alert.alert(error.message)
-        Alert.alert('Hata', 'Konum alınamadı');
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
+      // Konumu alma
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Highest,
+      });
+
+      setLocation(loc.coords);
+      await AsyncStorage.setItem('location', JSON.stringify(loc.coords));
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Hata', 'Konum alınamadı');
+    }
   };
 
   useEffect(() => {
@@ -92,11 +79,13 @@ export default function App() {
         <Stack.Screen name="Login" options={{ headerShown: false }}>
           {(props) => <LoginScreen {...props} setToken={setToken} />}
         </Stack.Screen>
-        <Stack.Screen name="Home">
+        <Stack.Screen name="Home" options={{ title:'Ana Sayfa' }}>
           {(props) => <HomeScreen {...props} location={location} />}
         </Stack.Screen>
         <Stack.Screen name="StockScreen" component={StockScreen} options={{ headerShown: true, title:'Stok Girişi' }} />
         <Stack.Screen name="DefinitionsScreen" component={DefinitionsScreen} options={{ headerShown: true, title:'Tanımlar' }} />
+        <Stack.Screen name="EndofDayScreen" component={EndofDayScreen} options={{ headerShown: true, title:'Gün Sonu İşlemleri' }} />
+        <Stack.Screen name="AddEndOfDayScreen" component={AddEndOfDayScreen} options={{ headerShown: true, title:'Gün Sonu Ekle' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

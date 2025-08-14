@@ -29,7 +29,7 @@ const HomeScreen = ({ navigation }) => {
       icon: 'trending-up',
       color: '#10B981',
       bgColor: '#ECFDF5',
-      screen: 'DayEndOperations'
+      screen: 'EndofDayScreen'
     },
     {
       id: 3,
@@ -81,7 +81,7 @@ const HomeScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Atık/Gider Yönetimi</Text>
+          <Text style={styles.headerTitle}>smartBakery - Akıllı Fırın</Text>
           <Text style={styles.headerSubtitle}>Hoş geldiniz!</Text>
         </View>
         
