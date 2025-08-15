@@ -13,6 +13,10 @@ const Endpoint = {
   StockData: `${BASE_URL}/api/stocks/getStockData`,
   StockDelete: `${BASE_URL}/api/stocks/stockDelete`,
   EndOfDayListData: `${BASE_URL}/api/endofdays/getEndOfListData`,
+  EndOfDayAdd: `${BASE_URL}/api/endofdays/addEndOfData`,
+  EndOfCheck: `${BASE_URL}/api/endofdays/endOfDataCheck`,
+  EndOfData: `${BASE_URL}/api/endofdays/getEndOfData`,
+  EndOfDelete: `${BASE_URL}/api/endofdays/delete`,
 };
 
 export default Endpoint;

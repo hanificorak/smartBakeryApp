@@ -10,35 +10,60 @@ import {
     StyleSheet,
     TextInput,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
+    FlatList,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
+import { Modal, Portal, Provider, Button } from 'react-native-paper';
+import axios from 'axios';
 
 const AddEndOfDayScreen = ({ navigation }) => {
     const [products, setProducts] = useState([]);
     const [inputValues, setInputValues] = useState({});
     const [temp, setTemp] = useState('');
-    const [tempCode, setTempCode] = useState('')
+    const [tempCode, setTempCode] = useState('');
+    const [weatherModalVisible, setWeatherModalVisible] = useState(false);
+
+    const [selectedWeathers, setSelectedWeathers] = useState('');
+    const [weathers, setWeathers] = useState([]);
+    const [showWeatherDropdown, setShowWeatherDropdown] = useState(false);
+
+    const [saveLoading,setSaveLoading] = useState(false);
+
 
 
     useEffect(() => {
         getWeatherInfo();
-        getEndOfListData()
+        getEndOfListData();
+        getParam();
     }, []);
+
+    const getParam = async () => {
+        try {
+            const { data } = await api.post(Endpoint.StockParams);
+            setWeathers(data.obj.weather);
+        } catch (error) {
+            console.error('Veriler yüklenirken hata:', error);
+        }
+    };
+
 
     const getWeatherInfo = async () => {
         try {
             let location = await AsyncStorage.getItem('location');
-            if (!location) return; // Konum aluyor yoksa işlem duruyor
+            if (!location) return;
 
-
-            const loc_data = JSON.parse(location); // Konum bilgileri
+            const loc_data = JSON.parse(location);
             const latitude = loc_data.latitude;
             const longitude = loc_data.longitude;
 
-            const weather_item = await AsyncStorage.getItem("weather_data"); // son hava durumu bilgi verisi
-            if (weather_item == null) { // eğer hiç hava durumu bilgisi yok ise 
+            const weather_item = await AsyncStorage.getItem("weather_data");
+            if (weather_item == null) {
                 getWeatherDataApi(latitude, longitude);
             } else {
                 let weather_item_js = JSON.parse(weather_item);
@@ -46,11 +71,12 @@ const AddEndOfDayScreen = ({ navigation }) => {
 
                 setTemp(weather_item_response.temperature);
                 setTempCode(weather_item_response.weathercode);
+                getWeatherCodeItem(weather_item_response.weathercode);
             }
         } catch (error) {
             console.log('Hava Durumu Hatası', error.message);
         }
-    }
+    };
 
     const getWeatherDataApi = async (latitude, longitude) => {
         try {
@@ -62,53 +88,58 @@ const AddEndOfDayScreen = ({ navigation }) => {
                     timezone: 'Europe/Istanbul'
                 }
             });
-            if (response != null && response.data != null) {
-                AsyncStorage.setItem('weather_data', JSON.stringify({ data: response, time: getTurkeyDate() }));
+
+            if (response && response.data) {
+                AsyncStorage.setItem('weather_data', JSON.stringify({ data: response, time: new Date().toISOString() }));
                 const currentWeather = response?.data?.current_weather;
 
                 setTemp(currentWeather.temperature);
                 setTempCode(currentWeather.weathercode);
+                getWeatherCodeItem(currentWeather.weathercode);
             } else {
-                console.log('Hava Durumu API Hatası')
+                console.log('Hava Durumu API Hatası');
             }
         } catch (error) {
-            console.log('Hava Durumu API Hatası Teknik', error.message)
-
+            console.log('Hava Durumu API Hatası Teknik', error.message);
         }
-    }
+    };
+
+    const getWeatherCodeItem = async (code) => {
+        try {
+            const { data } = await api.post(Endpoint.WeatherItem, { code: code });
+            if (data && data.status) {
+                setSelectedWeathers(data.obj)
+            }
+        } catch (error) {
+            console.log('Hava Durumu Veri Bilgisi', error.message);
+        }
+    };
 
     const getEndOfListData = async () => {
         try {
             const { data } = await api.post(Endpoint.EndOfDayListData);
             if (data && data.status) {
-                let arr = [];
-                for (let i = 0; i < data.obj.length; i++) {
-                    const el = data.obj[i];
-                    arr.push({
-                        id: el.id,
-                        name: el.product.name,
-                        product_id: el.product_id,
-                        amount: el.amount,
-                        current: 0
-                    })
-
-                }
+                let arr = data.obj.map(el => ({
+                    id: el.id,
+                    name: el.product.name,
+                    product_id: el.product_id,
+                    amount: el.amount,
+                    current: 0
+                }));
                 setProducts(arr);
             }
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
     };
 
     const handleInputChange = (productId, value) => {
         let numericValue = value.replace(/[^0-9]/g, '');
-
         setProducts(prevProducts =>
             prevProducts.map(product => {
                 if (product.id === productId) {
                     const maxAllowed = product.amount;
                     const finalValue = Math.min(Number(numericValue), maxAllowed);
-
                     return { ...product, current: String(finalValue) };
                 }
                 return product;
@@ -118,41 +149,52 @@ const AddEndOfDayScreen = ({ navigation }) => {
 
     const handleSave = async () => {
         try {
-            // Girilen değerleri kontrol et
-            console.log(products);
-            return;
-            const hasValues = Object.values(inputValues).some(value => value !== '');
-
-            if (!hasValues) {
-                Alert.alert('Uyarı', 'Lütfen en az bir ürün için değer girin.');
-                return;
+            setSaveLoading(true);
+            const { data } = await api.post(Endpoint.EndOfDayAdd, { data: products, weather_temp: temp, weather_temp_code: selectedWeathers.id });
+            setSaveLoading(false);
+          
+            if (data && data.status) {
+                navigation.replace('EndofDayScreen');
+                Alert.alert('Bilgi', 'Kayıt işlemi başarıyla gerçekleşti.');
+            } else {
+                Alert.alert('Uyarı', 'İşlem başarısız');
             }
 
-            // Burada AsyncStorage'a kaydetme işlemi yapılacak
-            const dataToSave = {
-                date: new Date().toISOString(),
-                products: products.map(product => ({
-                    ...product,
-                    inputValue: inputValues[product.id] || '0'
-                }))
-            };
+            // const dataToSave = {
+            //     date: new Date().toISOString(),
+            //     products: products.map(product => ({
+            //         ...product,
+            //         inputValue: inputValues[product.id] || '0'
+            //     }))
+            // };
 
-            await AsyncStorage.setItem('endOfDayData', JSON.stringify(dataToSave));
+            // await AsyncStorage.setItem('endOfDayData', JSON.stringify(dataToSave));
 
-            Alert.alert(
-                'Başarılı',
-                'Gün sonu verileri başarıyla kaydedildi.',
-                [
-                    {
-                        text: 'Tamam',
-                        onPress: () => navigation.goBack()
-                    }
-                ]
-            );
+            // Alert.alert(
+            //     'Başarılı',
+            //     'Gün sonu verileri başarıyla kaydedildi.',
+            //     [{ text: 'Tamam', onPress: () => navigation.goBack() }]
+            // );
         } catch (error) {
+            console.log(error.message)
             Alert.alert('Hata', 'Veriler kaydedilirken bir hata oluştu.');
         }
     };
+
+    const renderWeatherItem = ({ item }) => (
+        <TouchableOpacity
+            style={styles.dropdownItem}
+            onPress={() => {
+                setSelectedWeathers(item);
+                setShowWeatherDropdown(false);
+                Keyboard.dismiss();
+            }}
+            activeOpacity={0.7}
+        >
+            <Text style={styles.dropdownItemText}>{item.description}</Text>
+        </TouchableOpacity>
+    );
+
 
     const renderProductItem = (product) => (
         <View key={product.id} style={styles.productCard}>
@@ -181,59 +223,141 @@ const AddEndOfDayScreen = ({ navigation }) => {
     );
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
-            <LinearGradient
-                colors={['#1e3a8a', '#3b82f6', '#06b6d4']}
-                style={styles.header}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            >
-                <SafeAreaView>
-                    <View style={styles.headerContent}>
-                        <View style={styles.headerTop}>
-                            <Text style={styles.headerTitle}>Gün Sonu</Text>
-                            <TouchableOpacity
-                                style={styles.saveButton}
-                                onPress={handleSave}
-                                activeOpacity={0.8}
-                            >
-                                <LinearGradient
-                                    colors={['#059669', '#10b981']}
-                                    style={styles.saveButtonGradient}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 0 }}
+        <Provider>
+            <View style={styles.container}>
+                <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
+                <LinearGradient
+                    colors={['#1e3a8a', '#3b82f6', '#06b6d4']}
+                    style={styles.header}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                >
+                    <SafeAreaView>
+                        <View style={styles.headerContent}>
+                            <View style={styles.headerTop}>
+                                <Text style={styles.headerTitle}>Gün Sonu</Text>
+                                <TouchableOpacity
+                                    style={styles.saveButton}
+                                    disabled={saveLoading}
+                                    onPress={handleSave}
+                                    activeOpacity={0.8}
                                 >
-                                    <Text style={styles.saveButtonText}>Kaydet</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
+                                    <LinearGradient
+                                        colors={['#059669', '#10b981']}
+                                        style={styles.saveButtonGradient}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                    >
+                                        <Text style={styles.saveButtonText}>{(saveLoading ? 'Kayıt ediliyor...' : 'Kaydet')}</Text>
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </SafeAreaView>
+                </LinearGradient>
+
+                <View style={{ padding: 10 }}>
+                    <TouchableOpacity
+                        onPress={() => setWeatherModalVisible(true)}
+                        style={{
+                            marginRight: 10,
+                            borderRadius: 12,
+                            borderWidth: 1,
+                            borderColor: '#d0d7ff',
+                            backgroundColor: '#f0f4ff',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.2,
+                            shadowRadius: 4,
+                            elevation: 3,
+                            padding: 16
+                        }}
+                    >
+                        <Text style={{
+                            textAlign: 'center',
+                            fontSize: 16,
+                            fontWeight: '600',
+                            color: '#0033cc'
+                        }}>
+                            Hava Durumu: {temp}°C
+                        </Text>
+                        <Text style={{
+                            textAlign: 'center',
+                            fontSize: 14,
+                            color: '#333'
+                        }}>
+                            {selectedWeathers.description}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                    <View style={styles.contentContainer}>
+                        <View style={styles.productsList}>
+                            {products.map(product => renderProductItem(product))}
                         </View>
                     </View>
-                </SafeAreaView>
-            </LinearGradient>
+                </ScrollView>
 
-            <View style={{ flexDirection: 'row', padding: 10 }}>
-                <View style={{ flex: 1, marginRight: 10, borderColor: '#004ad3ff', borderRadius: 10, borderWidth: 1, backgroundColor: '#0000ff5e', justifyContent: 'center', alignContent: 'center', alignItems: 'center' }}>
-                    <TouchableOpacity style={{ padding: 10 }}>
-                        <Text style={{ textAlign: 'center' }}>Hava Durumu: 13 C</Text>
-                        <Text style={{ textAlign: 'center' }}>Açık (Clear)</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={{ flex: 1 }}>
-                    <TouchableOpacity style={{ padding: 10, backgroundColor: 'gray' }}>
-                        <Text>13 C</Text>
-                    </TouchableOpacity>
-                </View>
+                {/* Modal */}
+                <Portal>
+                    <Modal
+                        visible={weatherModalVisible}
+                        onDismiss={() => setWeatherModalVisible(false)}
+                        contentContainerStyle={{
+                            backgroundColor: 'white',
+                            padding: 20,
+                            marginHorizontal: 20,
+                            borderRadius: 16
+                        }}
+                    >
+                        <View>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Hava Durumu</Text>
+                                <TouchableOpacity
+                                    style={[styles.dropdownButton, selectedWeathers && styles.dropdownButtonSelected]}
+                                    onPress={() => setShowWeatherDropdown(!showWeatherDropdown)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text style={[styles.dropdownButtonText, !selectedWeathers && styles.placeholder]}>
+                                        {selectedWeathers.description || 'Hava durumu seçiniz'}
+                                    </Text>
+                                    <Text style={[styles.dropdownArrow, showWeatherDropdown && styles.dropdownArrowUp]}>
+                                        ▼
+                                    </Text>
+                                </TouchableOpacity>
+                                {showWeatherDropdown && (
+                                    <View style={styles.dropdown}>
+                                        <FlatList
+                                            data={weathers}
+                                            renderItem={renderWeatherItem}
+                                            keyExtractor={item => item.id}
+                                            style={styles.dropdownList}
+                                        />
+                                    </View>
+                                )}
+                            </View>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Sıcaklık (°C)</Text>
+                                <TextInput
+                                    style={[styles.textInput, temp && styles.textInputFilled]}
+                                    value={temp?.toString() || ""}
+                                    onChangeText={setTemp}
+                                    placeholder="Derece"
+                                    keyboardType="numeric"
+                                    placeholderTextColor="#9CA3AF"
+                                />
+                            </View>
+                        </View>
+                        <Button mode="contained" onPress={() => setWeatherModalVisible(false)}>
+                            Kapat
+                        </Button>
+                    </Modal>
+                </Portal>
             </View>
-
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                <View style={styles.contentContainer}>
-                    <View style={styles.productsList}>
-                        {products.map(product => renderProductItem(product))}
-                    </View>
-                </View>
-            </ScrollView>
-        </View>
+        </Provider>
     );
 };
 
@@ -267,10 +391,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         elevation: 4,
         shadowColor: '#059669',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
     },
@@ -290,33 +411,6 @@ const styles = StyleSheet.create({
     contentContainer: {
         padding: 20,
     },
-    sectionHeader: {
-        backgroundColor: '#ffffff',
-        padding: 20,
-        marginBottom: 20,
-        borderRadius: 16,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 1,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-    },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#1e293b',
-        marginBottom: 8,
-        textAlign: 'center',
-    },
-    sectionSubtitle: {
-        fontSize: 14,
-        color: '#64748b',
-        textAlign: 'center',
-        fontStyle: 'italic',
-    },
     productsList: {
         gap: 16,
     },
@@ -326,10 +420,7 @@ const styles = StyleSheet.create({
         padding: 20,
         elevation: 3,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         borderLeftWidth: 4,
@@ -388,5 +479,93 @@ const styles = StyleSheet.create({
         color: '#1e293b',
         textAlign: 'center',
         fontWeight: '600',
+    },
+    inputGroup: {
+        gap: 8,
+        marginBottom: 15
+    },
+    inputLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#374151',
+        letterSpacing: 0.2,
+    },
+    dropdownButton: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: '#FFFFFF',
+        minHeight: 52,
+    },
+    dropdownButtonSelected: {
+        borderColor: '#8B5CF6',
+        backgroundColor: '#FAF5FF',
+    },
+    dropdownButtonText: {
+        fontSize: 16,
+        color: '#1F2937',
+        fontWeight: '500',
+        flex: 1,
+    },
+    dropdownArrow: {
+        fontSize: 14,
+        color: '#6B7280',
+        fontWeight: '600',
+        marginLeft: 8,
+        transition: 'transform 0.2s ease',
+    },
+    dropdownArrowUp: {
+        transform: [{ rotate: '180deg' }],
+    },
+    dropdown: {
+        marginTop: 4,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 12,
+        backgroundColor: '#FFFFFF',
+        maxHeight: 200,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+
+    dropdownItem: {
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    dropdownItemText: {
+        fontSize: 16,
+        color: '#374151',
+        fontWeight: '500',
+    },
+    dropdownList: {
+        maxHeight: 200,
+    },
+    textInput: {
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        fontSize: 16,
+        backgroundColor: '#FFFFFF',
+        color: '#1F2937',
+        transition: 'all 0.2s ease',
+    },
+    textInputFilled: {
+        borderColor: '#8B5CF6',
+        backgroundColor: '#FAF5FF',
     },
 });
