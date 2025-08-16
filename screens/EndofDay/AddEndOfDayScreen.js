@@ -19,8 +19,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
-import { Modal, Portal, Provider, Button } from 'react-native-paper';
-import axios from 'axios';
+import { Modal, Portal, Provider, Button, ActivityIndicator } from 'react-native-paper';
 
 const AddEndOfDayScreen = ({ navigation }) => {
     const [products, setProducts] = useState([]);
@@ -33,7 +32,8 @@ const AddEndOfDayScreen = ({ navigation }) => {
     const [weathers, setWeathers] = useState([]);
     const [showWeatherDropdown, setShowWeatherDropdown] = useState(false);
 
-    const [saveLoading,setSaveLoading] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
 
 
@@ -117,7 +117,10 @@ const AddEndOfDayScreen = ({ navigation }) => {
 
     const getEndOfListData = async () => {
         try {
+            setLoading(true);
             const { data } = await api.post(Endpoint.EndOfDayListData);
+            setLoading(false);
+
             if (data && data.status) {
                 let arr = data.obj.map(el => ({
                     id: el.id,
@@ -149,10 +152,15 @@ const AddEndOfDayScreen = ({ navigation }) => {
 
     const handleSave = async () => {
         try {
+
+            if(products.length == 0){
+                Alert.alert('Uyarı','Bugüne ait stok kaydı mevcut değil.');
+                return;
+            }
             setSaveLoading(true);
             const { data } = await api.post(Endpoint.EndOfDayAdd, { data: products, weather_temp: temp, weather_temp_code: selectedWeathers.id });
             setSaveLoading(false);
-          
+
             if (data && data.status) {
                 navigation.replace('EndofDayScreen');
                 Alert.alert('Bilgi', 'Kayıt işlemi başarıyla gerçekleşti.');
@@ -227,7 +235,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
             <View style={styles.container}>
                 <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
                 <LinearGradient
-                    colors={['#1e3a8a', '#3b82f6', '#06b6d4']}
+                    colors={['#4B6CB7', '#182848']}
                     style={styles.header}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -235,7 +243,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                     <SafeAreaView>
                         <View style={styles.headerContent}>
                             <View style={styles.headerTop}>
-                                <Text style={styles.headerTitle}>Gün Sonu</Text>
+                                <Text style={styles.headerTitle}>Gün Sonu </Text>
                                 <TouchableOpacity
                                     style={styles.saveButton}
                                     disabled={saveLoading}
@@ -243,7 +251,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                                     activeOpacity={0.8}
                                 >
                                     <LinearGradient
-                                        colors={['#059669', '#10b981']}
+                                        colors={['#FF6A00', '#FF8E53']} // turuncu → şeftali
                                         style={styles.saveButtonGradient}
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 1, y: 0 }}
@@ -296,7 +304,25 @@ const AddEndOfDayScreen = ({ navigation }) => {
                 <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                     <View style={styles.contentContainer}>
                         <View style={styles.productsList}>
-                            {products.map(product => renderProductItem(product))}
+                            {(loading ?
+                                <View style={styles.loadingContainer}>
+                                    <View style={styles.loadingCard}>
+                                        <ActivityIndicator size="large" color="#667eea" />
+                                        <Text style={styles.loadingText}>Yükleniyor...</Text>
+                                        <Text style={styles.loadingSubtext}>Kayıtlar yükleniyor</Text>
+                                    </View>
+                                </View> : (products.length > 0 ? products.map(product => renderProductItem(product)) :
+
+
+                                    <View style={styles.emptyState}>
+                                        <View style={styles.emptyStateCard}>
+                                            <Text style={styles.emptyIcon}>📦</Text>
+                                            <Text style={styles.emptyTitle}>Henüz kayıt yok</Text>
+                                            <Text style={styles.emptySubtitle}>
+                                                Bugüne ait stok girişi yok.                                          </Text>
+                                        </View>
+                                    </View>
+                                ))}
                         </View>
                     </View>
                 </ScrollView>
@@ -390,9 +416,8 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         overflow: 'hidden',
         elevation: 4,
-        shadowColor: '#059669',
-        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
+        width: 150,
         shadowRadius: 4,
     },
     saveButtonGradient: {
@@ -402,6 +427,7 @@ const styles = StyleSheet.create({
     saveButtonText: {
         color: '#ffffff',
         fontWeight: '600',
+        textAlign: 'center',
         fontSize: 16,
         letterSpacing: 0.3,
     },
@@ -432,6 +458,33 @@ const styles = StyleSheet.create({
     productInfo: {
         flex: 1,
     },
+    loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 40,
+    borderRadius: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  loadingText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginTop: 16,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
+  },
     productName: {
         fontSize: 18,
         fontWeight: '600',
@@ -567,5 +620,40 @@ const styles = StyleSheet.create({
     textInputFilled: {
         borderColor: '#8B5CF6',
         backgroundColor: '#FAF5FF',
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 100
+    },
+    emptyStateCard: {
+        backgroundColor: '#FFFFFF',
+        padding: 40,
+        borderRadius: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+        maxWidth: 280,
+    },
+    emptyIcon: {
+        fontSize: 64,
+        marginBottom: 20,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1F2937',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+        textAlign: 'center',
+        lineHeight: 20,
     },
 });

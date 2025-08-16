@@ -285,7 +285,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
 
             {/* Modern Header */}
             <LinearGradient
-                colors={['#1e3a8a', '#3b82f6', '#06b6d4']}
+            colors={['#4B6CB7', '#182848']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.header}

@@ -38,7 +38,7 @@ const HomeScreen = ({ navigation }) => {
       icon: 'bar-chart',
       color: '#8B5CF6',
       bgColor: '#F3F4F6',
-      screen: 'Reports'
+      screen: 'ReportsScreen'
     },
     {
       id: 4,

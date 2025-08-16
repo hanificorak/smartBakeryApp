@@ -13,6 +13,7 @@ import StockScreen from './screens/Stock/StockScreen';
 import DefinitionsScreen from './screens/Definitions/DefinitionsScreen';
 import EndofDayScreen from './screens/EndofDay/EndofDayScreen';
 import AddEndOfDayScreen from './screens/EndofDay/AddEndOfDayScreen';
+import ReportsScreen from './screens/Reports/ReportsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -86,6 +87,7 @@ export default function App() {
         <Stack.Screen name="DefinitionsScreen" component={DefinitionsScreen} options={{ headerShown: true, title:'Tanımlar' }} />
         <Stack.Screen name="EndofDayScreen" component={EndofDayScreen} options={{ headerShown: true, title:'Gün Sonu İşlemleri' }} />
         <Stack.Screen name="AddEndOfDayScreen" component={AddEndOfDayScreen} options={{ headerShown: true, title:'Gün Sonu Ekle' }} />
+        <Stack.Screen name="ReportsScreen" component={ReportsScreen} options={{ headerShown: true, title:'Raporlar' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

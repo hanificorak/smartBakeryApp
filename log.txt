@@ -1,0 +1,737 @@
+-------------------------------------
+Translated Report (Full Report Below)
+-------------------------------------
+
+Incident Identifier: A9E3B39F-9EF3-4C40-AB03-B8FFDB5F3251
+CrashReporter Key:   02C682B0-76F8-CA90-FD7B-8404E4BA2F46
+Hardware Model:      Mac16,1
+Process:             Expo Go [37503]
+Path:                /Users/USER/Library/Developer/CoreSimulator/Devices/8785FED5-8734-4553-856F-0FFB38D3A813/data/Containers/Bundle/Application/065D0D75-08F1-4587-B58C-4B55627F273F/Expo-Go-2.33.16.tar.app/Expo Go
+Identifier:          host.exp.Exponent
+Version:             2.33.16 (2.33.16)
+Code Type:           ARM-64 (Native)
+Role:                Foreground
+Parent Process:      launchd_sim [37206]
+Coalition:           com.apple.CoreSimulator.SimDevice.8785FED5-8734-4553-856F-0FFB38D3A813 [2549]
+Responsible Process: SimulatorTrampoline [37065]
+
+Date/Time:           2025-08-16 15:47:12.6578 +0300
+Launch Time:         2025-08-16 15:46:52.3135 +0300
+OS Version:          macOS 15.6 (24G84)
+Release Type:        User
+Report Version:      104
+
+Exception Type:  EXC_BAD_ACCESS (SIGSEGV)
+Exception Subtype: KERN_INVALID_ADDRESS at 0x0000000000000000
+Exception Codes: 0x0000000000000001, 0x0000000000000000
+VM Region Info: 0 is not in any region.  Bytes before following region: 4334534656
+      REGION TYPE                    START - END         [ VSIZE] PRT/MAX SHRMOD  REGION DETAIL
+      UNUSED SPACE AT START
+--->  
+      __TEXT                      1025bc000-104b08000    [ 37.3M] r-x/r-x SM=COW  /Users/USER/Library/Developer/CoreSimulator/Devices/8785FED5-8734-4553-856F-0FFB38D3A813/data/Containers/Bundle/Application/065D0D75-08F1-4587-B58C-4B55627F273F/Expo-Go-2.33.16.tar.app/Expo Go
+Termination Reason: SIGNAL 11 Segmentation fault: 11
+Terminating Process: exc handler [37503]
+
+Triggered by Thread:  26
+
+Kernel Triage:
+VM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter
+VM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter
+VM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter
+VM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter
+VM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter
+
+
+Thread 0::  Dispatch queue: com.apple.main-thread
+0   libsystem_kernel.dylib        	       0x107d3b564 __psynch_mutexwait + 8
+1   libsystem_pthread.dylib       	       0x107cdbb10 _pthread_mutex_firstfit_lock_wait + 80
+2   libsystem_pthread.dylib       	       0x107cd96b4 _pthread_mutex_firstfit_lock_slow + 216
+3   QuartzCore                    	       0x18b3f6bc4 backingStoreFinalize(void const*) + 56
+4   CoreFoundation                	       0x18042b0f0 _CFRelease + 284
+5   QuartzCore                    	       0x18b578374 CA::Layer::~Layer() + 192
+6   QuartzCore                    	       0x18b4e2a40 CA::Transaction::commit() + 1592
+7   QuartzCore                    	       0x18b4e3d48 CA::Transaction::flush_as_runloop_observer(bool) + 68
+8   UIKitCore                     	       0x185c580dc _UIApplicationFlushCATransaction + 48
+9   UIKitCore                     	       0x185b88c60 __setupUpdateSequence_block_invoke_2 + 356
+10  UIKitCore                     	       0x1851bd0c0 _UIUpdateSequenceRun + 76
+11  UIKitCore                     	       0x185b884f4 schedulerStepScheduledMainSection + 204
+12  UIKitCore                     	       0x185b87910 runloopSourceCallback + 80
+13  CoreFoundation                	       0x180429368 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+14  CoreFoundation                	       0x1804292b0 __CFRunLoopDoSource0 + 168
+15  CoreFoundation                	       0x180428a38 __CFRunLoopDoSources0 + 220
+16  CoreFoundation                	       0x180423434 __CFRunLoopRun + 780
+17  CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+18  GraphicsServices              	       0x191004d00 GSEventRunModal + 164
+19  UIKitCore                     	       0x185c597d4 -[UIApplication _run] + 796
+20  UIKitCore                     	       0x185c5dba0 UIApplicationMain + 124
+21  Expo Go                       	       0x1025f7f40 main + 64
+22  ???                           	       0x107df53d4 ???
+23  dyld                          	       0x107b8eb98 start + 6076
+
+Thread 1:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 2:: com.apple.uikit.eventfetch-thread
+0   libsystem_kernel.dylib        	       0x107d38b70 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x107d49fac mach_msg2_internal + 72
+2   libsystem_kernel.dylib        	       0x107d40c28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x107d38ed8 mach_msg + 20
+4   CoreFoundation                	       0x180428bc4 __CFRunLoopServiceMachPort + 156
+5   CoreFoundation                	       0x1804235a4 __CFRunLoopRun + 1148
+6   CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+7   Foundation                    	       0x180f0e38c -[NSRunLoop(NSRunLoop) runMode:beforeDate:] + 208
+8   Foundation                    	       0x180f0e5ac -[NSRunLoop(NSRunLoop) runUntilDate:] + 60
+9   UIKitCore                     	       0x185d07390 -[UIEventFetcher threadMain] + 408
+10  Foundation                    	       0x180f35148 __NSThread__start__ + 716
+11  libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+12  libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 3:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 4:
+0   libsystem_kernel.dylib        	       0x107d3a770 __ulock_wait + 8
+1   libdispatch.dylib             	       0x18017e590 _dlock_wait + 52
+2   libdispatch.dylib             	       0x18017e8c8 _dispatch_group_wait_slow + 52
+3   CFNetwork                     	       0x184a548fc __18-[NSHost resolve:]_block_invoke + 520
+4   libdispatch.dylib             	       0x18017c788 _dispatch_call_block_and_release + 24
+5   libdispatch.dylib             	       0x180197278 _dispatch_client_callout + 12
+6   libdispatch.dylib             	       0x180185ad0 _dispatch_lane_serial_drain + 984
+7   libdispatch.dylib             	       0x180186590 _dispatch_lane_invoke + 396
+8   libdispatch.dylib             	       0x180191380 _dispatch_root_queue_drain_deferred_wlh + 288
+9   libdispatch.dylib             	       0x1801909f4 _dispatch_workloop_worker_thread + 440
+10  libsystem_pthread.dylib       	       0x107cdabcc _pthread_wqthread + 288
+11  libsystem_pthread.dylib       	       0x107cd998c start_wqthread + 8
+
+Thread 5:: com.google.firebase.crashlytics.MachExceptionServer
+0   libsystem_kernel.dylib        	       0x107d3c2e0 write + 8
+1   Expo Go                       	       0x102a8f298 FIRCLSSDKFileLog + 316
+2   Expo Go                       	       0x102a90eac FIRCLSMachExceptionServer + 976
+3   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+4   libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 6:: com.facebook.react.runtime.JavaScript
+0   libsystem_kernel.dylib        	       0x107d38b70 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x107d49fac mach_msg2_internal + 72
+2   libsystem_kernel.dylib        	       0x107d40c28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x107d38ed8 mach_msg + 20
+4   CoreFoundation                	       0x180428bc4 __CFRunLoopServiceMachPort + 156
+5   CoreFoundation                	       0x1804235a4 __CFRunLoopRun + 1148
+6   CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+7   Expo Go                       	       0x102e18004 +[RCTJSThreadManager runRunLoop] + 212
+8   Foundation                    	       0x180f35148 __NSThread__start__ + 716
+9   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+10  libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 7:: hades
+0   libsystem_kernel.dylib        	       0x107d3c014 __psynch_cvwait + 8
+1   libsystem_pthread.dylib       	       0x107cdeab8 _pthread_cond_wait + 976
+2   libc++.1.dylib                	       0x18030c358 std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) + 28
+3   hermes                        	       0x108cd234c hermes::vm::HadesGC::Executor::worker() + 116
+4   hermes                        	       0x108cd22b4 void* std::__1::__thread_proxy[abi:nn180100]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, hermes::vm::HadesGC::Executor::Executor()::'lambda'()>>(void*) + 44
+5   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+6   libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 8:: AXSpeech
+0   libsystem_kernel.dylib        	       0x107d38b70 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x107d49fac mach_msg2_internal + 72
+2   libsystem_kernel.dylib        	       0x107d40c28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x107d38ed8 mach_msg + 20
+4   CoreFoundation                	       0x180428bc4 __CFRunLoopServiceMachPort + 156
+5   CoreFoundation                	       0x1804235a4 __CFRunLoopRun + 1148
+6   CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+7   Foundation                    	       0x180f0e38c -[NSRunLoop(NSRunLoop) runMode:beforeDate:] + 208
+8   TextToSpeech                  	       0x1b6c370f8 0x1b6c0d000 + 172280
+9   Foundation                    	       0x180f35148 __NSThread__start__ + 716
+10  libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+11  libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 9:: caulk.messenger.shared:17
+0   libsystem_kernel.dylib        	       0x107d38aec semaphore_wait_trap + 8
+1   caulk                         	       0x1b6b51b3c caulk::semaphore::timed_wait(double) + 220
+2   caulk                         	       0x1b6b58c40 caulk::concurrent::details::worker_thread::run() + 28
+3   caulk                         	       0x1b6b58cb4 void* caulk::thread_proxy<std::__1::tuple<caulk::thread::attributes, void (caulk::concurrent::details::worker_thread::*)(), std::__1::tuple<caulk::concurrent::details::worker_thread*>>>(void*) + 48
+4   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+5   libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 10:: caulk.messenger.shared:high
+0   libsystem_kernel.dylib        	       0x107d38aec semaphore_wait_trap + 8
+1   caulk                         	       0x1b6b51b3c caulk::semaphore::timed_wait(double) + 220
+2   caulk                         	       0x1b6b58c40 caulk::concurrent::details::worker_thread::run() + 28
+3   caulk                         	       0x1b6b58cb4 void* caulk::thread_proxy<std::__1::tuple<caulk::thread::attributes, void (caulk::concurrent::details::worker_thread::*)(), std::__1::tuple<caulk::concurrent::details::worker_thread*>>>(void*) + 48
+4   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+5   libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 11:: hades
+0   libsystem_kernel.dylib        	       0x107d3c014 __psynch_cvwait + 8
+1   libsystem_pthread.dylib       	       0x107cdeab8 _pthread_cond_wait + 976
+2   libc++.1.dylib                	       0x18030c358 std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) + 28
+3   hermes                        	       0x108cd234c hermes::vm::HadesGC::Executor::worker() + 116
+4   hermes                        	       0x108cd22b4 void* std::__1::__thread_proxy[abi:nn180100]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, hermes::vm::HadesGC::Executor::Executor()::'lambda'()>>(void*) + 44
+5   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+6   libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 12:: com.apple.NSURLConnectionLoader
+0   libsystem_kernel.dylib        	       0x107d38b70 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x107d49fac mach_msg2_internal + 72
+2   libsystem_kernel.dylib        	       0x107d40c28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x107d38ed8 mach_msg + 20
+4   CoreFoundation                	       0x180428bc4 __CFRunLoopServiceMachPort + 156
+5   CoreFoundation                	       0x1804235a4 __CFRunLoopRun + 1148
+6   CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+7   CFNetwork                     	       0x184b2a0f0 +[__CFN_CoreSchedulingSetRunnable _run:] + 368
+8   Foundation                    	       0x180f35148 __NSThread__start__ + 716
+9   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+10  libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 13::  Dispatch queue: CA DispatchGroup
+0   QuartzCore                    	       0x18b3f64d4 CABackingStoreCollect_(double, bool) + 544
+1   QuartzCore                    	       0x18b3f6254 CABackingStoreCollect + 36
+2   QuartzCore                    	       0x18b3f66dc async_collect_callback(void*) + 40
+3   libdispatch.dylib             	       0x180197278 _dispatch_client_callout + 12
+4   libdispatch.dylib             	       0x180185ad0 _dispatch_lane_serial_drain + 984
+5   libdispatch.dylib             	       0x180186590 _dispatch_lane_invoke + 396
+6   libdispatch.dylib             	       0x180191380 _dispatch_root_queue_drain_deferred_wlh + 288
+7   libdispatch.dylib             	       0x1801909f4 _dispatch_workloop_worker_thread + 440
+8   libsystem_pthread.dylib       	       0x107cdabcc _pthread_wqthread + 288
+9   libsystem_pthread.dylib       	       0x107cd998c start_wqthread + 8
+
+Thread 14::  Dispatch queue: com.apple.root.default-qos.overcommit
+0   libsystem_kernel.dylib        	       0x107d3e670 kevent + 8
+1   libsystem_info.dylib          	       0x18037c098 _mdns_search_ex + 1084
+2   libsystem_info.dylib          	       0x18037b394 mdns_hostbyaddr + 564
+3   libsystem_info.dylib          	       0x18037e59c search_host_byaddr + 164
+4   libsystem_info.dylib          	       0x18038041c si_nameinfo + 352
+5   libsystem_info.dylib          	       0x18037a238 getnameinfo + 240
+6   CFNetwork                     	       0x184a54d58 __40-[NSHost resolveCurrentHostWithHandler:]_block_invoke + 104
+7   libdispatch.dylib             	       0x18017c788 _dispatch_call_block_and_release + 24
+8   libdispatch.dylib             	       0x180197278 _dispatch_client_callout + 12
+9   libdispatch.dylib             	       0x1801b23b0 <deduplicated_symbol> + 60
+10  libdispatch.dylib             	       0x180180fc0 _dispatch_queue_override_invoke + 1180
+11  libdispatch.dylib             	       0x18018f9cc _dispatch_root_queue_drain + 336
+12  libdispatch.dylib             	       0x1801903b4 _dispatch_worker_thread2 + 232
+13  libsystem_pthread.dylib       	       0x107cdab90 _pthread_wqthread + 228
+14  libsystem_pthread.dylib       	       0x107cd998c start_wqthread + 8
+
+Thread 15:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 16:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 17:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 18::  Dispatch queue: com.apple.root.default-qos.overcommit
+0   libsystem_kernel.dylib        	       0x107d3e670 kevent + 8
+1   libsystem_info.dylib          	       0x18037c098 _mdns_search_ex + 1084
+2   libsystem_info.dylib          	       0x18037b394 mdns_hostbyaddr + 564
+3   libsystem_info.dylib          	       0x18037e59c search_host_byaddr + 164
+4   libsystem_info.dylib          	       0x18038041c si_nameinfo + 352
+5   libsystem_info.dylib          	       0x18037a238 getnameinfo + 240
+6   CFNetwork                     	       0x184a54d58 __40-[NSHost resolveCurrentHostWithHandler:]_block_invoke + 104
+7   libdispatch.dylib             	       0x18017c788 _dispatch_call_block_and_release + 24
+8   libdispatch.dylib             	       0x180197278 _dispatch_client_callout + 12
+9   libdispatch.dylib             	       0x1801b23b0 <deduplicated_symbol> + 60
+10  libdispatch.dylib             	       0x180180fc0 _dispatch_queue_override_invoke + 1180
+11  libdispatch.dylib             	       0x18018f9cc _dispatch_root_queue_drain + 336
+12  libdispatch.dylib             	       0x1801903b4 _dispatch_worker_thread2 + 232
+13  libsystem_pthread.dylib       	       0x107cdab90 _pthread_wqthread + 228
+14  libsystem_pthread.dylib       	       0x107cd998c start_wqthread + 8
+
+Thread 19::  Dispatch queue: com.apple.root.default-qos.overcommit
+0   libsystem_kernel.dylib        	       0x107d3e670 kevent + 8
+1   libsystem_info.dylib          	       0x18037c098 _mdns_search_ex + 1084
+2   libsystem_info.dylib          	       0x18037b394 mdns_hostbyaddr + 564
+3   libsystem_info.dylib          	       0x18037e59c search_host_byaddr + 164
+4   libsystem_info.dylib          	       0x18038041c si_nameinfo + 352
+5   libsystem_info.dylib          	       0x18037a238 getnameinfo + 240
+6   CFNetwork                     	       0x184a54d58 __40-[NSHost resolveCurrentHostWithHandler:]_block_invoke + 104
+7   libdispatch.dylib             	       0x18017c788 _dispatch_call_block_and_release + 24
+8   libdispatch.dylib             	       0x180197278 _dispatch_client_callout + 12
+9   libdispatch.dylib             	       0x1801b23b0 <deduplicated_symbol> + 60
+10  libdispatch.dylib             	       0x180180fc0 _dispatch_queue_override_invoke + 1180
+11  libdispatch.dylib             	       0x18018f9cc _dispatch_root_queue_drain + 336
+12  libdispatch.dylib             	       0x1801903b4 _dispatch_worker_thread2 + 232
+13  libsystem_pthread.dylib       	       0x107cdab90 _pthread_wqthread + 228
+14  libsystem_pthread.dylib       	       0x107cd998c start_wqthread + 8
+
+Thread 20::  Dispatch queue: com.apple.root.default-qos.overcommit
+0   libsystem_kernel.dylib        	       0x107d3e670 kevent + 8
+1   libsystem_info.dylib          	       0x18037c098 _mdns_search_ex + 1084
+2   libsystem_info.dylib          	       0x18037b394 mdns_hostbyaddr + 564
+3   libsystem_info.dylib          	       0x18037e59c search_host_byaddr + 164
+4   libsystem_info.dylib          	       0x18038041c si_nameinfo + 352
+5   libsystem_info.dylib          	       0x18037a238 getnameinfo + 240
+6   CFNetwork                     	       0x184a54d58 __40-[NSHost resolveCurrentHostWithHandler:]_block_invoke + 104
+7   libdispatch.dylib             	       0x18017c788 _dispatch_call_block_and_release + 24
+8   libdispatch.dylib             	       0x180197278 _dispatch_client_callout + 12
+9   libdispatch.dylib             	       0x1801b23b0 <deduplicated_symbol> + 60
+10  libdispatch.dylib             	       0x180180fc0 _dispatch_queue_override_invoke + 1180
+11  libdispatch.dylib             	       0x18018f9cc _dispatch_root_queue_drain + 336
+12  libdispatch.dylib             	       0x1801903b4 _dispatch_worker_thread2 + 232
+13  libsystem_pthread.dylib       	       0x107cdab90 _pthread_wqthread + 228
+14  libsystem_pthread.dylib       	       0x107cd998c start_wqthread + 8
+
+Thread 21:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 22:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 23:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 24:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 25:
+0   libsystem_pthread.dylib       	       0x107cd9984 start_wqthread + 0
+
+Thread 26 Crashed:: com.facebook.react.runtime.JavaScript
+0   libsystem_platform.dylib      	       0x107d18b04 _platform_strlen + 4
+1   Expo Go                       	       0x1026277d0 std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>::basic_string[abi:ne180100]<0>(char const*) + 36
+2   Expo Go                       	       0x102b848f0 -[WorkletsModule installTurboModule:] + 168
+3   CoreFoundation                	       0x1804d0120 __invoking___ + 144
+4   CoreFoundation                	       0x1804cd2bc -[NSInvocation invoke] + 276
+5   CoreFoundation                	       0x1804cd540 -[NSInvocation invokeWithTarget:] + 60
+6   Expo Go                       	       0x102d65540 invocation function for block in facebook::react::ObjCTurboModule::performMethodInvocation(facebook::jsi::Runtime&, bool, char const*, NSInvocation*, NSMutableArray*) + 92
+7   Expo Go                       	       0x102d651d8 facebook::react::ObjCTurboModule::performMethodInvocation(facebook::jsi::Runtime&, bool, char const*, NSInvocation*, NSMutableArray*) + 432
+8   Expo Go                       	       0x102d67434 facebook::react::ObjCTurboModule::invokeObjCMethod(facebook::jsi::Runtime&, facebook::react::TurboModuleMethodValueKind, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, objc_selector*, facebook::jsi::Value const*, unsigned long) + 256
+9   hermes                        	       0x108b92d2c std::__1::function<facebook::jsi::Value (facebook::jsi::Runtime&, facebook::jsi::Value const&, facebook::jsi::Value const*, unsigned long)>::operator()(facebook::jsi::Runtime&, facebook::jsi::Value const&, facebook::jsi::Value const*, unsigned long) const + 44
+10  hermes                        	       0x108b929f4 facebook::hermes::HermesRuntimeImpl::HFContext::func(void*, hermes::vm::Runtime&, hermes::vm::NativeArgs) + 204
+11  hermes                        	       0x108c19f7c hermes::vm::NativeFunction::_nativeCall(hermes::vm::NativeFunction*, hermes::vm::Runtime&) + 140
+12  hermes                        	       0x108c2e4f4 hermes::vm::Interpreter::handleCallSlowPath(hermes::vm::Runtime&, hermes::vm::PinnedHermesValue*) + 60
+13  hermes                        	       0x108c2fdf0 hermes::vm::CallResult<hermes::vm::HermesValue, (hermes::vm::detail::CallResultSpecialize)2> hermes::vm::Interpreter::interpretFunction<false, false>(hermes::vm::Runtime&, hermes::vm::InterpreterState&) + 2268
+14  hermes                        	       0x108c2f4ec hermes::vm::Runtime::interpretFunctionImpl(hermes::vm::CodeBlock*) + 132
+15  hermes                        	       0x108c62944 hermes::vm::Runtime::runBytecode(std::__1::shared_ptr<hermes::hbc::BCProviderBase>&&, hermes::vm::RuntimeModuleFlags, llvh::StringRef, hermes::vm::Handle<hermes::vm::Environment>, hermes::vm::Handle<hermes::vm::HermesValue>) + 1156
+16  hermes                        	       0x108b85cd8 facebook::hermes::HermesRuntimeImpl::evaluatePreparedJavaScript(std::__1::shared_ptr<facebook::jsi::PreparedJavaScript const> const&) + 224
+17  hermes                        	       0x108b85b78 facebook::hermes::HermesRuntimeImpl::evaluateJavaScriptWithSourceMap(std::__1::shared_ptr<facebook::jsi::Buffer const> const&, std::__1::shared_ptr<facebook::jsi::Buffer const> const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&) + 116
+18  hermes                        	       0x108b86a2c facebook::hermes::HermesRuntimeImpl::evaluateJavaScript(std::__1::shared_ptr<facebook::jsi::Buffer const> const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&) + 32
+19  Expo Go                       	       0x102e1df34 std::__1::__function::__func<facebook::react::ReactInstance::loadScript(std::__1::unique_ptr<facebook::react::JSBigString const, std::__1::default_delete<facebook::react::JSBigString const>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, std::__1::function<void (facebook::jsi::Runtime&)>&&)::$_0, std::__1::allocator<facebook::react::ReactInstance::loadScript(std::__1::unique_ptr<facebook::react::JSBigString const, std::__1::default_delete<facebook::react::JSBigString const>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, std::__1::function<void (facebook::jsi::Runtime&)>&&)::$_0>, void (facebook::jsi::Runtime&)>::operator()(facebook::jsi::Runtime&) + 148
+20  Expo Go                       	       0x102e933bc facebook::react::Task::execute(facebook::jsi::Runtime&, bool) + 240
+21  Expo Go                       	       0x102e8fa50 facebook::react::RuntimeScheduler_Modern::executeTask(facebook::jsi::Runtime&, facebook::react::Task&, bool) const + 104
+22  Expo Go                       	       0x102e90160 facebook::react::RuntimeScheduler_Modern::runEventLoopTick(facebook::jsi::Runtime&, facebook::react::Task&, std::__1::chrono::time_point<std::__1::chrono::steady_clock, std::__1::chrono::duration<long long, std::__1::ratio<1l, 1000000000l>>>) + 140
+23  Expo Go                       	       0x102e8feac facebook::react::RuntimeScheduler_Modern::runEventLoop(facebook::jsi::Runtime&, bool) + 148
+24  Expo Go                       	       0x102e1c2f4 _ZNSt3__110__function6__funcIZZN8facebook5react13ReactInstanceC1ENS_10unique_ptrINS3_9JSRuntimeENS_14default_deleteIS6_EEEENS_10shared_ptrINS3_18MessageQueueThreadEEENSA_INS3_12TimerManagerEEENS_8functionIFvRNS2_3jsi7RuntimeERKNS3_14JsErrorHandler14ProcessedErrorEEEEPNS3_18jsinspector_modern10HostTargetEENK3$_0clINSF_IFvSI_EEEEEDaT_EUlvE_NS_9allocatorISY_EEFvvEEclEv + 116
+25  Expo Go                       	       0x102c37c84 facebook::react::tryAndReturnError(std::__1::function<void ()> const&) + 32
+26  Expo Go                       	       0x102c48780 facebook::react::RCTMessageThread::tryFunc(std::__1::function<void ()> const&) + 24
+27  Expo Go                       	       0x102c48584 invocation function for block in facebook::react::RCTMessageThread::runAsync(std::__1::function<void ()>) + 44
+28  CoreFoundation                	       0x180429134 __CFRUNLOOP_IS_CALLING_OUT_TO_A_BLOCK__ + 20
+29  CoreFoundation                	       0x180428898 __CFRunLoopDoBlocks + 348
+30  CoreFoundation                	       0x180423a2c __CFRunLoopRun + 2308
+31  CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+32  Expo Go                       	       0x102e18004 +[RCTJSThreadManager runRunLoop] + 212
+33  Foundation                    	       0x180f35148 __NSThread__start__ + 716
+34  libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+35  libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 27:: hades
+0   libsystem_kernel.dylib        	       0x107d3c014 __psynch_cvwait + 8
+1   libsystem_pthread.dylib       	       0x107cdeab8 _pthread_cond_wait + 976
+2   libc++.1.dylib                	       0x18030c358 std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) + 28
+3   hermes                        	       0x108cd234c hermes::vm::HadesGC::Executor::worker() + 116
+4   hermes                        	       0x108cd22b4 void* std::__1::__thread_proxy[abi:nn180100]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, hermes::vm::HadesGC::Executor::Executor()::'lambda'()>>(void*) + 44
+5   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+6   libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 28:: com.apple.CFStream.LegacyThread
+0   libsystem_kernel.dylib        	       0x107d38b70 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x107d49fac mach_msg2_internal + 72
+2   libsystem_kernel.dylib        	       0x107d40c28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x107d38ed8 mach_msg + 20
+4   CoreFoundation                	       0x180428bc4 __CFRunLoopServiceMachPort + 156
+5   CoreFoundation                	       0x1804235a4 __CFRunLoopRun + 1148
+6   CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+7   CoreFoundation                	       0x180446fdc _legacyStreamRunLoop_workThread + 260
+8   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+9   libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 29:: com.facebook.SocketRocket.NetworkThread
+0   libsystem_kernel.dylib        	       0x107d38b70 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x107d49fac mach_msg2_internal + 72
+2   libsystem_kernel.dylib        	       0x107d40c28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x107d38ed8 mach_msg + 20
+4   CoreFoundation                	       0x180428bc4 __CFRunLoopServiceMachPort + 156
+5   CoreFoundation                	       0x1804235a4 __CFRunLoopRun + 1148
+6   CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+7   Foundation                    	       0x180f0e38c -[NSRunLoop(NSRunLoop) runMode:beforeDate:] + 208
+8   Expo Go                       	       0x102f0c4cc -[SRRunLoopThread main] + 224
+9   Foundation                    	       0x180f35148 __NSThread__start__ + 716
+10  libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+11  libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 30:: com.apple.CFSocket.private
+0   libsystem_kernel.dylib        	       0x107d42f98 __select + 8
+1   CoreFoundation                	       0x1804377a4 __CFSocketManager + 680
+2   libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+3   libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+Thread 31:: AXSpeech
+0   libsystem_kernel.dylib        	       0x107d38b70 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x107d49fac mach_msg2_internal + 72
+2   libsystem_kernel.dylib        	       0x107d40c28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x107d38ed8 mach_msg + 20
+4   CoreFoundation                	       0x180428bc4 __CFRunLoopServiceMachPort + 156
+5   CoreFoundation                	       0x1804235a4 __CFRunLoopRun + 1148
+6   CoreFoundation                	       0x180422cec CFRunLoopRunSpecific + 536
+7   Foundation                    	       0x180f0e38c -[NSRunLoop(NSRunLoop) runMode:beforeDate:] + 208
+8   TextToSpeech                  	       0x1b6c370f8 0x1b6c0d000 + 172280
+9   Foundation                    	       0x180f35148 __NSThread__start__ + 716
+10  libsystem_pthread.dylib       	       0x107cde5f0 _pthread_start + 104
+11  libsystem_pthread.dylib       	       0x107cd9998 thread_start + 8
+
+
+Thread 26 crashed with ARM Thread State (64-bit):
+    x0: 0x0000000000000000   x1: 0x0000000000000000   x2: 0x00000001f2cd44b0   x3: 0x00000001801d7ed0
+    x4: 0x0000000000000009   x5: 0x0000000000000000   x6: 0x00006000022873e0   x7: 0x0000000000000000
+    x8: 0x0000000000000001   x9: 0x00000001fac7a17b  x10: 0x0000600002c0f200  x11: 0x0000000000000007
+   x12: 0x0000000000000003  x13: 0x0000600002c0f220  x14: 0x00000001f2ca8668  x15: 0x00000001f2ca8668
+   x16: 0x0000000107d18b00  x17: 0x0000000000000004  x18: 0x0000000000000000  x19: 0x000000016f30cd00
+   x20: 0x0000000000000000  x21: 0x0000000000000000  x22: 0x00006000035311e0  x23: 0x00006000022830c0
+   x24: 0x0000600002ce7f80  x25: 0x0000600003ec0118  x26: 0x0000600007005b00  x27: 0x0000000000000001
+   x28: 0x0000600003ec0120   fp: 0x000000016f30ccb0   lr: 0x00000001026277d0
+    sp: 0x000000016f30cc80   pc: 0x0000000107d18b04 cpsr: 0x60000000
+   far: 0x0000000000000000  esr: 0x92000006 (Data Abort) byte read Translation fault
+
+Binary Images:
+       0x107b88000 -        0x107c23fff dyld (*) <3247e185-ced2-36ff-9e29-47a77c23e004> /usr/lib/dyld
+       0x1025bc000 -        0x104b07fff host.exp.Exponent (2.33.16) <034bd637-6a94-37d5-bf63-a3eef54c5a08> /Users/USER/Library/Developer/CoreSimulator/Devices/8785FED5-8734-4553-856F-0FFB38D3A813/data/Containers/Bundle/Application/065D0D75-08F1-4587-B58C-4B55627F273F/Expo-Go-2.33.16.tar.app/Expo Go
+       0x108b80000 -        0x108e13fff dev.hermesengine.iphonesimulator (0.12.0) <14bb6ef9-d474-36ea-ad11-557c8adee3d5> /Users/USER/Library/Developer/CoreSimulator/Devices/8785FED5-8734-4553-856F-0FFB38D3A813/data/Containers/Bundle/Application/065D0D75-08F1-4587-B58C-4B55627F273F/Expo-Go-2.33.16.tar.app/Frameworks/hermes.framework/hermes
+       0x107d18000 -        0x107d1ffff libsystem_platform.dylib (*) <43ef9892-7edb-34c5-88d6-2c79fa2e7bd3> /usr/lib/system/libsystem_platform.dylib
+       0x107d38000 -        0x107d73fff libsystem_kernel.dylib (*) <0960cf7e-fb2e-3068-998e-131a316ed666> /usr/lib/system/libsystem_kernel.dylib
+       0x107cd8000 -        0x107ce7fff libsystem_pthread.dylib (*) <421e2342-6729-3a9f-a439-29ad130875b3> /usr/lib/system/libsystem_pthread.dylib
+       0x107f84000 -        0x107f8ffff libobjc-trampolines.dylib (*) <56878cbd-4b61-3d67-a830-23a1b2beaf59> /Volumes/VOLUME/*/libobjc-trampolines.dylib
+       0x18b3cb000 -        0x18b6c22bf com.apple.QuartzCore (1.11) <982d6ba3-9a66-38cf-a2ae-1983f4383676> /Volumes/VOLUME/*/QuartzCore.framework/QuartzCore
+       0x180396000 -        0x1807adfff com.apple.CoreFoundation (6.9) <ae27f481-c1fa-359c-b04c-af9cda7655ff> /Volumes/VOLUME/*/CoreFoundation.framework/CoreFoundation
+       0x184dfb000 -        0x186b672bf com.apple.UIKitCore (1.0) <f5406608-aa34-30ba-8494-0a8b531792f5> /Volumes/VOLUME/*/UIKitCore.framework/UIKitCore
+       0x191002000 -        0x19100a1ff com.apple.GraphicsServices (1.0) <80b30bb2-e6e1-317e-b798-ea590de713a8> /Volumes/VOLUME/*/GraphicsServices.framework/GraphicsServices
+               0x0 - 0xffffffffffffffff ??? (*) <00000000-0000-0000-0000-000000000000> ???
+       0x18082d000 -        0x1813dce3f com.apple.Foundation (6.9) <48eb0271-c8d1-359a-bd56-bcf3e7e37dc5> /Volumes/VOLUME/*/Foundation.framework/Foundation
+       0x18017b000 -        0x1801bfb9f libdispatch.dylib (*) <990151a6-fd18-3496-84e3-f565307fbc2f> /Volumes/VOLUME/*/libdispatch.dylib
+       0x184922000 -        0x184ca399f com.apple.CFNetwork (1.0) <a726149c-9657-391f-bfdd-fd9ed415d3cc> /Volumes/VOLUME/*/CFNetwork.framework/CFNetwork
+       0x1802ec000 -        0x180370ffb libc++.1.dylib (*) <b81f25b5-2a12-36cd-84e2-b8c80df7d07b> /Volumes/VOLUME/*/libc++.1.dylib
+       0x1b6c0d000 -        0x1b6de2fdf com.apple.texttospeech (1.0.0) <a1620dc8-7943-3238-9daa-dc6d73391990> /Volumes/VOLUME/*/TextToSpeech.framework/TextToSpeech
+       0x1b6b42000 -        0x1b6b675df com.apple.audio.caulk (1.0) <7f22c3c4-1a93-34dd-bf46-522f8d2a0e77> /Volumes/VOLUME/*/caulk.framework/caulk
+       0x180371000 -        0x18039573f libsystem_info.dylib (*) <72f93c21-397e-3188-a566-962d785814e0> /Volumes/VOLUME/*/libsystem_info.dylib
+       0x1801c0000 -        0x1801fffb7 libsystem_malloc.dylib (*) <f3066e60-307f-30bf-8fcc-0e359358fea5> /Volumes/VOLUME/*/libsystem_malloc.dylib
+
+EOF
+
+-----------
+Full Report
+-----------
+
+{"app_name":"Expo Go","timestamp":"2025-08-16 15:47:14.00 +0300","app_version":"2.33.16","slice_uuid":"034bd637-6a94-37d5-bf63-a3eef54c5a08","build_version":"2.33.16","platform":7,"bundleID":"host.exp.Exponent","share_with_app_devs":0,"is_first_party":0,"bug_type":"309","os_version":"macOS 15.6 (24G84)","roots_installed":0,"name":"Expo Go","incident_id":"A9E3B39F-9EF3-4C40-AB03-B8FFDB5F3251"}
+{
+  "uptime" : 4200,
+  "procRole" : "Foreground",
+  "version" : 2,
+  "userID" : 501,
+  "deployVersion" : 210,
+  "modelCode" : "Mac16,1",
+  "coalitionID" : 2549,
+  "osVersion" : {
+    "train" : "macOS 15.6",
+    "build" : "24G84",
+    "releaseType" : "User"
+  },
+  "captureTime" : "2025-08-16 15:47:12.6578 +0300",
+  "codeSigningMonitor" : 2,
+  "incident" : "A9E3B39F-9EF3-4C40-AB03-B8FFDB5F3251",
+  "pid" : 37503,
+  "translated" : false,
+  "cpuType" : "ARM-64",
+  "roots_installed" : 0,
+  "bug_type" : "309",
+  "procLaunch" : "2025-08-16 15:46:52.3135 +0300",
+  "procStartAbsTime" : 102259898948,
+  "procExitAbsTime" : 102747908513,
+  "procName" : "Expo Go",
+  "procPath" : "\/Users\/USER\/Library\/Developer\/CoreSimulator\/Devices\/8785FED5-8734-4553-856F-0FFB38D3A813\/data\/Containers\/Bundle\/Application\/065D0D75-08F1-4587-B58C-4B55627F273F\/Expo-Go-2.33.16.tar.app\/Expo Go",
+  "bundleInfo" : {"CFBundleShortVersionString":"2.33.16","CFBundleVersion":"2.33.16","CFBundleIdentifier":"host.exp.Exponent"},
+  "storeInfo" : {"deviceIdentifierForVendor":"73198165-A6F2-5CAE-A24F-335C97867FC4","thirdParty":true},
+  "parentProc" : "launchd_sim",
+  "parentPid" : 37206,
+  "coalitionName" : "com.apple.CoreSimulator.SimDevice.8785FED5-8734-4553-856F-0FFB38D3A813",
+  "crashReporterKey" : "02C682B0-76F8-CA90-FD7B-8404E4BA2F46",
+  "appleIntelligenceStatus" : {"reasons":["selectedSiriLanguageIneligible","selectedLanguageIneligible"],"state":"unavailable"},
+  "responsiblePid" : 37065,
+  "responsibleProc" : "SimulatorTrampoline",
+  "codeSigningID" : "host.exp.Exponent",
+  "codeSigningTeamID" : "",
+  "codeSigningFlags" : 570425857,
+  "codeSigningValidationCategory" : 10,
+  "codeSigningTrustLevel" : 4294967295,
+  "codeSigningAuxiliaryInfo" : 0,
+  "instructionByteStream" : {"beforePC":"AagxbiMAJh5AAADLPwAD6yEwg5oAAAGLwANf1h8gA9UfIAPVAex8kg==","atPC":"IADAPcP5\/xBiBME8AgxAkmMAAsthAMA9AByhTgUAABQfIAPVHyAD1Q=="},
+  "bootSessionUUID" : "17E5DF79-BAF6-40B8-B6BE-04CD949B1BBB",
+  "wakeTime" : 89,
+  "sleepWakeUUID" : "CA251BE5-D9B7-4FC2-AB9C-70D69B3A92DF",
+  "sip" : "enabled",
+  "vmRegionInfo" : "0 is not in any region.  Bytes before following region: 4334534656\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      UNUSED SPACE AT START\n--->  \n      __TEXT                      1025bc000-104b08000    [ 37.3M] r-x\/r-x SM=COW  \/Users\/USER\/Library\/Developer\/CoreSimulator\/Devices\/8785FED5-8734-4553-856F-0FFB38D3A813\/data\/Containers\/Bundle\/Application\/065D0D75-08F1-4587-B58C-4B55627F273F\/Expo-Go-2.33.16.tar.app\/Expo Go",
+  "exception" : {"codes":"0x0000000000000001, 0x0000000000000000","rawCodes":[1,0],"type":"EXC_BAD_ACCESS","signal":"SIGSEGV","subtype":"KERN_INVALID_ADDRESS at 0x0000000000000000"},
+  "termination" : {"flags":0,"code":11,"namespace":"SIGNAL","indicator":"Segmentation fault: 11","byProc":"exc handler","byPid":37503},
+  "ktriageinfo" : "VM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter\nVM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter\nVM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter\nVM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter\nVM - (arg = 0x3) mach_vm_allocate_kernel failed within call to vm_map_enter\n",
+  "vmregioninfo" : "0 is not in any region.  Bytes before following region: 4334534656\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      UNUSED SPACE AT START\n--->  \n      __TEXT                      1025bc000-104b08000    [ 37.3M] r-x\/r-x SM=COW  \/Users\/USER\/Library\/Developer\/CoreSimulator\/Devices\/8785FED5-8734-4553-856F-0FFB38D3A813\/data\/Containers\/Bundle\/Application\/065D0D75-08F1-4587-B58C-4B55627F273F\/Expo-Go-2.33.16.tar.app\/Expo Go",
+  "extMods" : {"caller":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"system":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"targeted":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"warnings":0},
+  "faultingThread" : 26,
+  "threads" : [{"id":152043,"threadState":{"x":[{"value":4},{"value":0},{"value":0},{"value":153418},{"value":8352},{"value":19},{"value":0},{"value":1027},{"value":8372856879,"symbolLocation":39,"symbol":"buffer_list_mutex"},{"value":8372856872,"symbolLocation":32,"symbol":"buffer_list_mutex"},{"value":8372856864,"symbolLocation":24,"symbol":"buffer_list_mutex"},{"value":152043},{"value":2},{"value":258},{"value":3310632970},{"value":3310632970},{"value":301},{"value":4},{"value":0},{"value":8372856840,"symbolLocation":0,"symbol":"buffer_list_mutex"},{"value":258},{"value":0},{"value":8372856864,"symbolLocation":24,"symbol":"buffer_list_mutex"},{"value":152043},{"value":8372856872,"symbolLocation":32,"symbol":"buffer_list_mutex"},{"value":18446462598732840960},{"value":0},{"value":1048576},{"value":4453325984}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4425890576},"cpsr":{"value":1610612736},"fp":{"value":6132337232},"sp":{"value":6132337184},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426282340},"far":{"value":0}},"queue":"com.apple.main-thread","frames":[{"imageOffset":13668,"symbol":"__psynch_mutexwait","symbolLocation":8,"imageIndex":4},{"imageOffset":15120,"symbol":"_pthread_mutex_firstfit_lock_wait","symbolLocation":80,"imageIndex":5},{"imageOffset":5812,"symbol":"_pthread_mutex_firstfit_lock_slow","symbolLocation":216,"imageIndex":5},{"imageOffset":179140,"symbol":"backingStoreFinalize(void const*)","symbolLocation":56,"imageIndex":7},{"imageOffset":610544,"symbol":"_CFRelease","symbolLocation":284,"imageIndex":8},{"imageOffset":1758068,"symbol":"CA::Layer::~Layer()","symbolLocation":192,"imageIndex":7},{"imageOffset":1145408,"symbol":"CA::Transaction::commit()","symbolLocation":1592,"imageIndex":7},{"imageOffset":1150280,"symbol":"CA::Transaction::flush_as_runloop_observer(bool)","symbolLocation":68,"imageIndex":7},{"imageOffset":15061212,"symbol":"_UIApplicationFlushCATransaction","symbolLocation":48,"imageIndex":9},{"imageOffset":14212192,"symbol":"__setupUpdateSequence_block_invoke_2","symbolLocation":356,"imageIndex":9},{"imageOffset":3940544,"symbol":"_UIUpdateSequenceRun","symbolLocation":76,"imageIndex":9},{"imageOffset":14210292,"symbol":"schedulerStepScheduledMainSection","symbolLocation":204,"imageIndex":9},{"imageOffset":14207248,"symbol":"runloopSourceCallback","symbolLocation":80,"imageIndex":9},{"imageOffset":602984,"symbol":"__CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__","symbolLocation":24,"imageIndex":8},{"imageOffset":602800,"symbol":"__CFRunLoopDoSource0","symbolLocation":168,"imageIndex":8},{"imageOffset":600632,"symbol":"__CFRunLoopDoSources0","symbolLocation":220,"imageIndex":8},{"imageOffset":578612,"symbol":"__CFRunLoopRun","symbolLocation":780,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":11520,"symbol":"GSEventRunModal","symbolLocation":164,"imageIndex":10},{"imageOffset":15067092,"symbol":"-[UIApplication _run]","symbolLocation":796,"imageIndex":9},{"imageOffset":15084448,"symbol":"UIApplicationMain","symbolLocation":124,"imageIndex":9},{"imageOffset":245568,"symbol":"main","symbolLocation":64,"imageIndex":1},{"imageOffset":4427043796,"imageIndex":11},{"imageOffset":27544,"symbol":"start","symbolLocation":6076,"imageIndex":0}]},{"id":152129,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6133477376},{"value":5635},{"value":6132940800},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6133477376},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":152140,"name":"com.apple.uikit.eventfetch-thread","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":67083094196224},{"value":4294967295},{"value":67083094196224},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":15619},{"value":3072},{"value":18446744073709551569},{"value":69},{"value":0},{"value":4294967295},{"value":2},{"value":67083094196224},{"value":4294967295},{"value":67083094196224},{"value":6135192968},{"value":8589934592},{"value":21592279046},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4426342316},"cpsr":{"value":0},"fp":{"value":6135192816},"sp":{"value":6135192736},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271600},"far":{"value":0}},"frames":[{"imageOffset":2928,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":73644,"symbol":"mach_msg2_internal","symbolLocation":72,"imageIndex":4},{"imageOffset":35880,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":4},{"imageOffset":3800,"symbol":"mach_msg","symbolLocation":20,"imageIndex":4},{"imageOffset":601028,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":156,"imageIndex":8},{"imageOffset":578980,"symbol":"__CFRunLoopRun","symbolLocation":1148,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":7213964,"symbol":"-[NSRunLoop(NSRunLoop) runMode:beforeDate:]","symbolLocation":208,"imageIndex":12},{"imageOffset":7214508,"symbol":"-[NSRunLoop(NSRunLoop) runUntilDate:]","symbolLocation":60,"imageIndex":12},{"imageOffset":15778704,"symbol":"-[UIEventFetcher threadMain]","symbolLocation":408,"imageIndex":9},{"imageOffset":7373128,"symbol":"__NSThread__start__","symbolLocation":716,"imageIndex":12},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":152143,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6136918016},{"value":17155},{"value":6136381440},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6136918016},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":152144,"frames":[{"imageOffset":10096,"symbol":"__ulock_wait","symbolLocation":8,"imageIndex":4},{"imageOffset":13712,"symbol":"_dlock_wait","symbolLocation":52,"imageIndex":13},{"imageOffset":14536,"symbol":"_dispatch_group_wait_slow","symbolLocation":52,"imageIndex":13},{"imageOffset":1255676,"symbol":"__18-[NSHost resolve:]_block_invoke","symbolLocation":520,"imageIndex":14},{"imageOffset":6024,"symbol":"_dispatch_call_block_and_release","symbolLocation":24,"imageIndex":13},{"imageOffset":115320,"symbol":"_dispatch_client_callout","symbolLocation":12,"imageIndex":13},{"imageOffset":43728,"symbol":"_dispatch_lane_serial_drain","symbolLocation":984,"imageIndex":13},{"imageOffset":46480,"symbol":"_dispatch_lane_invoke","symbolLocation":396,"imageIndex":13},{"imageOffset":91008,"symbol":"_dispatch_root_queue_drain_deferred_wlh","symbolLocation":288,"imageIndex":13},{"imageOffset":88564,"symbol":"_dispatch_workloop_worker_thread","symbolLocation":440,"imageIndex":13},{"imageOffset":11212,"symbol":"_pthread_wqthread","symbolLocation":288,"imageIndex":5},{"imageOffset":6540,"symbol":"start_wqthread","symbolLocation":8,"imageIndex":5}],"threadState":{"x":[{"value":18446744073709551612},{"value":0},{"value":0},{"value":0},{"value":6},{"value":0},{"value":105553156826208},{"value":0},{"value":9223372036854775808},{"value":4294967116},{"value":4294967116},{"value":4294967117},{"value":105553151828384},{"value":2095104},{"value":2043},{"value":3653478443},{"value":515},{"value":3655573653},{"value":0},{"value":0},{"value":1},{"value":0},{"value":105553151828388},{"value":8368325928,"symbolLocation":0,"symbol":"_NSConcreteStackBlock"},{"value":28},{"value":105553141057280},{"value":0},{"value":8162802840,"symbolLocation":8,"symbol":"__block_descriptor_48_e8_32o40b_e5_v8\u0001?0ls32l8s40l8"},{"value":6137489256}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6444017040},"cpsr":{"value":1073741824},"fp":{"value":6137488960},"sp":{"value":6137488928},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426278768},"far":{"value":0}}},{"id":152153,"name":"com.google.firebase.crashlytics.MachExceptionServer","threadState":{"x":[{"value":1},{"value":0},{"value":1},{"value":4426140225},{"value":10758893076480},{"value":0},{"value":0},{"value":0},{"value":58},{"value":4436803240},{"value":124},{"value":0},{"value":2505},{"value":0},{"value":0},{"value":0},{"value":4},{"value":15},{"value":0},{"value":4366484914,"symbolLocation":14605,"symbol":"FIRCLSHexMap"},{"value":7},{"value":40},{"value":4366408686,"symbolLocation":8020,"symbol":"exsqlite3_declare_vtab.aKeyword"},{"value":4366484847,"symbolLocation":14538,"symbol":"FIRCLSHexMap"},{"value":9},{"value":4339594096},{"value":4366482782,"symbolLocation":12473,"symbol":"FIRCLSHexMap"},{"value":4436803348},{"value":4366484808,"symbolLocation":14499,"symbol":"FIRCLSHexMap"}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4339593880},"cpsr":{"value":0},"fp":{"value":4436803216},"sp":{"value":4436803104},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426285792},"far":{"value":0}},"frames":[{"imageOffset":17120,"symbol":"write","symbolLocation":8,"imageIndex":4},{"imageOffset":5059224,"symbol":"FIRCLSSDKFileLog","symbolLocation":316,"imageIndex":1},{"imageOffset":5066412,"symbol":"FIRCLSMachExceptionServer","symbolLocation":976,"imageIndex":1},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":152166,"name":"com.facebook.react.runtime.JavaScript","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":116561117446144},{"value":0},{"value":116561117446144},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":27139},{"value":3072},{"value":18446744073709551569},{"value":2},{"value":0},{"value":4294967295},{"value":2},{"value":116561117446144},{"value":0},{"value":116561117446144},{"value":6140370376},{"value":8589934592},{"value":21592279046},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4426342316},"cpsr":{"value":0},"fp":{"value":6140370224},"sp":{"value":6140370144},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271600},"far":{"value":0}},"frames":[{"imageOffset":2928,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":73644,"symbol":"mach_msg2_internal","symbolLocation":72,"imageIndex":4},{"imageOffset":35880,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":4},{"imageOffset":3800,"symbol":"mach_msg","symbolLocation":20,"imageIndex":4},{"imageOffset":601028,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":156,"imageIndex":8},{"imageOffset":578980,"symbol":"__CFRunLoopRun","symbolLocation":1148,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":8765444,"symbol":"+[RCTJSThreadManager runRunLoop]","symbolLocation":212,"imageIndex":1},{"imageOffset":7373128,"symbol":"__NSThread__start__","symbolLocation":716,"imageIndex":12},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":152169,"name":"hades","threadState":{"x":[{"value":260},{"value":0},{"value":0},{"value":0},{"value":0},{"value":160},{"value":0},{"value":0},{"value":6140948136},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":0},{"value":0},{"value":105553171857936},{"value":105553171858000},{"value":6140948704},{"value":0},{"value":0},{"value":0},{"value":1},{"value":256},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4425902776},"cpsr":{"value":1610612736},"fp":{"value":6140948256},"sp":{"value":6140948112},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426285076},"far":{"value":0}},"frames":[{"imageOffset":16404,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":4},{"imageOffset":27320,"symbol":"_pthread_cond_wait","symbolLocation":976,"imageIndex":5},{"imageOffset":131928,"symbol":"std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&)","symbolLocation":28,"imageIndex":15},{"imageOffset":1385292,"symbol":"hermes::vm::HadesGC::Executor::worker()","symbolLocation":116,"imageIndex":2},{"imageOffset":1385140,"symbol":"void* std::__1::__thread_proxy[abi:nn180100]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, hermes::vm::HadesGC::Executor::Executor()::'lambda'()>>(void*)","symbolLocation":44,"imageIndex":2},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":152267,"name":"AXSpeech","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":124292058578944},{"value":0},{"value":124292058578944},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":28939},{"value":3072},{"value":18446744073709551569},{"value":2},{"value":0},{"value":4294967295},{"value":2},{"value":124292058578944},{"value":0},{"value":124292058578944},{"value":6141517240},{"value":8589934592},{"value":21592279046},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4426342316},"cpsr":{"value":0},"fp":{"value":6141517088},"sp":{"value":6141517008},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271600},"far":{"value":0}},"frames":[{"imageOffset":2928,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":73644,"symbol":"mach_msg2_internal","symbolLocation":72,"imageIndex":4},{"imageOffset":35880,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":4},{"imageOffset":3800,"symbol":"mach_msg","symbolLocation":20,"imageIndex":4},{"imageOffset":601028,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":156,"imageIndex":8},{"imageOffset":578980,"symbol":"__CFRunLoopRun","symbolLocation":1148,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":7213964,"symbol":"-[NSRunLoop(NSRunLoop) runMode:beforeDate:]","symbolLocation":208,"imageIndex":12},{"imageOffset":172280,"imageIndex":16},{"imageOffset":7373128,"symbol":"__NSThread__start__","symbolLocation":716,"imageIndex":12},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":152318,"name":"caulk.messenger.shared:17","threadState":{"x":[{"value":14},{"value":105553119513146},{"value":0},{"value":6143242346},{"value":105553119513120},{"value":25},{"value":0},{"value":0},{"value":0},{"value":4294967295},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":18446744073709551580},{"value":0},{"value":0},{"value":105553176947920},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":7360289596},"cpsr":{"value":2147483648},"fp":{"value":6143242112},"sp":{"value":6143242080},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271468},"far":{"value":0}},"frames":[{"imageOffset":2796,"symbol":"semaphore_wait_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":64316,"symbol":"caulk::semaphore::timed_wait(double)","symbolLocation":220,"imageIndex":17},{"imageOffset":93248,"symbol":"caulk::concurrent::details::worker_thread::run()","symbolLocation":28,"imageIndex":17},{"imageOffset":93364,"symbol":"void* caulk::thread_proxy<std::__1::tuple<caulk::thread::attributes, void (caulk::concurrent::details::worker_thread::*)(), std::__1::tuple<caulk::concurrent::details::worker_thread*>>>(void*)","symbolLocation":48,"imageIndex":17},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":152319,"name":"caulk.messenger.shared:high","threadState":{"x":[{"value":14},{"value":105553119340380},{"value":0},{"value":6143815788},{"value":105553119340352},{"value":27},{"value":0},{"value":0},{"value":0},{"value":4294967295},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":18446744073709551580},{"value":0},{"value":0},{"value":105553176953904},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":7360289596},"cpsr":{"value":2147483648},"fp":{"value":6143815552},"sp":{"value":6143815520},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271468},"far":{"value":0}},"frames":[{"imageOffset":2796,"symbol":"semaphore_wait_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":64316,"symbol":"caulk::semaphore::timed_wait(double)","symbolLocation":220,"imageIndex":17},{"imageOffset":93248,"symbol":"caulk::concurrent::details::worker_thread::run()","symbolLocation":28,"imageIndex":17},{"imageOffset":93364,"symbol":"void* caulk::thread_proxy<std::__1::tuple<caulk::thread::attributes, void (caulk::concurrent::details::worker_thread::*)(), std::__1::tuple<caulk::concurrent::details::worker_thread*>>>(void*)","symbolLocation":48,"imageIndex":17},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":152329,"name":"hades","threadState":{"x":[{"value":260},{"value":0},{"value":0},{"value":0},{"value":0},{"value":160},{"value":0},{"value":0},{"value":6144388776},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":0},{"value":0},{"value":105553171977024},{"value":105553171977088},{"value":6144389344},{"value":0},{"value":0},{"value":0},{"value":1},{"value":256},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4425902776},"cpsr":{"value":1610612736},"fp":{"value":6144388896},"sp":{"value":6144388752},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426285076},"far":{"value":0}},"frames":[{"imageOffset":16404,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":4},{"imageOffset":27320,"symbol":"_pthread_cond_wait","symbolLocation":976,"imageIndex":5},{"imageOffset":131928,"symbol":"std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&)","symbolLocation":28,"imageIndex":15},{"imageOffset":1385292,"symbol":"hermes::vm::HadesGC::Executor::worker()","symbolLocation":116,"imageIndex":2},{"imageOffset":1385140,"symbol":"void* std::__1::__thread_proxy[abi:nn180100]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, hermes::vm::HadesGC::Executor::Executor()::'lambda'()>>(void*)","symbolLocation":44,"imageIndex":2},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":153153,"name":"com.apple.NSURLConnectionLoader","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":133070971731968},{"value":0},{"value":133070971731968},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":30983},{"value":3072},{"value":18446744073709551569},{"value":2},{"value":0},{"value":4294967295},{"value":2},{"value":133070971731968},{"value":0},{"value":133070971731968},{"value":6132899144},{"value":8589934592},{"value":21592279046},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4426342316},"cpsr":{"value":0},"fp":{"value":6132898992},"sp":{"value":6132898912},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271600},"far":{"value":0}},"frames":[{"imageOffset":2928,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":73644,"symbol":"mach_msg2_internal","symbolLocation":72,"imageIndex":4},{"imageOffset":35880,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":4},{"imageOffset":3800,"symbol":"mach_msg","symbolLocation":20,"imageIndex":4},{"imageOffset":601028,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":156,"imageIndex":8},{"imageOffset":578980,"symbol":"__CFRunLoopRun","symbolLocation":1148,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":2130160,"symbol":"+[__CFN_CoreSchedulingSetRunnable _run:]","symbolLocation":368,"imageIndex":14},{"imageOffset":7373128,"symbol":"__NSThread__start__","symbolLocation":716,"imageIndex":12},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":153418,"threadState":{"x":[{"value":0},{"value":82947},{"value":82947},{"value":82947},{"value":4449161344},{"value":2},{"value":2},{"value":0},{"value":4430034160},{"value":2},{"value":0},{"value":2},{"value":4435476604},{"value":1094979649},{"value":1363481681},{"value":1363481681},{"value":4425881368,"symbolLocation":0,"symbol":"pthread_mutex_unlock"},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":1},{"value":8368321088,"symbolLocation":1664,"symbol":"_dispatch_root_queues"},{"value":2148468223},{"value":105553142144448},{"value":0},{"value":0},{"value":196610}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6631154892},"cpsr":{"value":2147483648},"fp":{"value":6139799616},"sp":{"value":6139799520},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":6631154900},"far":{"value":0}},"queue":"CA DispatchGroup","frames":[{"imageOffset":177364,"symbol":"CABackingStoreCollect_(double, bool)","symbolLocation":544,"imageIndex":7},{"imageOffset":176724,"symbol":"CABackingStoreCollect","symbolLocation":36,"imageIndex":7},{"imageOffset":177884,"symbol":"async_collect_callback(void*)","symbolLocation":40,"imageIndex":7},{"imageOffset":115320,"symbol":"_dispatch_client_callout","symbolLocation":12,"imageIndex":13},{"imageOffset":43728,"symbol":"_dispatch_lane_serial_drain","symbolLocation":984,"imageIndex":13},{"imageOffset":46480,"symbol":"_dispatch_lane_invoke","symbolLocation":396,"imageIndex":13},{"imageOffset":91008,"symbol":"_dispatch_root_queue_drain_deferred_wlh","symbolLocation":288,"imageIndex":13},{"imageOffset":88564,"symbol":"_dispatch_workloop_worker_thread","symbolLocation":440,"imageIndex":13},{"imageOffset":11212,"symbol":"_pthread_wqthread","symbolLocation":288,"imageIndex":5},{"imageOffset":6540,"symbol":"start_wqthread","symbolLocation":8,"imageIndex":5}]},{"id":153421,"threadState":{"x":[{"value":4},{"value":0},{"value":0},{"value":6145533072},{"value":1},{"value":6145533024},{"value":0},{"value":6446108228,"symbolLocation":0,"symbol":"_mdns_query_callback"},{"value":6145536172},{"value":4426547312,"symbolLocation":0,"symbol":"errno"},{"value":0},{"value":6145533120},{"value":24000000},{"value":333997},{"value":31488},{"value":1024},{"value":363},{"value":130841883736834},{"value":0},{"value":0},{"value":8368499048,"symbolLocation":0,"symbol":"_mdns_mutex"},{"value":105553163019008},{"value":12},{"value":1},{"value":1},{"value":1},{"value":0},{"value":1},{"value":43}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6446104728},"cpsr":{"value":536870912},"fp":{"value":6145533408},"sp":{"value":6145532784},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426294896},"far":{"value":0}},"queue":"com.apple.root.default-qos.overcommit","frames":[{"imageOffset":26224,"symbol":"kevent","symbolLocation":8,"imageIndex":4},{"imageOffset":45208,"symbol":"_mdns_search_ex","symbolLocation":1084,"imageIndex":18},{"imageOffset":41876,"symbol":"mdns_hostbyaddr","symbolLocation":564,"imageIndex":18},{"imageOffset":54684,"symbol":"search_host_byaddr","symbolLocation":164,"imageIndex":18},{"imageOffset":62492,"symbol":"si_nameinfo","symbolLocation":352,"imageIndex":18},{"imageOffset":37432,"symbol":"getnameinfo","symbolLocation":240,"imageIndex":18},{"imageOffset":1256792,"symbol":"__40-[NSHost resolveCurrentHostWithHandler:]_block_invoke","symbolLocation":104,"imageIndex":14},{"imageOffset":6024,"symbol":"_dispatch_call_block_and_release","symbolLocation":24,"imageIndex":13},{"imageOffset":115320,"symbol":"_dispatch_client_callout","symbolLocation":12,"imageIndex":13},{"imageOffset":226224,"symbol":"<deduplicated_symbol>","symbolLocation":60,"imageIndex":13},{"imageOffset":24512,"symbol":"_dispatch_queue_override_invoke","symbolLocation":1180,"imageIndex":13},{"imageOffset":84428,"symbol":"_dispatch_root_queue_drain","symbolLocation":336,"imageIndex":13},{"imageOffset":86964,"symbol":"_dispatch_worker_thread2","symbolLocation":232,"imageIndex":13},{"imageOffset":11152,"symbol":"_pthread_wqthread","symbolLocation":228,"imageIndex":5},{"imageOffset":6540,"symbol":"start_wqthread","symbolLocation":8,"imageIndex":5}]},{"id":153422,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6146109440},{"value":82179},{"value":6145572864},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6146109440},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":153423,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6146682880},{"value":81923},{"value":6146146304},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6146682880},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":153425,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6147829760},{"value":81667},{"value":6147293184},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6147829760},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":153428,"threadState":{"x":[{"value":4},{"value":0},{"value":0},{"value":6149547152},{"value":1},{"value":6149547104},{"value":0},{"value":26},{"value":6149550252},{"value":4426547312,"symbolLocation":0,"symbol":"errno"},{"value":0},{"value":6149547200},{"value":24000000},{"value":334520},{"value":31488},{"value":768},{"value":363},{"value":131941395364610},{"value":0},{"value":0},{"value":8368499048,"symbolLocation":0,"symbol":"_mdns_mutex"},{"value":105553162554112},{"value":12},{"value":1},{"value":1},{"value":1},{"value":0},{"value":1},{"value":45}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6446104728},"cpsr":{"value":536870912},"fp":{"value":6149547488},"sp":{"value":6149546864},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426294896},"far":{"value":0}},"queue":"com.apple.root.default-qos.overcommit","frames":[{"imageOffset":26224,"symbol":"kevent","symbolLocation":8,"imageIndex":4},{"imageOffset":45208,"symbol":"_mdns_search_ex","symbolLocation":1084,"imageIndex":18},{"imageOffset":41876,"symbol":"mdns_hostbyaddr","symbolLocation":564,"imageIndex":18},{"imageOffset":54684,"symbol":"search_host_byaddr","symbolLocation":164,"imageIndex":18},{"imageOffset":62492,"symbol":"si_nameinfo","symbolLocation":352,"imageIndex":18},{"imageOffset":37432,"symbol":"getnameinfo","symbolLocation":240,"imageIndex":18},{"imageOffset":1256792,"symbol":"__40-[NSHost resolveCurrentHostWithHandler:]_block_invoke","symbolLocation":104,"imageIndex":14},{"imageOffset":6024,"symbol":"_dispatch_call_block_and_release","symbolLocation":24,"imageIndex":13},{"imageOffset":115320,"symbol":"_dispatch_client_callout","symbolLocation":12,"imageIndex":13},{"imageOffset":226224,"symbol":"<deduplicated_symbol>","symbolLocation":60,"imageIndex":13},{"imageOffset":24512,"symbol":"_dispatch_queue_override_invoke","symbolLocation":1180,"imageIndex":13},{"imageOffset":84428,"symbol":"_dispatch_root_queue_drain","symbolLocation":336,"imageIndex":13},{"imageOffset":86964,"symbol":"_dispatch_worker_thread2","symbolLocation":232,"imageIndex":13},{"imageOffset":11152,"symbol":"_pthread_wqthread","symbolLocation":228,"imageIndex":5},{"imageOffset":6540,"symbol":"start_wqthread","symbolLocation":8,"imageIndex":5}]},{"id":153429,"threadState":{"x":[{"value":4},{"value":0},{"value":0},{"value":6150120592},{"value":1},{"value":6150120544},{"value":0},{"value":15},{"value":6150123692},{"value":4426547312,"symbolLocation":0,"symbol":"errno"},{"value":0},{"value":6150120640},{"value":24000000},{"value":333465},{"value":31488},{"value":1280},{"value":363},{"value":129742372109058},{"value":0},{"value":0},{"value":8368499048,"symbolLocation":0,"symbol":"_mdns_mutex"},{"value":105553163006976},{"value":12},{"value":1},{"value":1},{"value":1},{"value":0},{"value":1},{"value":38}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6446104728},"cpsr":{"value":536870912},"fp":{"value":6150120928},"sp":{"value":6150120304},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426294896},"far":{"value":0}},"queue":"com.apple.root.default-qos.overcommit","frames":[{"imageOffset":26224,"symbol":"kevent","symbolLocation":8,"imageIndex":4},{"imageOffset":45208,"symbol":"_mdns_search_ex","symbolLocation":1084,"imageIndex":18},{"imageOffset":41876,"symbol":"mdns_hostbyaddr","symbolLocation":564,"imageIndex":18},{"imageOffset":54684,"symbol":"search_host_byaddr","symbolLocation":164,"imageIndex":18},{"imageOffset":62492,"symbol":"si_nameinfo","symbolLocation":352,"imageIndex":18},{"imageOffset":37432,"symbol":"getnameinfo","symbolLocation":240,"imageIndex":18},{"imageOffset":1256792,"symbol":"__40-[NSHost resolveCurrentHostWithHandler:]_block_invoke","symbolLocation":104,"imageIndex":14},{"imageOffset":6024,"symbol":"_dispatch_call_block_and_release","symbolLocation":24,"imageIndex":13},{"imageOffset":115320,"symbol":"_dispatch_client_callout","symbolLocation":12,"imageIndex":13},{"imageOffset":226224,"symbol":"<deduplicated_symbol>","symbolLocation":60,"imageIndex":13},{"imageOffset":24512,"symbol":"_dispatch_queue_override_invoke","symbolLocation":1180,"imageIndex":13},{"imageOffset":84428,"symbol":"_dispatch_root_queue_drain","symbolLocation":336,"imageIndex":13},{"imageOffset":86964,"symbol":"_dispatch_worker_thread2","symbolLocation":232,"imageIndex":13},{"imageOffset":11152,"symbol":"_pthread_wqthread","symbolLocation":228,"imageIndex":5},{"imageOffset":6540,"symbol":"start_wqthread","symbolLocation":8,"imageIndex":5}]},{"id":153430,"threadState":{"x":[{"value":4},{"value":0},{"value":0},{"value":6150694032},{"value":1},{"value":6150693984},{"value":0},{"value":26},{"value":6150697132},{"value":4426547312,"symbolLocation":0,"symbol":"errno"},{"value":0},{"value":6150694080},{"value":24000000},{"value":335345},{"value":31744},{"value":256},{"value":363},{"value":135239930248194},{"value":0},{"value":0},{"value":8368499048,"symbolLocation":0,"symbol":"_mdns_mutex"},{"value":105553163012992},{"value":12},{"value":1},{"value":1},{"value":1},{"value":0},{"value":1},{"value":47}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6446104728},"cpsr":{"value":536870912},"fp":{"value":6150694368},"sp":{"value":6150693744},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426294896},"far":{"value":0}},"queue":"com.apple.root.default-qos.overcommit","frames":[{"imageOffset":26224,"symbol":"kevent","symbolLocation":8,"imageIndex":4},{"imageOffset":45208,"symbol":"_mdns_search_ex","symbolLocation":1084,"imageIndex":18},{"imageOffset":41876,"symbol":"mdns_hostbyaddr","symbolLocation":564,"imageIndex":18},{"imageOffset":54684,"symbol":"search_host_byaddr","symbolLocation":164,"imageIndex":18},{"imageOffset":62492,"symbol":"si_nameinfo","symbolLocation":352,"imageIndex":18},{"imageOffset":37432,"symbol":"getnameinfo","symbolLocation":240,"imageIndex":18},{"imageOffset":1256792,"symbol":"__40-[NSHost resolveCurrentHostWithHandler:]_block_invoke","symbolLocation":104,"imageIndex":14},{"imageOffset":6024,"symbol":"_dispatch_call_block_and_release","symbolLocation":24,"imageIndex":13},{"imageOffset":115320,"symbol":"_dispatch_client_callout","symbolLocation":12,"imageIndex":13},{"imageOffset":226224,"symbol":"<deduplicated_symbol>","symbolLocation":60,"imageIndex":13},{"imageOffset":24512,"symbol":"_dispatch_queue_override_invoke","symbolLocation":1180,"imageIndex":13},{"imageOffset":84428,"symbol":"_dispatch_root_queue_drain","symbolLocation":336,"imageIndex":13},{"imageOffset":86964,"symbol":"_dispatch_worker_thread2","symbolLocation":232,"imageIndex":13},{"imageOffset":11152,"symbol":"_pthread_wqthread","symbolLocation":228,"imageIndex":5},{"imageOffset":6540,"symbol":"start_wqthread","symbolLocation":8,"imageIndex":5}]},{"id":153435,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6153564160},{"value":79875},{"value":6153027584},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6153564160},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":153437,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6154711040},{"value":76035},{"value":6154174464},{"value":0},{"value":409603},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6154711040},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":153439,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6155857920},{"value":76547},{"value":6155321344},{"value":0},{"value":409603},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6155857920},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":153444,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6158725120},{"value":77827},{"value":6158188544},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6158725120},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"id":153446,"frames":[{"imageOffset":6532,"symbol":"start_wqthread","symbolLocation":0,"imageIndex":5}],"threadState":{"x":[{"value":6159872000},{"value":0},{"value":6159335424},{"value":0},{"value":278532},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6159872000},"esr":{"value":0,"description":" Address size fault"},"pc":{"value":4425881988},"far":{"value":0}}},{"triggered":true,"id":153462,"name":"com.facebook.react.runtime.JavaScript","threadState":{"x":[{"value":0},{"value":0},{"value":8368506032,"symbolLocation":0,"symbol":"OBJC_CLASS_$_NSRunLoop"},{"value":6444383952,"symbolLocation":0,"symbol":"nanov2_malloc_type"},{"value":9},{"value":0},{"value":105553152472032},{"value":0},{"value":1},{"value":8502354299,"objc-selector":"release"},{"value":105553162465792},{"value":7},{"value":3},{"value":105553162465824},{"value":8368326248,"symbolLocation":0,"symbol":"_NSConcreteGlobalBlock"},{"value":8368326248,"symbolLocation":0,"symbol":"_NSConcreteGlobalBlock"},{"value":4426140416,"symbolLocation":0,"symbol":"_platform_strlen"},{"value":4},{"value":0},{"value":6160436480},{"value":0},{"value":0},{"value":105553172042208},{"value":105553152454848},{"value":105553163353984},{"value":105553182064920},{"value":105553233730304},{"value":1},{"value":105553182064928}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4334974928},"cpsr":{"value":1610612736},"fp":{"value":6160436400},"sp":{"value":6160436352},"esr":{"value":2449473542,"description":"(Data Abort) byte read Translation fault"},"pc":{"value":4426140420,"matchesCrashFrame":1},"far":{"value":0}},"frames":[{"imageOffset":2820,"symbol":"_platform_strlen","symbolLocation":4,"imageIndex":3},{"imageOffset":440272,"symbol":"std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>::basic_string[abi:ne180100]<0>(char const*)","symbolLocation":36,"imageIndex":1},{"imageOffset":6064368,"symbol":"-[WorkletsModule installTurboModule:]","symbolLocation":168,"imageIndex":1},{"imageOffset":1286432,"symbol":"__invoking___","symbolLocation":144,"imageIndex":8},{"imageOffset":1274556,"symbol":"-[NSInvocation invoke]","symbolLocation":276,"imageIndex":8},{"imageOffset":1275200,"symbol":"-[NSInvocation invokeWithTarget:]","symbolLocation":60,"imageIndex":8},{"imageOffset":8033600,"symbol":"invocation function for block in facebook::react::ObjCTurboModule::performMethodInvocation(facebook::jsi::Runtime&, bool, char const*, NSInvocation*, NSMutableArray*)","symbolLocation":92,"imageIndex":1},{"imageOffset":8032728,"symbol":"facebook::react::ObjCTurboModule::performMethodInvocation(facebook::jsi::Runtime&, bool, char const*, NSInvocation*, NSMutableArray*)","symbolLocation":432,"imageIndex":1},{"imageOffset":8041524,"symbol":"facebook::react::ObjCTurboModule::invokeObjCMethod(facebook::jsi::Runtime&, facebook::react::TurboModuleMethodValueKind, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, objc_selector*, facebook::jsi::Value const*, unsigned long)","symbolLocation":256,"imageIndex":1},{"imageOffset":77100,"symbol":"std::__1::function<facebook::jsi::Value (facebook::jsi::Runtime&, facebook::jsi::Value const&, facebook::jsi::Value const*, unsigned long)>::operator()(facebook::jsi::Runtime&, facebook::jsi::Value const&, facebook::jsi::Value const*, unsigned long) const","symbolLocation":44,"imageIndex":2},{"imageOffset":76276,"symbol":"facebook::hermes::HermesRuntimeImpl::HFContext::func(void*, hermes::vm::Runtime&, hermes::vm::NativeArgs)","symbolLocation":204,"imageIndex":2},{"imageOffset":630652,"symbol":"hermes::vm::NativeFunction::_nativeCall(hermes::vm::NativeFunction*, hermes::vm::Runtime&)","symbolLocation":140,"imageIndex":2},{"imageOffset":713972,"symbol":"hermes::vm::Interpreter::handleCallSlowPath(hermes::vm::Runtime&, hermes::vm::PinnedHermesValue*)","symbolLocation":60,"imageIndex":2},{"imageOffset":720368,"symbol":"hermes::vm::CallResult<hermes::vm::HermesValue, (hermes::vm::detail::CallResultSpecialize)2> hermes::vm::Interpreter::interpretFunction<false, false>(hermes::vm::Runtime&, hermes::vm::InterpreterState&)","symbolLocation":2268,"imageIndex":2},{"imageOffset":718060,"symbol":"hermes::vm::Runtime::interpretFunctionImpl(hermes::vm::CodeBlock*)","symbolLocation":132,"imageIndex":2},{"imageOffset":928068,"symbol":"hermes::vm::Runtime::runBytecode(std::__1::shared_ptr<hermes::hbc::BCProviderBase>&&, hermes::vm::RuntimeModuleFlags, llvh::StringRef, hermes::vm::Handle<hermes::vm::Environment>, hermes::vm::Handle<hermes::vm::HermesValue>)","symbolLocation":1156,"imageIndex":2},{"imageOffset":23768,"symbol":"facebook::hermes::HermesRuntimeImpl::evaluatePreparedJavaScript(std::__1::shared_ptr<facebook::jsi::PreparedJavaScript const> const&)","symbolLocation":224,"imageIndex":2},{"imageOffset":23416,"symbol":"facebook::hermes::HermesRuntimeImpl::evaluateJavaScriptWithSourceMap(std::__1::shared_ptr<facebook::jsi::Buffer const> const&, std::__1::shared_ptr<facebook::jsi::Buffer const> const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&)","symbolLocation":116,"imageIndex":2},{"imageOffset":27180,"symbol":"facebook::hermes::HermesRuntimeImpl::evaluateJavaScript(std::__1::shared_ptr<facebook::jsi::Buffer const> const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&)","symbolLocation":32,"imageIndex":2},{"imageOffset":8789812,"symbol":"std::__1::__function::__func<facebook::react::ReactInstance::loadScript(std::__1::unique_ptr<facebook::react::JSBigString const, std::__1::default_delete<facebook::react::JSBigString const>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, std::__1::function<void (facebook::jsi::Runtime&)>&&)::$_0, std::__1::allocator<facebook::react::ReactInstance::loadScript(std::__1::unique_ptr<facebook::react::JSBigString const, std::__1::default_delete<facebook::react::JSBigString const>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, std::__1::function<void (facebook::jsi::Runtime&)>&&)::$_0>, void (facebook::jsi::Runtime&)>::operator()(facebook::jsi::Runtime&)","symbolLocation":148,"imageIndex":1},{"imageOffset":9270204,"symbol":"facebook::react::Task::execute(facebook::jsi::Runtime&, bool)","symbolLocation":240,"imageIndex":1},{"imageOffset":9255504,"symbol":"facebook::react::RuntimeScheduler_Modern::executeTask(facebook::jsi::Runtime&, facebook::react::Task&, bool) const","symbolLocation":104,"imageIndex":1},{"imageOffset":9257312,"symbol":"facebook::react::RuntimeScheduler_Modern::runEventLoopTick(facebook::jsi::Runtime&, facebook::react::Task&, std::__1::chrono::time_point<std::__1::chrono::steady_clock, std::__1::chrono::duration<long long, std::__1::ratio<1l, 1000000000l>>>)","symbolLocation":140,"imageIndex":1},{"imageOffset":9256620,"symbol":"facebook::react::RuntimeScheduler_Modern::runEventLoop(facebook::jsi::Runtime&, bool)","symbolLocation":148,"imageIndex":1},{"imageOffset":8782580,"symbol":"_ZNSt3__110__function6__funcIZZN8facebook5react13ReactInstanceC1ENS_10unique_ptrINS3_9JSRuntimeENS_14default_deleteIS6_EEEENS_10shared_ptrINS3_18MessageQueueThreadEEENSA_INS3_12TimerManagerEEENS_8functionIFvRNS2_3jsi7RuntimeERKNS3_14JsErrorHandler14ProcessedErrorEEEEPNS3_18jsinspector_modern10HostTargetEENK3$_0clINSF_IFvSI_EEEEEDaT_EUlvE_NS_9allocatorISY_EEFvvEEclEv","symbolLocation":116,"imageIndex":1},{"imageOffset":6798468,"symbol":"facebook::react::tryAndReturnError(std::__1::function<void ()> const&)","symbolLocation":32,"imageIndex":1},{"imageOffset":6866816,"symbol":"facebook::react::RCTMessageThread::tryFunc(std::__1::function<void ()> const&)","symbolLocation":24,"imageIndex":1},{"imageOffset":6866308,"symbol":"invocation function for block in facebook::react::RCTMessageThread::runAsync(std::__1::function<void ()>)","symbolLocation":44,"imageIndex":1},{"imageOffset":602420,"symbol":"__CFRUNLOOP_IS_CALLING_OUT_TO_A_BLOCK__","symbolLocation":20,"imageIndex":8},{"imageOffset":600216,"symbol":"__CFRunLoopDoBlocks","symbolLocation":348,"imageIndex":8},{"imageOffset":580140,"symbol":"__CFRunLoopRun","symbolLocation":2308,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":8765444,"symbol":"+[RCTJSThreadManager runRunLoop]","symbolLocation":212,"imageIndex":1},{"imageOffset":7373128,"symbol":"__NSThread__start__","symbolLocation":716,"imageIndex":12},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":153463,"name":"hades","threadState":{"x":[{"value":260},{"value":0},{"value":0},{"value":0},{"value":0},{"value":160},{"value":0},{"value":0},{"value":6161018536},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":0},{"value":0},{"value":105553172042384},{"value":105553172042448},{"value":6161019104},{"value":0},{"value":0},{"value":0},{"value":1},{"value":256},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4425902776},"cpsr":{"value":1610612736},"fp":{"value":6161018656},"sp":{"value":6161018512},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426285076},"far":{"value":0}},"frames":[{"imageOffset":16404,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":4},{"imageOffset":27320,"symbol":"_pthread_cond_wait","symbolLocation":976,"imageIndex":5},{"imageOffset":131928,"symbol":"std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&)","symbolLocation":28,"imageIndex":15},{"imageOffset":1385292,"symbol":"hermes::vm::HadesGC::Executor::worker()","symbolLocation":116,"imageIndex":2},{"imageOffset":1385140,"symbol":"void* std::__1::__thread_proxy[abi:nn180100]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, hermes::vm::HadesGC::Executor::Executor()::'lambda'()>>(void*)","symbolLocation":44,"imageIndex":2},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":153464,"name":"com.apple.CFStream.LegacyThread","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":520081884839936},{"value":0},{"value":520081884839936},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":121091},{"value":3072},{"value":18446744073709551569},{"value":6597069768194},{"value":0},{"value":4294967295},{"value":2},{"value":520081884839936},{"value":0},{"value":520081884839936},{"value":6161588232},{"value":8589934592},{"value":21592279046},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4426342316},"cpsr":{"value":0},"fp":{"value":6161588080},"sp":{"value":6161588000},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271600},"far":{"value":0}},"frames":[{"imageOffset":2928,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":73644,"symbol":"mach_msg2_internal","symbolLocation":72,"imageIndex":4},{"imageOffset":35880,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":4},{"imageOffset":3800,"symbol":"mach_msg","symbolLocation":20,"imageIndex":4},{"imageOffset":601028,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":156,"imageIndex":8},{"imageOffset":578980,"symbol":"__CFRunLoopRun","symbolLocation":1148,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":724956,"symbol":"_legacyStreamRunLoop_workThread","symbolLocation":260,"imageIndex":8},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":153465,"name":"com.facebook.SocketRocket.NetworkThread","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":517882861584384},{"value":0},{"value":517882861584384},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":120579},{"value":3072},{"value":18446744073709551569},{"value":2},{"value":0},{"value":4294967295},{"value":2},{"value":517882861584384},{"value":0},{"value":517882861584384},{"value":6162161000},{"value":8589934592},{"value":21592279046},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4426342316},"cpsr":{"value":0},"fp":{"value":6162160848},"sp":{"value":6162160768},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271600},"far":{"value":0}},"frames":[{"imageOffset":2928,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":73644,"symbol":"mach_msg2_internal","symbolLocation":72,"imageIndex":4},{"imageOffset":35880,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":4},{"imageOffset":3800,"symbol":"mach_msg","symbolLocation":20,"imageIndex":4},{"imageOffset":601028,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":156,"imageIndex":8},{"imageOffset":578980,"symbol":"__CFRunLoopRun","symbolLocation":1148,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":7213964,"symbol":"-[NSRunLoop(NSRunLoop) runMode:beforeDate:]","symbolLocation":208,"imageIndex":12},{"imageOffset":9766092,"symbol":"-[SRRunLoopThread main]","symbolLocation":224,"imageIndex":1},{"imageOffset":7373128,"symbol":"__NSThread__start__","symbolLocation":716,"imageIndex":12},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":153466,"name":"com.apple.CFSocket.private","threadState":{"x":[{"value":4},{"value":0},{"value":105553116599424},{"value":0},{"value":0},{"value":0},{"value":3438121320448},{"value":0},{"value":6162739424},{"value":0},{"value":105553181481984},{"value":15},{"value":5},{"value":105553181482048},{"value":72057602406436409,"symbolLocation":72057594037927937,"symbol":"OBJC_CLASS_$___NSCFArray"},{"value":8368508472,"symbolLocation":0,"symbol":"OBJC_CLASS_$___NSCFArray"},{"value":93},{"value":6446721588,"symbolLocation":0,"symbol":"-[__NSCFArray objectAtIndex:]"},{"value":0},{"value":8368530872,"symbolLocation":0,"symbol":"__CFActiveSocketsLock"},{"value":64},{"value":8153954552,"symbolLocation":0,"symbol":"__kCFNull"},{"value":0},{"value":0},{"value":105553116599424},{"value":6162738780},{"value":105553116600608},{"value":6162738780},{"value":105553131180400}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6446872484},"cpsr":{"value":1610612736},"fp":{"value":6162739136},"sp":{"value":6162705360},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426313624},"far":{"value":0}},"frames":[{"imageOffset":44952,"symbol":"__select","symbolLocation":8,"imageIndex":4},{"imageOffset":661412,"symbol":"__CFSocketManager","symbolLocation":680,"imageIndex":8},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]},{"id":153834,"name":"AXSpeech","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":310092343803904},{"value":0},{"value":310092343803904},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":72199},{"value":3072},{"value":18446744073709551569},{"value":2},{"value":0},{"value":4294967295},{"value":2},{"value":310092343803904},{"value":0},{"value":310092343803904},{"value":6134046136},{"value":8589934592},{"value":21592279046},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4426342316},"cpsr":{"value":0},"fp":{"value":6134045984},"sp":{"value":6134045904},"esr":{"value":1442840704,"description":" Address size fault"},"pc":{"value":4426271600},"far":{"value":0}},"frames":[{"imageOffset":2928,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":4},{"imageOffset":73644,"symbol":"mach_msg2_internal","symbolLocation":72,"imageIndex":4},{"imageOffset":35880,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":4},{"imageOffset":3800,"symbol":"mach_msg","symbolLocation":20,"imageIndex":4},{"imageOffset":601028,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":156,"imageIndex":8},{"imageOffset":578980,"symbol":"__CFRunLoopRun","symbolLocation":1148,"imageIndex":8},{"imageOffset":576748,"symbol":"CFRunLoopRunSpecific","symbolLocation":536,"imageIndex":8},{"imageOffset":7213964,"symbol":"-[NSRunLoop(NSRunLoop) runMode:beforeDate:]","symbolLocation":208,"imageIndex":12},{"imageOffset":172280,"imageIndex":16},{"imageOffset":7373128,"symbol":"__NSThread__start__","symbolLocation":716,"imageIndex":12},{"imageOffset":26096,"symbol":"_pthread_start","symbolLocation":104,"imageIndex":5},{"imageOffset":6552,"symbol":"thread_start","symbolLocation":8,"imageIndex":5}]}],
+  "usedImages" : [
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 4424499200,
+    "size" : 638976,
+    "uuid" : "3247e185-ced2-36ff-9e29-47a77c23e004",
+    "path" : "\/usr\/lib\/dyld",
+    "name" : "dyld"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4334534656,
+    "CFBundleShortVersionString" : "2.33.16",
+    "CFBundleIdentifier" : "host.exp.Exponent",
+    "size" : 39108608,
+    "uuid" : "034bd637-6a94-37d5-bf63-a3eef54c5a08",
+    "path" : "\/Users\/USER\/Library\/Developer\/CoreSimulator\/Devices\/8785FED5-8734-4553-856F-0FFB38D3A813\/data\/Containers\/Bundle\/Application\/065D0D75-08F1-4587-B58C-4B55627F273F\/Expo-Go-2.33.16.tar.app\/Expo Go",
+    "name" : "Expo Go",
+    "CFBundleVersion" : "2.33.16"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4441243648,
+    "CFBundleShortVersionString" : "0.12.0",
+    "CFBundleIdentifier" : "dev.hermesengine.iphonesimulator",
+    "size" : 2703360,
+    "uuid" : "14bb6ef9-d474-36ea-ad11-557c8adee3d5",
+    "path" : "\/Users\/USER\/Library\/Developer\/CoreSimulator\/Devices\/8785FED5-8734-4553-856F-0FFB38D3A813\/data\/Containers\/Bundle\/Application\/065D0D75-08F1-4587-B58C-4B55627F273F\/Expo-Go-2.33.16.tar.app\/Frameworks\/hermes.framework\/hermes",
+    "name" : "hermes",
+    "CFBundleVersion" : "0.12.0"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4426137600,
+    "size" : 32768,
+    "uuid" : "43ef9892-7edb-34c5-88d6-2c79fa2e7bd3",
+    "path" : "\/usr\/lib\/system\/libsystem_platform.dylib",
+    "name" : "libsystem_platform.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4426268672,
+    "size" : 245760,
+    "uuid" : "0960cf7e-fb2e-3068-998e-131a316ed666",
+    "path" : "\/usr\/lib\/system\/libsystem_kernel.dylib",
+    "name" : "libsystem_kernel.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4425875456,
+    "size" : 65536,
+    "uuid" : "421e2342-6729-3a9f-a439-29ad130875b3",
+    "path" : "\/usr\/lib\/system\/libsystem_pthread.dylib",
+    "name" : "libsystem_pthread.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4428677120,
+    "size" : 49152,
+    "uuid" : "56878cbd-4b61-3d67-a830-23a1b2beaf59",
+    "path" : "\/Volumes\/VOLUME\/*\/libobjc-trampolines.dylib",
+    "name" : "libobjc-trampolines.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6630977536,
+    "CFBundleShortVersionString" : "1.11",
+    "CFBundleIdentifier" : "com.apple.QuartzCore",
+    "size" : 3109568,
+    "uuid" : "982d6ba3-9a66-38cf-a2ae-1983f4383676",
+    "path" : "\/Volumes\/VOLUME\/*\/QuartzCore.framework\/QuartzCore",
+    "name" : "QuartzCore",
+    "CFBundleVersion" : "1156.18"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6446211072,
+    "CFBundleShortVersionString" : "6.9",
+    "CFBundleIdentifier" : "com.apple.CoreFoundation",
+    "size" : 4292608,
+    "uuid" : "ae27f481-c1fa-359c-b04c-af9cda7655ff",
+    "path" : "\/Volumes\/VOLUME\/*\/CoreFoundation.framework\/CoreFoundation",
+    "name" : "CoreFoundation",
+    "CFBundleVersion" : "3502"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6524219392,
+    "CFBundleShortVersionString" : "1.0",
+    "CFBundleIdentifier" : "com.apple.UIKitCore",
+    "size" : 30851776,
+    "uuid" : "f5406608-aa34-30ba-8494-0a8b531792f5",
+    "path" : "\/Volumes\/VOLUME\/*\/UIKitCore.framework\/UIKitCore",
+    "name" : "UIKitCore",
+    "CFBundleVersion" : "8506.1.101"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6727671808,
+    "CFBundleShortVersionString" : "1.0",
+    "CFBundleIdentifier" : "com.apple.GraphicsServices",
+    "size" : 33280,
+    "uuid" : "80b30bb2-e6e1-317e-b798-ea590de713a8",
+    "path" : "\/Volumes\/VOLUME\/*\/GraphicsServices.framework\/GraphicsServices",
+    "name" : "GraphicsServices",
+    "CFBundleVersion" : "1.0"
+  },
+  {
+    "size" : 0,
+    "source" : "A",
+    "base" : 0,
+    "uuid" : "00000000-0000-0000-0000-000000000000"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6451023872,
+    "CFBundleShortVersionString" : "6.9",
+    "CFBundleIdentifier" : "com.apple.Foundation",
+    "size" : 12254784,
+    "uuid" : "48eb0271-c8d1-359a-bd56-bcf3e7e37dc5",
+    "path" : "\/Volumes\/VOLUME\/*\/Foundation.framework\/Foundation",
+    "name" : "Foundation",
+    "CFBundleVersion" : "3502"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6444003328,
+    "size" : 281504,
+    "uuid" : "990151a6-fd18-3496-84e3-f565307fbc2f",
+    "path" : "\/Volumes\/VOLUME\/*\/libdispatch.dylib",
+    "name" : "libdispatch.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6519136256,
+    "CFBundleShortVersionString" : "1.0",
+    "CFBundleIdentifier" : "com.apple.CFNetwork",
+    "size" : 3676576,
+    "uuid" : "a726149c-9657-391f-bfdd-fd9ed415d3cc",
+    "path" : "\/Volumes\/VOLUME\/*\/CFNetwork.framework\/CFNetwork",
+    "name" : "CFNetwork",
+    "CFBundleVersion" : "3826.500.131"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6445514752,
+    "size" : 544764,
+    "uuid" : "b81f25b5-2a12-36cd-84e2-b8c80df7d07b",
+    "path" : "\/Volumes\/VOLUME\/*\/libc++.1.dylib",
+    "name" : "libc++.1.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 7361056768,
+    "CFBundleShortVersionString" : "1.0.0",
+    "CFBundleIdentifier" : "com.apple.texttospeech",
+    "size" : 1925088,
+    "uuid" : "a1620dc8-7943-3238-9daa-dc6d73391990",
+    "path" : "\/Volumes\/VOLUME\/*\/TextToSpeech.framework\/TextToSpeech",
+    "name" : "TextToSpeech",
+    "CFBundleVersion" : "1.0"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 7360225280,
+    "CFBundleShortVersionString" : "1.0",
+    "CFBundleIdentifier" : "com.apple.audio.caulk",
+    "size" : 153056,
+    "uuid" : "7f22c3c4-1a93-34dd-bf46-522f8d2a0e77",
+    "path" : "\/Volumes\/VOLUME\/*\/caulk.framework\/caulk",
+    "name" : "caulk"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6446059520,
+    "size" : 149312,
+    "uuid" : "72f93c21-397e-3188-a566-962d785814e0",
+    "path" : "\/Volumes\/VOLUME\/*\/libsystem_info.dylib",
+    "name" : "libsystem_info.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 6444285952,
+    "size" : 262072,
+    "uuid" : "f3066e60-307f-30bf-8fcc-0e359358fea5",
+    "path" : "\/Volumes\/VOLUME\/*\/libsystem_malloc.dylib",
+    "name" : "libsystem_malloc.dylib"
+  }
+],
+  "sharedCache" : {
+  "base" : 6442450944,
+  "size" : 3915153408,
+  "uuid" : "a54cacfd-a68d-3536-b68b-33e6df11923b"
+},
+  "vmSummary" : "ReadOnly portion of Libraries: Total=1.8G resident=0K(0%) swapped_out_or_unallocated=1.8G(100%)\nWritable regions: Total=784.9M written=2067K(0%) resident=2003K(0%) swapped_out=64K(0%) unallocated=782.9M(100%)\n\n                                VIRTUAL   REGION \nREGION TYPE                        SIZE    COUNT (non-coalesced) \n===========                     =======  ======= \nActivity Tracing                   256K        1 \nCG raster data                    4848K        8 \nColorSync                          144K        6 \nCoreAnimation                     2640K       69 \nFoundation                        9056K        2 \nKernel Alloc Once                   32K        1 \nMALLOC                           705.8M      138 \nMALLOC guard page                  192K       12 \nMach message                        16K        1 \nSQLite page cache                 1664K       13 \nSTACK GUARD                       56.5M       31 \nStack                             23.9M       32 \nVM_ALLOCATE                       39.9M       43 \n__DATA                            46.2M      897 \n__DATA_CONST                     113.8M      921 \n__DATA_DIRTY                        91K       11 \n__FONT_DATA                        2352        1 \n__LINKEDIT                       732.8M        8 \n__OBJC_RO                         61.3M        1 \n__OBJC_RW                         2727K        1 \n__TEXT                             1.1G      938 \n__TPRO_CONST                       148K        2 \ndyld private memory                2.5G       17 \nlibnetwork                         128K        8 \nmapped file                       59.9M       48 \npage table in kernel              2003K        1 \nshared memory                       16K        1 \n===========                     =======  ======= \nTOTAL                              5.4G     3212 \n",
+  "legacyInfo" : {
+  "threadTriggered" : {
+    "name" : "com.facebook.react.runtime.JavaScript"
+  }
+},
+  "logWritingSignature" : "d3bc0244dbfffee31a9295b843ce7c3055601f5a",
+  "trialInfo" : {
+  "rollouts" : [
+    {
+      "rolloutId" : "63508950b3714d3622fc77f7",
+      "factorPackIds" : {
+        "SIRI_MEMORY_SYNC_CONFIG" : "6526e111d0c9ce2f459b54a8"
+      },
+      "deploymentId" : 240000015
+    },
+    {
+      "rolloutId" : "66d35d7fe4d6bf7664f40ddf",
+      "factorPackIds" : {
+        "BLACKPEARL_SPARROW" : "67c7824a1baae429bb41b897"
+      },
+      "deploymentId" : 240000031
+    }
+  ],
+  "experiments" : [
+
+  ]
+}
+}
+
+Model: Mac16,1, BootROM 11881.140.96, proc 10:4:6 processors, 16 GB, SMC 
+Graphics: Apple M4, Apple M4, Built-In
+Display: Color LCD, 3024 x 1964 Retina, Main, MirrorOff, Online
+Memory Module: LPDDR5, Micron
+AirPort: spairport_wireless_card_type_wifi (0x14E4, 0x4388), wl0: Jun 24 2025 04:56:40 version 23.40.31.0.41.51.179 FWID 01-435c4c4d
+IO80211_driverkit-1485.7 "IO80211_driverkit-1485.7" Jul 15 2025 20:46:41
+AirPort: 
+Bluetooth: Version (null), 0 services, 0 devices, 0 incoming serial ports
+Network Service: Wi-Fi, AirPort, en0
+USB Device: USB31Bus
+USB Device: USB31Bus
+USB Device: USB31Bus
+Thunderbolt Bus: MacBook Pro, Apple Inc.
+Thunderbolt Bus: MacBook Pro, Apple Inc.
+Thunderbolt Bus: MacBook Pro, Apple Inc.

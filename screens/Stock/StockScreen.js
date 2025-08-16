@@ -23,8 +23,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 import Endpoint from '../../tools/endpoint';
 import api from '../../tools/api';
-import { Button } from 'react-native-paper';
+import { ActivityIndicator, Button } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useColorScheme } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,55 +34,37 @@ export default function StockScreen({ navigation, setToken }) {
     const [stockEntries, setStockEntries] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState('');
-    const [selectedWeathers, setSelectedWeathers] = useState('');
     const [quantity, setQuantity] = useState('');
     const [description, setDescription] = useState('');
     const [showProductDropdown, setShowProductDropdown] = useState(false);
-    const [showWeatherDropdown, setShowWeatherDropdown] = useState(false);
-    const [weathers, setWeathers] = useState([]);
     const [products, setProducts] = useState([]);
-    const [tempValue, setTempValue] = useState(null);
-
     const slideAnim = useRef(new Animated.Value(height)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.95)).current;
-
     const [date, setDate] = useState(new Date());
     const [showdateSelect, setShowdateSelect] = useState(false);
     const [tempDate, setTempDate] = useState(new Date());
+    const [loading, setLoading] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
+    const colorScheme = useColorScheme(); // 'light' veya 'dark'
 
-    const onChange = (event, selectedDate) => {
-        if (Platform.OS === 'android') {
-            setShowdateSelect(false);
-            if (selectedDate) setDate(selectedDate);
-        } else {
-            if (selectedDate) setTempDate(selectedDate);
-        }
-    };
 
-    const confirmDate = () => {
-        setDate(tempDate);
-        setSelectedDate(tempDate);
-        setShowdateSelect(false);
-        getStockData()
-    };
 
     useEffect(() => {
         getParam();
-        getLocation();
         getStockData();
         setSelectedDate(tempDate);
 
-        // Entry animasyonu
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 800,
+                duration: 1000,
                 useNativeDriver: true,
             }),
-            Animated.timing(scaleAnim, {
+            Animated.spring(scaleAnim, {
                 toValue: 1,
-                duration: 800,
+                tension: 100,
+                friction: 8,
                 useNativeDriver: true,
             })
         ]).start();
@@ -90,109 +73,24 @@ export default function StockScreen({ navigation, setToken }) {
     const getParam = async () => {
         try {
             const { data } = await api.post(Endpoint.StockParams);
-            setWeathers(data.obj.weather);
             setProducts(data.obj.products);
         } catch (error) {
             console.error('Veriler yüklenirken hata:', error);
         }
     };
 
-    const getTurkeyDate = () => {
-        const now = new Date();
-        const options = {
-            timeZone: "Europe/Istanbul",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit"
-        };
-        const formatter = new Intl.DateTimeFormat("en-GB", options);
-        const parts = formatter.formatToParts(now);
-        const year = parts.find(p => p.type === "year").value;
-        const month = parts.find(p => p.type === "month").value;
-        const day = parts.find(p => p.type === "day").value;
-        const hour = parts.find(p => p.type === "hour").value;
-        const minute = parts.find(p => p.type === "minute").value;
-        const second = parts.find(p => p.type === "second").value;
-        return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-    };
-
-    const toDate = (str) => {
-        const [datePart, timePart] = str.split(" ");
-        const [year, month, day] = datePart.split("-").map(Number);
-        const [hour, minute, second] = timePart.split(":").map(Number);
-        return new Date(year, month - 1, day, hour, minute, second);
-    };
-
-    const getWeatherApi = async (latitude, longitude) => {
-
-        const response = await axios.get(`https://api.open-meteo.com/v1/forecast`, {
-            params: {
-                latitude,
-                longitude,
-                current_weather: true,
-                timezone: 'Europe/Istanbul'
-            }
-        });
-        AsyncStorage.setItem('weather_data', JSON.stringify({ data: response, time: getTurkeyDate() }));
-        const currentWeather = response?.data?.current_weather;
-        setTempValue(currentWeather.temperature);
-        getWeatherItem(currentWeather?.weathercode);
-    };
-
-    const getLocation = async () => {
-        try {
-            let location = await AsyncStorage.getItem('location');
-            if (!location) return;
-            let x = JSON.parse(location);
-            let latitude = x.latitude;
-            let longitude = x.longitude;
-
-            const weather_item = await AsyncStorage.getItem("weather_data");
-            if (weather_item == null) {
-                getWeatherApi(latitude, longitude);
-                return;
-            }
-
-            let w_item = JSON.parse(weather_item);
-            const lastDate = toDate(w_item.time);
-            const currentDate = toDate(getTurkeyDate());
-            const diffHours = (currentDate - lastDate) / (1000 * 60 * 60);
-
-
-            if (diffHours >= 3) {
-                getWeatherApi(latitude, longitude);
-            } else {
-                let w_l_data = JSON.parse(await AsyncStorage.getItem('weather_data'));
-                let w_l_data_response = w_l_data?.data?.data?.current_weather;
-                setTempValue(w_l_data_response?.temperature);
-                getWeatherItem(w_l_data_response?.weathercode);
-            }
-
-
-        } catch (error) {
-            console.error("Hava durumu alınamadı:", error);
-        }
-    };
-
-    const getWeatherItem = async (weather_code) => {
-        const { data } = await api.post(Endpoint.WeatherItem, { code: weather_code });
-        if (data && data.status) setSelectedWeathers(data.obj);
-    };
-
     const openModal = () => {
         setModalVisible(true);
         Animated.parallel([
-            Animated.timing(slideAnim, {
+            Animated.spring(slideAnim, {
                 toValue: 0,
-                duration: 400,
+                tension: 65,
+                friction: 8,
                 useNativeDriver: true,
             }),
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 400,
+                duration: 300,
                 useNativeDriver: true,
             })
         ]).start();
@@ -202,12 +100,12 @@ export default function StockScreen({ navigation, setToken }) {
         Animated.parallel([
             Animated.timing(slideAnim, {
                 toValue: height,
-                duration: 350,
+                duration: 300,
                 useNativeDriver: true,
             }),
             Animated.timing(fadeAnim, {
                 toValue: 0,
-                duration: 350,
+                duration: 300,
                 useNativeDriver: true,
             })
         ]).start(() => {
@@ -230,13 +128,14 @@ export default function StockScreen({ navigation, setToken }) {
             return;
         }
 
+        setSaveLoading(true);
         const { data } = await api.post(Endpoint.AddStock, {
             product_id: selectedProduct.id,
-            weather_id: selectedWeathers.id,
             amount: quantity,
             desc: description,
-            temperature: tempValue
         });
+        setSaveLoading(false);
+
         if (data && data.status) {
             Alert.alert('Bilgi', 'Kayıt başarıyla eklendi.');
             getStockData();
@@ -247,8 +146,26 @@ export default function StockScreen({ navigation, setToken }) {
     };
 
     const getStockData = async () => {
+        setLoading(true);
         const { data } = await api.post(Endpoint.StockData, { date: date });
+        setLoading(false);
         if (data && data.status) setStockEntries(data.obj);
+    };
+
+    const onChange = (event, selectedDate) => {
+        if (Platform.OS === 'android') {
+            setShowdateSelect(false);
+            if (selectedDate) setDate(selectedDate);
+        } else {
+            if (selectedDate) setTempDate(selectedDate);
+        }
+    };
+
+    const confirmDate = () => {
+        setDate(tempDate);
+        setSelectedDate(tempDate);
+        setShowdateSelect(false);
+        getStockData()
     };
 
     const deleteStockEntry = (id) => {
@@ -267,19 +184,20 @@ export default function StockScreen({ navigation, setToken }) {
                                 Alert.alert('Bilgi', 'Stok kaydı başarıyla silindi.');
                                 getStockData();
                             } else {
+                                if (data.sub_info == "usage_rec") {
+                                    Alert.alert('Uyarı', 'Seçilen kayda günlük stok girilmiş. Bu kayıt silinemez.');
+                                    return;
+                                }
                                 Alert.alert('Uyarı', 'İşlem başarısız.');
                             }
                         } catch (error) {
-
+                            console.error('Silme hatası:', error);
                         }
                     }
                 }
             ]
         );
     };
-
-
-
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -290,64 +208,84 @@ export default function StockScreen({ navigation, setToken }) {
         });
     };
 
-    const renderStockEntry = ({ item, index }) => (
-        <View
-            style={[
-                styles.entryCard,
-
-            ]}
-        >
-            <View style={styles.entryHeader}>
-                <View style={styles.productInfo}>
-                    <Text style={styles.productName}>{item.product?.name}</Text>
-
-                </View>
-                <TouchableOpacity
-                    onPress={() => deleteStockEntry(item)}
-                    style={styles.deleteButton}
-                    activeOpacity={0.7}
-                >
-                    <Text style={styles.deleteButtonText}>✕</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.entryDetails}>
-                <View style={styles.detailRow}>
-                    <View style={[styles.iconContainer, { marginTop: -15, marginBottom: -0 }]}>
-                        <Text style={styles.iconText}>📦</Text>
-                    </View>
-                    <Text style={{ fontSize: 19, fontWeight: 'bold', marginTop: -18, color: 'teal' }}>{item.amount} Adet</Text>
-                </View>
-                <View style={styles.detailRow}>
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>🕐</Text>
-                    </View>
-                    <Text style={styles.detailText}>{formatDateTime(item.created_at)}</Text>
-                </View>
-
-                {tempValue && (
-                    <View style={styles.detailRow}>
-                        <View style={styles.iconContainer}>
-                            <Text style={styles.iconText}>🌡️</Text>
-                        </View>
-                        <Text style={styles.detailText}>{tempValue}°C</Text>
-                    </View>
-                )}
-
-            </View>
-
-            {item.description ? (
-                <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionLabel}>Açıklama:</Text>
-                    <Text style={styles.descriptionText}>{item.description}</Text>
-                </View>
-            ) : null}
-        </View>
-    );
-
     const formatDateTime = (dateString) => {
         const date = new Date(dateString);
         return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    };
+
+    const renderStockEntry = ({ item, index }) => {
+        return (
+            <Animated.View
+                style={[
+                    styles.entryCard,
+                    {
+
+                    }
+                ]}
+            >
+                <View style={styles.cardHeader}>
+                    <View style={styles.productBadge}>
+                        <View style={styles.productIcon}>
+                            <Text style={styles.productIconText}>📦</Text>
+                        </View>
+                        <View style={styles.productDetails}>
+                            <Text style={styles.productName}>{item.product?.name}</Text>
+                            <Text style={styles.productId}>ID: #{item.product?.id}</Text>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity
+                        onPress={() => deleteStockEntry(item)}
+                        style={styles.deleteButton}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.deleteIcon}>
+                            <Text style={styles.deleteText}>×</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.statsContainer}>
+                    <View style={styles.statItem}>
+                        <View style={styles.statIconContainer}>
+                            <Text style={styles.statIcon}>📊</Text>
+                        </View>
+                        <View>
+                            <Text style={styles.statValue}>{item.amount}</Text>
+                            <Text style={styles.statLabel}>Miktar</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.statDivider} />
+
+                    <View style={styles.statItem}>
+                        <View style={styles.statIconContainer}>
+                            <Text style={styles.statIcon}>🕒</Text>
+                        </View>
+                        <View>
+                            <Text style={styles.statValue}>{formatDateTime(item.created_at).split(' ')[1]}</Text>
+                            <Text style={styles.statLabel}>Saat</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {item.description && (
+                    <View style={styles.descriptionCard}>
+                        <View style={styles.descriptionHeader}>
+                            <Text style={styles.descriptionIcon}>💬</Text>
+                            <Text style={styles.descriptionTitle}>Açıklama</Text>
+                        </View>
+                        <Text style={styles.descriptionText}>{item.description}</Text>
+                    </View>
+                )}
+
+                <View style={styles.cardFooter}>
+                    <Text style={styles.timestampText}>
+                        {formatDateTime(item.created_at)}
+                    </Text>
+                </View>
+            </Animated.View>
+        );
     };
 
     const renderProductItem = ({ item }) => (
@@ -360,86 +298,115 @@ export default function StockScreen({ navigation, setToken }) {
             }}
             activeOpacity={0.7}
         >
-            <Text style={styles.dropdownItemText}>{item.name}</Text>
-        </TouchableOpacity>
-    );
-
-    const renderWeatherItem = ({ item }) => (
-        <TouchableOpacity
-            style={styles.dropdownItem}
-            onPress={() => {
-                setSelectedWeathers(item);
-                setShowWeatherDropdown(false);
-                Keyboard.dismiss();
-            }}
-            activeOpacity={0.7}
-        >
-            <Text style={styles.dropdownItemText}>{item.description}</Text>
+            <View style={styles.dropdownItemContent}>
+                <View style={styles.dropdownItemIcon}>
+                    <Text>📦</Text>
+                </View>
+                <View style={styles.dropdownItemText}>
+                    <Text style={styles.dropdownItemName}>{item.name}</Text>
+                    <Text style={styles.dropdownItemId}>ID: {item.id}</Text>
+                </View>
+            </View>
         </TouchableOpacity>
     );
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#667eea" />
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-            <LinearGradient
-                colors={['#1e3a8a', '#3b82f6', '#06b6d4']}
-                style={styles.header}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            >
-                <View style={styles.headerContent}>
-
-                    <View style={styles.headerActions}>
-                        <TouchableOpacity style={styles.addButton} onPress={openModal} activeOpacity={0.8}>
-                            <LinearGradient
-                                colors={['#059669', '#10b981']}
-                                style={styles.addButtonGradient}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                            >
-                                <Text style={styles.addButtonText}>+ Yeni Giriş</Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.dateButton}
-                            onPress={() => setShowdateSelect(true)}
-                            activeOpacity={0.8}
+            {/* Modern Header with Glassmorphism */}
+            <View style={styles.headerContainer}>
+                <LinearGradient
+                    colors={['#4B6CB7', '#182848']}
+                    style={styles.headerGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                >
+                    <View style={styles.headerBlur}>
+                        <Animated.View
+                            style={[
+                                styles.headerContent
+                            ]}
                         >
-                            <Text style={styles.dateButtonText}>📅 Tarih Seç</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </LinearGradient>
+                            <View style={styles.headerTop}>
+                                <View>
+                                    <Text style={styles.headerTitle}>Stok Yönetimi</Text>
+                                    <Text style={styles.headerSubtitle}>
+                                        {formatDate(selectedDate)}
+                                    </Text>
+                                </View>
+                                <View style={styles.headerStats}>
+                                    <Text style={styles.statsNumber}>{stockEntries.length}</Text>
+                                    <Text style={styles.statsLabel}>Kayıt</Text>
+                                </View>
+                            </View>
 
-            <View style={styles.listContainer}>
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.listTitle}>Günlük Girişler</Text>
-                    <View style={styles.dateBadge}>
-                        <Text style={styles.dateBadgeText}>{formatDate(selectedDate)}</Text>
-                    </View>
-                </View>
+                            <View style={styles.actionButtons}>
+                                <TouchableOpacity
+                                    style={styles.primaryButton}
+                                    onPress={openModal}
+                                    activeOpacity={0.8}
+                                >
+                                    <LinearGradient
+                                        colors={['#FF6A00', '#FF8E53']} // turuncu → şeftali
+                                        style={styles.buttonGradient}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                    >
+                                        <Text style={styles.primaryButtonIcon}>+</Text>
+                                        <Text style={styles.primaryButtonText}>Yeni Giriş</Text>
+                                    </LinearGradient>
+                                </TouchableOpacity>
 
-                {stockEntries.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyIcon}>📦</Text>
-                        <Text style={styles.emptyText}>Henüz stok girişi yok</Text>
-                        <Text style={styles.emptySubText}>Yeni bir giriş eklemek için yukarıdaki butona dokunun</Text>
+                                <TouchableOpacity
+                                    style={styles.secondaryButton}
+                                    onPress={() => setShowdateSelect(true)}
+                                    activeOpacity={0.8}
+                                >
+                                    <View style={styles.secondaryButtonContent}>
+                                        <Text style={styles.secondaryButtonIcon}>📅</Text>
+                                        <Text style={styles.secondaryButtonText}>Tarih</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </Animated.View>
+                    </View>
+                </LinearGradient>
+            </View>
+
+            {/* Content Area */}
+            <View style={styles.contentContainer}>
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <View style={styles.loadingCard}>
+                            <ActivityIndicator size="large" color="#667eea" />
+                            <Text style={styles.loadingText}>Yükleniyor...</Text>
+                            <Text style={styles.loadingSubtext}>Stok kayıtları getiriliyor</Text>
+                        </View>
+                    </View>
+                ) : stockEntries.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <View style={styles.emptyStateCard}>
+                            <Text style={styles.emptyIcon}>📦</Text>
+                            <Text style={styles.emptyTitle}>Henüz kayıt yok</Text>
+                            <Text style={styles.emptySubtitle}>
+                                Yeni bir stok girişi ekleyerek başlayın
+                            </Text>
+                        </View>
                     </View>
                 ) : (
                     <FlatList
                         data={stockEntries}
                         renderItem={renderStockEntry}
-                        keyExtractor={item => item.id}
+                        keyExtractor={(item) => item.id.toString()}
                         showsVerticalScrollIndicator={false}
-                        contentContainerStyle={styles.listContent}
-                        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+                        contentContainerStyle={styles.listContainer}
+                        ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
                     />
                 )}
             </View>
 
-            {/* Modal */}
+            {/* Enhanced Modal */}
             <Modal
                 visible={modalVisible}
                 transparent={true}
@@ -447,129 +414,147 @@ export default function StockScreen({ navigation, setToken }) {
                 onRequestClose={closeModal}
             >
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'position'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-                    style={{ flex: 1 }}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.modalKeyboard}
                 >
                     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                         <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
-                            <TouchableOpacity style={styles.modalBackground} activeOpacity={1} onPress={closeModal} />
-                            <Animated.View style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}>
-                                <View style={styles.modalHandle} />
+                            <TouchableOpacity
+                                style={styles.modalBackground}
+                                activeOpacity={1}
+                                onPress={closeModal}
+                            />
 
-                                <View keyboardShouldPersistTaps="handled" nestedScrollEnabled={true} contentContainerStyle={{ paddingBottom: 20 }}>
-                                    <View style={styles.modalHeader}>
+                            <Animated.View
+                                style={[
+                                    styles.modalContainer,
+                                    { transform: [{ translateY: slideAnim }] }
+                                ]}
+                            >
+                                <View style={styles.modalHeader}>
+                                    <View style={styles.modalHandle} />
+                                    <View style={styles.modalTitleContainer}>
                                         <Text style={styles.modalTitle}>Yeni Stok Girişi</Text>
-                                        <TouchableOpacity onPress={closeModal} style={styles.closeButton} activeOpacity={0.7}>
-                                            <Text style={styles.closeButtonText}>✕</Text>
-                                        </TouchableOpacity>
+                                        <Text style={styles.modalSubtitle}>Ürün bilgilerini girin</Text>
                                     </View>
+                                    <TouchableOpacity
+                                        onPress={closeModal}
+                                        style={styles.closeButton}
+                                    >
+                                        <Text style={styles.closeButtonText}>×</Text>
+                                    </TouchableOpacity>
+                                </View>
 
-                                    <View style={styles.formContainer}>
-                                        {/* Ürün Dropdown */}
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.inputLabel}>Ürün Seçimi</Text>
-                                            <TouchableOpacity
-                                                style={[styles.dropdownButton, selectedProduct && styles.dropdownButtonSelected]}
-                                                onPress={() => setShowProductDropdown(!showProductDropdown)}
-                                                activeOpacity={0.8}
-                                            >
-                                                <Text style={[styles.dropdownButtonText, !selectedProduct && styles.placeholder]}>
+                                <ScrollView
+                                    style={styles.modalContent}
+                                    showsVerticalScrollIndicator={false}
+                                >
+                                    {/* Product Selection */}
+                                    <View style={styles.inputContainer}>
+                                        <Text style={styles.inputLabel}>
+                                            <Text style={styles.labelIcon}>📦</Text> Ürün Seçimi
+                                        </Text>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.modernDropdown,
+                                                selectedProduct && styles.modernDropdownSelected
+                                            ]}
+                                            onPress={() => setShowProductDropdown(!showProductDropdown)}
+                                        >
+                                            <View style={styles.dropdownContent}>
+                                                <Text style={[
+                                                    styles.dropdownText,
+                                                    !selectedProduct && styles.placeholderText
+                                                ]}>
                                                     {selectedProduct.name || 'Ürün seçiniz'}
                                                 </Text>
-                                                <Text style={[styles.dropdownArrow, showProductDropdown && styles.dropdownArrowUp]}>
-                                                    ▼
-                                                </Text>
-                                            </TouchableOpacity>
-                                            {showProductDropdown && (
-                                                <View style={styles.dropdown}>
-                                                    <FlatList
-                                                        data={products}
-                                                        nestedScrollEnabled={true}
-                                                        renderItem={renderProductItem}
-                                                        keyExtractor={item => item.id.toString()}
-                                                        style={styles.dropdownList}
-                                                    />
-                                                </View>
-                                            )}
-                                        </View>
+                                                <Animated.View
+                                                    style={[
+                                                        styles.dropdownArrow,
+                                                        {
+                                                            transform: [{
+                                                                rotate: showProductDropdown ? '180deg' : '0deg'
+                                                            }]
+                                                        }
+                                                    ]}
+                                                >
+                                                    <Text style={styles.arrowIcon}>▼</Text>
+                                                </Animated.View>
+                                            </View>
+                                        </TouchableOpacity>
 
-                                        {/* Hava Durumu */}
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.inputLabel}>Hava Durumu</Text>
-                                            <TouchableOpacity
-                                                style={[styles.dropdownButton, selectedWeathers && styles.dropdownButtonSelected]}
-                                                onPress={() => setShowWeatherDropdown(!showWeatherDropdown)}
-                                                activeOpacity={0.8}
-                                            >
-                                                <Text style={[styles.dropdownButtonText, !selectedWeathers && styles.placeholder]}>
-                                                    {selectedWeathers.description || 'Hava durumu seçiniz'}
-                                                </Text>
-                                                <Text style={[styles.dropdownArrow, showWeatherDropdown && styles.dropdownArrowUp]}>
-                                                    ▼
-                                                </Text>
-                                            </TouchableOpacity>
-                                            {showWeatherDropdown && (
-                                                <View style={styles.dropdown}>
-                                                    <FlatList
-                                                        data={weathers}
-                                                        renderItem={renderWeatherItem}
-                                                        keyExtractor={item => item.id}
-                                                        style={styles.dropdownList}
-                                                    />
-                                                </View>
-                                            )}
-                                        </View>
+                                        {showProductDropdown && (
+                                            <Animated.View style={styles.modernDropdownList}>
+                                                <FlatList
+                                                    data={products}
+                                                    renderItem={renderProductItem}
+                                                    keyExtractor={item => item.id.toString()}
+                                                    style={styles.dropdownScrollView}
+                                                    nestedScrollEnabled={true}
+                                                />
+                                            </Animated.View>
+                                        )}
+                                    </View>
 
-                                        {/* Miktar */}
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.inputLabel}>Miktar</Text>
+                                    {/* Quantity Input */}
+                                    <View style={styles.inputContainer}>
+                                        <Text style={styles.inputLabel}>
+                                            <Text style={styles.labelIcon}>📊</Text> Miktar
+                                        </Text>
+                                        <View style={[
+                                            styles.modernInput,
+                                            quantity && styles.modernInputFilled
+                                        ]}>
                                             <TextInput
-                                                style={[styles.textInput, quantity && styles.textInputFilled]}
+                                                style={styles.inputField}
                                                 value={quantity}
                                                 onChangeText={setQuantity}
-                                                placeholder="Miktar giriniz"
+                                                placeholder="0"
                                                 keyboardType="numeric"
-                                                placeholderTextColor="#9CA3AF"
+                                                placeholderTextColor="#A0A0A0"
                                             />
-                                        </View>
-
-                                        {/* Sıcaklık */}
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.inputLabel}>Sıcaklık (°C)</Text>
-                                            <TextInput
-                                                style={[styles.textInput, tempValue && styles.textInputFilled]}
-                                                value={tempValue?.toString() || ""}
-                                                onChangeText={setTempValue}
-                                                placeholder="Derece"
-                                                keyboardType="numeric"
-                                                placeholderTextColor="#9CA3AF"
-                                            />
-                                        </View>
-
-                                        {/* Açıklama */}
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.inputLabel}>Açıklama (İsteğe bağlı)</Text>
-                                            <TextInput
-                                                style={[styles.textInput, styles.textArea, description && styles.textInputFilled]}
-                                                value={description}
-                                                onChangeText={setDescription}
-                                                placeholder="Açıklama giriniz"
-                                                multiline
-                                                numberOfLines={3}
-                                                placeholderTextColor="#9CA3AF"
-                                            />
+                                            <Text style={styles.inputUnit}>adet</Text>
                                         </View>
                                     </View>
 
-                                    <TouchableOpacity style={styles.saveButton} onPress={addStockEntry} activeOpacity={0.9}>
+                                    {/* Description Input */}
+                                    <View style={styles.inputContainer}>
+                                        <Text style={styles.inputLabel}>
+                                            <Text style={styles.labelIcon}>💬</Text> Açıklama (İsteğe bağlı)
+                                        </Text>
+                                        <View style={[
+                                            styles.modernTextArea,
+                                            description && styles.modernInputFilled
+                                        ]}>
+                                            <TextInput
+                                                style={styles.textAreaField}
+                                                value={description}
+                                                onChangeText={setDescription}
+                                                placeholder="Ek bilgiler..."
+                                                multiline
+                                                numberOfLines={3}
+                                                placeholderTextColor="#A0A0A0"
+                                                textAlignVertical="top"
+                                            />
+                                        </View>
+                                    </View>
+                                </ScrollView>
+
+                                {/* Save Button */}
+                                <View style={styles.modalFooter}>
+                                    <TouchableOpacity
+                                        style={styles.saveButton}
+                                        onPress={addStockEntry}
+                                        disabled={saveLoading}
+                                        activeOpacity={0.9}
+                                    >
                                         <LinearGradient
                                             colors={['#667eea', '#764ba2']}
                                             style={styles.saveButtonGradient}
                                             start={{ x: 0, y: 0 }}
                                             end={{ x: 1, y: 0 }}
                                         >
-                                            <Text style={styles.saveButtonText}>Kaydet</Text>
+                                            <Text style={styles.saveButtonText}>{saveLoading ? 'Kayıt ediliyor...' : 'Kaydet'}</Text>
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
@@ -579,14 +564,14 @@ export default function StockScreen({ navigation, setToken }) {
                 </KeyboardAvoidingView>
             </Modal>
 
-            {/* Tarih Modal */}
+            {/* Date Picker Modal */}
             <Modal
                 visible={showdateSelect}
                 transparent
-                animationType="slide"
+                animationType="fade"
                 onRequestClose={() => setShowdateSelect(false)}
             >
-                <View style={styles.dateModalBackground}>
+                <View style={styles.dateModalOverlay}>
                     <View style={styles.dateModalContainer}>
                         <View style={styles.dateModalHeader}>
                             <Text style={styles.dateModalTitle}>Tarih Seçin</Text>
@@ -597,15 +582,23 @@ export default function StockScreen({ navigation, setToken }) {
                             mode="date"
                             display="spinner"
                             onChange={onChange}
-                            style={{ backgroundColor: 'white' }}
+                            textColor={colorScheme === 'dark' ? '#fff' : '#000'} // Dark modda beyaz
+
+                            style={styles.datePicker}
                         />
 
                         {Platform.OS === 'ios' && (
-                            <View style={styles.dateButtonRow}>
-                                <TouchableOpacity style={styles.dateModalCancelBtn} onPress={() => setShowdateSelect(false)}>
+                            <View style={styles.dateModalActions}>
+                                <TouchableOpacity
+                                    style={styles.dateModalButton}
+                                    onPress={() => setShowdateSelect(false)}
+                                >
                                     <Text style={styles.dateModalCancelText}>İptal</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.dateModalConfirmBtn} onPress={confirmDate}>
+                                <TouchableOpacity
+                                    style={[styles.dateModalButton, styles.dateModalConfirmButton]}
+                                    onPress={confirmDate}
+                                >
                                     <Text style={styles.dateModalConfirmText}>Tamam</Text>
                                 </TouchableOpacity>
                             </View>
@@ -622,238 +615,357 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F8FAFC',
     },
-    header: {
-        paddingTop: StatusBar.currentHeight + 10,
-        paddingBottom: 25,
-        paddingHorizontal: 20,
+
+    // Header Styles
+    headerContainer: {
+    },
+    headerGradient: {
+        paddingBottom: 10,
+    },
+    headerBlur: {
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(20px)',
     },
     headerContent: {
-        gap: 20,
+        paddingHorizontal: 15,
+        paddingTop: 15,
     },
     headerTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start',
+        marginBottom: 25,
     },
     headerTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
+        fontSize: 23,
+        fontWeight: '800',
         color: '#FFFFFF',
-        letterSpacing: 0.5,
+        letterSpacing: -0.5,
+        textShadowColor: 'rgba(0, 0, 0, 0.2)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
     },
-    weatherInfo: {
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
+    headerSubtitle: {
+        fontSize: 13,
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontWeight: '500',
+        marginTop: 1,
     },
-    tempText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-        fontSize: 14,
-    },
-    headerActions: {
-        marginTop: 10,
-        flexDirection: 'row',
-        gap: 12,
-    },
-    addButton: {
-        flex: 1,
-        borderRadius: 16,
-        overflow: 'hidden',
-    },
-    addButtonGradient: {
-        paddingVertical: 16,
-        paddingHorizontal: 20,
+    headerStats: {
         alignItems: 'center',
-        borderRadius: 16,
-    },
-    addButtonText: {
-        color: '#FFFFFF',
-        fontWeight: '700',
-        fontSize: 16,
-        letterSpacing: 0.3,
-    },
-    dateButton: {
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 16,
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        borderRadius: 20,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.3)',
-        minWidth: 130,
-        alignItems: 'center',
     },
-    dateButtonText: {
+    statsNumber: {
+        fontSize: 15,
+        fontWeight: '800',
         color: '#FFFFFF',
-        fontWeight: '600',
-        fontSize: 14,
     },
-    listContainer: {
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 20,
+    statsLabel: {
+        fontSize: 8,
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    sectionHeader: {
+    actionButtons: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
+        marginTop: -15,
+        gap: 12,
     },
-    listTitle: {
-        fontSize: 20,
+    primaryButton: {
+        flex: 1,
+        borderRadius: 10,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        elevation: 1,
+    },
+    buttonGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        gap: 8,
+    },
+    primaryButtonIcon: {
+        fontSize: 15,
+        fontWeight: '800',
+        color: '#FFFFFF',
+    },
+    primaryButtonText: {
+        fontSize: 16,
         fontWeight: '700',
-        color: '#1F2937',
+        color: '#ffff',
         letterSpacing: 0.3,
     },
-    dateBadge: {
-        backgroundColor: '#EEF2FF',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
+    secondaryButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: 10,
         borderWidth: 1,
-        borderColor: '#C7D2FE',
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        paddingHorizontal: 20,
+        justifyContent: 'center',
     },
-    dateBadgeText: {
-        color: '#4338CA',
+    secondaryButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    secondaryButtonIcon: {
+        fontSize: 16,
+    },
+    secondaryButtonText: {
+        fontSize: 14,
         fontWeight: '600',
-        fontSize: 12,
+        color: '#FFFFFF',
     },
-    emptyContainer: {
+
+    // Content Styles
+    contentContainer: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 40,
+    },
+    loadingCard: {
+        backgroundColor: '#FFFFFF',
+        padding: 40,
+        borderRadius: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    loadingText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1F2937',
+        marginTop: 16,
+    },
+    loadingSubtext: {
+        fontSize: 14,
+        color: '#6B7280',
+        marginTop: 4,
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyStateCard: {
+        backgroundColor: '#FFFFFF',
+        padding: 40,
+        borderRadius: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+        maxWidth: 280,
     },
     emptyIcon: {
         fontSize: 64,
-        marginBottom: 16,
+        marginBottom: 20,
     },
-    emptyText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#6B7280',
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1F2937',
         textAlign: 'center',
         marginBottom: 8,
     },
-    emptySubText: {
+    emptySubtitle: {
         fontSize: 14,
-        color: '#9CA3AF',
+        color: '#6B7280',
         textAlign: 'center',
         lineHeight: 20,
     },
-    listContent: {
-        paddingBottom: 20,
+    listContainer: {
+        paddingVertical: 20,
+        paddingBottom: 40,
     },
+
+    // Entry Card Styles
     entryCard: {
         backgroundColor: '#FFFFFF',
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 20,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
+        shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.08,
-        shadowRadius: 12,
+        shadowRadius: 16,
         elevation: 8,
         borderWidth: 1,
-        borderColor: '#F1F5F9',
+        borderColor: 'rgba(229, 231, 235, 0.5)',
     },
-    entryHeader: {
+    cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 16,
+        alignItems: 'center',
+        marginBottom: 0,
     },
-    productInfo: {
-        flex: 1,
+    productBadge: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
         gap: 12,
+    },
+    productIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#F3F4F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    productIconText: {
+        fontSize: 18,
+    },
+    productDetails: {
+        flex: 1,
     },
     productName: {
         fontSize: 18,
         fontWeight: '700',
         color: '#1F2937',
-        letterSpacing: 0.3,
-        flex: 1,
+        letterSpacing: -0.3,
     },
-    quantityBadge: {
-        backgroundColor: '#10B981',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-    },
-    quantityText: {
-        color: '#FFFFFF',
-        fontWeight: '700',
+    productId: {
         fontSize: 12,
+        color: '#9CA3AF',
+        fontWeight: '500',
+        marginTop: 2,
     },
     deleteButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#FEE2E2',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#FEF2F2',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
         borderColor: '#FECACA',
     },
-    deleteButtonText: {
-        color: '#EF4444',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    entryDetails: {
-        gap: 8,
-        marginBottom: 12,
-    },
-    detailRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    iconContainer: {
-        width: 24,
-        height: 24,
+    deleteIcon: {
+        width: '100%',
+        height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    iconText: {
+    deleteText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#EF4444',
+    },
+    statsContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#F8FAFC',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+    },
+    statItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        gap: 12,
+    },
+    statIconContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    statIcon: {
         fontSize: 14,
     },
-    detailText: {
-        fontSize: 14,
+    statValue: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#1F2937',
+    },
+    statLabel: {
+        fontSize: 12,
         color: '#6B7280',
         fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    descriptionContainer: {
-        backgroundColor: '#F9FAFB',
-        padding: 12,
-        borderRadius: 8,
-        borderLeftWidth: 3,
-        borderLeftColor: '#8B5CF6',
-        marginTop: 8,
+    statDivider: {
+        width: 1,
+        backgroundColor: '#E5E7EB',
+        marginHorizontal: 12,
     },
-    descriptionLabel: {
+    descriptionCard: {
+        backgroundColor: '#F0F9FF',
+        borderRadius: 12,
+        padding: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#0EA5E9',
+        marginBottom: 12,
+    },
+    descriptionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 8,
+    },
+    descriptionIcon: {
+        fontSize: 14,
+    },
+    descriptionTitle: {
         fontSize: 12,
-        fontWeight: '600',
-        color: '#8B5CF6',
-        marginBottom: 4,
+        fontWeight: '700',
+        color: '#0284C7',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     descriptionText: {
         fontSize: 14,
-        color: '#4B5563',
-        fontStyle: 'italic',
+        color: '#0F172A',
         lineHeight: 20,
+        fontWeight: '500',
+    },
+    cardFooter: {
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#F1F5F9',
+    },
+    timestampText: {
+        fontSize: 12,
+        color: '#9CA3AF',
+        fontWeight: '500',
+        textAlign: 'center',
+    },
+
+    // Modal Styles
+    modalKeyboard: {
+        flex: 1,
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(8px)',
     },
     modalBackground: {
         flex: 1,
@@ -864,43 +976,49 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
         maxHeight: height * 0.9,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: -4,
-        },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
-        elevation: 16,
+        shadowOffset: { width: 0, height: -8 },
+        shadowOpacity: 0.25,
+        shadowRadius: 24,
+        elevation: 20,
     },
     modalHandle: {
-        width: 40,
+        width: 36,
         height: 4,
         backgroundColor: '#D1D5DB',
         borderRadius: 2,
         alignSelf: 'center',
         marginTop: 12,
-        marginBottom: 8,
     },
     modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         paddingHorizontal: 24,
         paddingVertical: 20,
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
+    modalTitleContainer: {
+        alignItems: 'center',
+        marginVertical: 8,
+    },
     modalTitle: {
-        fontSize: 22,
-        fontWeight: '700',
+        fontSize: 24,
+        fontWeight: '800',
         color: '#1F2937',
-        letterSpacing: 0.3,
+        letterSpacing: -0.5,
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+        fontWeight: '500',
+        marginTop: 4,
     },
     closeButton: {
+        position: 'absolute',
+        right: 24,
+        top: 20,
         width: 36,
         height: 36,
         borderRadius: 18,
@@ -909,134 +1027,200 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     closeButtonText: {
-        fontSize: 18,
-        color: '#6B7280',
+        fontSize: 20,
         fontWeight: '600',
+        color: '#6B7280',
     },
-    formContainer: {
+    modalContent: {
+        flex: 1,
         paddingHorizontal: 24,
-        gap: 20,
+        paddingTop: 8,
     },
-    inputGroup: {
-        gap: 8,
+    inputContainer: {
+        marginBottom: 24,
     },
     inputLabel: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '700',
         color: '#374151',
+        marginBottom: 12,
         letterSpacing: 0.2,
     },
-    textInput: {
+    labelIcon: {
+        fontSize: 14,
+        marginRight: 4,
+    },
+
+    // Modern Input Styles
+    modernDropdown: {
         borderWidth: 2,
         borderColor: '#E5E7EB',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 16,
+        borderRadius: 16,
         backgroundColor: '#FFFFFF',
-        color: '#1F2937',
-        transition: 'all 0.2s ease',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 4,
     },
-    textInputFilled: {
+    modernDropdownSelected: {
         borderColor: '#8B5CF6',
         backgroundColor: '#FAF5FF',
     },
-    textArea: {
-        height: 90,
-        textAlignVertical: 'top',
-        paddingTop: 14,
-    },
-    dropdownButton: {
+    dropdownContent: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#E5E7EB',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        backgroundColor: '#FFFFFF',
-        minHeight: 52,
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 18,
     },
-    dropdownButtonSelected: {
-        borderColor: '#8B5CF6',
-        backgroundColor: '#FAF5FF',
-    },
-    dropdownButtonText: {
+    dropdownText: {
         fontSize: 16,
+        fontWeight: '600',
         color: '#1F2937',
-        fontWeight: '500',
         flex: 1,
     },
-    placeholder: {
+    placeholderText: {
         color: '#9CA3AF',
         fontWeight: '400',
     },
     dropdownArrow: {
-        fontSize: 14,
+        marginLeft: 12,
+    },
+    arrowIcon: {
+        fontSize: 12,
         color: '#6B7280',
         fontWeight: '600',
-        marginLeft: 8,
-        transition: 'transform 0.2s ease',
     },
-    dropdownArrowUp: {
-        transform: [{ rotate: '180deg' }],
-    },
-    dropdown: {
-        marginTop: 4,
+    modernDropdownList: {
+        marginTop: 8,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        borderRadius: 12,
-        backgroundColor: '#FFFFFF',
         maxHeight: 200,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 8,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+        elevation: 12,
     },
-    dropdownList: {
+    dropdownScrollView: {
         maxHeight: 200,
     },
     dropdownItem: {
-        paddingHorizontal: 16,
-        paddingVertical: 14,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
+    dropdownItemContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    dropdownItemIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#F3F4F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     dropdownItemText: {
+        flex: 1,
+    },
+    dropdownItemName: {
         fontSize: 16,
-        color: '#374151',
+        fontWeight: '600',
+        color: '#1F2937',
+    },
+    dropdownItemId: {
+        fontSize: 12,
+        color: '#9CA3AF',
         fontWeight: '500',
+        marginTop: 2,
+    },
+    modernInput: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        borderRadius: 16,
+        backgroundColor: '#FFFFFF',
+        paddingHorizontal: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    modernInputFilled: {
+        borderColor: '#8B5CF6',
+        backgroundColor: '#FAF5FF',
+    },
+    inputField: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1F2937',
+        paddingVertical: 18,
+    },
+    inputUnit: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#6B7280',
+        marginLeft: 8,
+    },
+    modernTextArea: {
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        borderRadius: 16,
+        backgroundColor: '#FFFFFF',
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 4,
+        minHeight: 100,
+    },
+    textAreaField: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#1F2937',
+        textAlignVertical: 'top',
+        minHeight: 60,
+    },
+    modalFooter: {
+        paddingHorizontal: 24,
+        paddingVertical: 20,
+        paddingBottom: 34,
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6',
     },
     saveButton: {
-        marginHorizontal: 24,
-        marginVertical: 24,
-        borderRadius: 16,
+        borderRadius: 20,
         overflow: 'hidden',
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.15,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.2,
         shadowRadius: 12,
         elevation: 8,
     },
     saveButtonGradient: {
-        paddingVertical: 18,
+        paddingVertical: 20,
         alignItems: 'center',
     },
     saveButtonText: {
-        color: '#FFFFFF',
         fontSize: 18,
-        fontWeight: '700',
-        letterSpacing: 0.3,
+        fontWeight: '800',
+        color: '#FFFFFF',
+        letterSpacing: 0.5,
     },
-    dateModalBackground: {
+
+    // Date Modal Styles
+    dateModalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
@@ -1045,18 +1229,15 @@ const styles = StyleSheet.create({
     },
     dateModalContainer: {
         backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        padding: 20,
+        borderRadius: 24,
+        padding: 24,
         width: '100%',
-        maxWidth: 350,
+        maxWidth: 340,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 8,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 16,
-        elevation: 16,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.3,
+        shadowRadius: 24,
+        elevation: 20,
     },
     dateModalHeader: {
         alignItems: 'center',
@@ -1067,38 +1248,33 @@ const styles = StyleSheet.create({
     },
     dateModalTitle: {
         fontSize: 20,
-        fontWeight: '700',
+        fontWeight: '800',
         color: '#1F2937',
-        letterSpacing: 0.3,
+        letterSpacing: -0.3,
     },
-    dateButtonRow: {
+    datePicker: {
+        backgroundColor: '#FFFFFF',
+    },
+    dateModalActions: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 20,
+        marginTop: 24,
         gap: 12,
     },
-    dateModalCancelBtn: {
+    dateModalButton: {
         flex: 1,
-        padding: 14,
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderRadius: 16,
         alignItems: 'center',
         backgroundColor: '#F3F4F6',
-        borderRadius: 12,
     },
-    dateModalConfirmBtn: {
-        flex: 1,
-        padding: 14,
-        alignItems: 'center',
+    dateModalConfirmButton: {
         backgroundColor: '#8B5CF6',
-        borderRadius: 12,
     },
     dateModalCancelText: {
+        fontSize: 16,
+        fontWeight: '600',
         color: '#6B7280',
-        fontWeight: '600',
-        fontSize: 16,
-    },
-    dateModalConfirmText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-        fontSize: 16,
     },
 });
