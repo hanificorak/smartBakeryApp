@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
 import { Modal, Portal, Provider, Button, ActivityIndicator } from 'react-native-paper';
+import axios from 'axios';
 
 const AddEndOfDayScreen = ({ navigation }) => {
     const [products, setProducts] = useState([]);
@@ -621,39 +622,39 @@ const styles = StyleSheet.create({
         borderColor: '#8B5CF6',
         backgroundColor: '#FAF5FF',
     },
-    emptyState: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 100
-    },
-    emptyStateCard: {
-        backgroundColor: '#FFFFFF',
-        padding: 40,
-        borderRadius: 24,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 10,
-        maxWidth: 280,
-    },
-    emptyIcon: {
-        fontSize: 64,
-        marginBottom: 20,
-    },
-    emptyTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#1F2937',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    emptySubtitle: {
-        fontSize: 14,
-        color: '#6B7280',
-        textAlign: 'center',
-        lineHeight: 20,
-    },
+        emptyState: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: 100
+        },
+        emptyStateCard: {
+            backgroundColor: '#FFFFFF',
+            padding: 40,
+            borderRadius: 24,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.1,
+            shadowRadius: 20,
+            elevation: 10,
+            maxWidth: 280,
+        },
+        emptyIcon: {
+            fontSize: 64,
+            marginBottom: 20,
+        },
+        emptyTitle: {
+            fontSize: 20,
+            fontWeight: '700',
+            color: '#1F2937',
+            textAlign: 'center',
+            marginBottom: 8,
+        },
+        emptySubtitle: {
+            fontSize: 14,
+            color: '#6B7280',
+            textAlign: 'center',
+            lineHeight: 20,
+        },
 });

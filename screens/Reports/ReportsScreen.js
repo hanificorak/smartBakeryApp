@@ -12,6 +12,9 @@ import {
     Modal,
     Animated,
     Dimensions,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -20,6 +23,7 @@ import {
     Card,
     Chip,
     Divider,
+    TextInput,
 } from 'react-native-paper';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
@@ -41,7 +45,10 @@ const ReportsScreen = ({ navigation }) => {
     const [products, setProducts] = useState([]);
     const [weatherOptions, setWeatherOptions] = useState([]);
     const [reportData, setReportData] = useState([]);
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false);
+    const [mailModal, setMailModal] = useState(false);
+    const [reportMail, setReportMail] = useState('');
+    const [sendLoading, setSendLoading] = useState(false);
 
     // const weatherOptions = [
     //     { label: 'Tümü', value: 'all' },
@@ -71,23 +78,42 @@ const ReportsScreen = ({ navigation }) => {
         }
     };
 
-    const getReportData = async () => {
-        setLoading(true);
-        const { data } = await api.post(Endpoint.ReportData, {
-            product: (selectedProduct == null ? null : selectedProduct.id),
-            weather: (selectedWeather == null ? null : selectedWeather.id),
-            date: dateRange,
-        });
-        setLoading(false)
-        if (data && data.status) {
-            setReportData(data.obj)
+    const getReportData = async (clear = false) => {
+        try {
+            setLoading(true);
+            let params = {
+                product: (selectedProduct == null ? null : selectedProduct.id),
+                weather: (selectedWeather == null ? null : selectedWeather.id),
+                date: dateRange,
+            }
+
+            if (clear) {
+                params = {
+                    product: null,
+                    weather: null,
+                    date: 'all',
+                }
+            }
+
+            const { data } = await api.post(Endpoint.ReportData, params);
+            setLoading(false)
+            if (data && data.status) {
+                setReportData(data.obj)
+            }
+        } catch (error) {
+            console.log(error.message)
+
         }
     };
 
-    const clearFilters = () => {
-        // setSelectedProduct(null);
-        // setSelectedWeather('all');
-        // setDateRange('all');
+    const clearFilters = async () => {
+        setSelectedProduct(null);
+        setSelectedWeather(null);
+        setDateRange('all');
+        closeModal();
+
+        getReportData(true);
+
     };
 
     const openModal = () => {
@@ -106,20 +132,50 @@ const ReportsScreen = ({ navigation }) => {
             useNativeDriver: true,
         }).start(() => {
             setFilterModalVisible(false);
-            getReportData();
+
         });
     };
 
+
+    const openModalMail = () => {
+        setMailModal(true);
+        Animated.timing(slideAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+        }).start();
+    };
+
+
+    const closeModalMail = () => {
+        Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+        }).start(() => {
+            setMailModal(false);
+
+        });
+    };
+
+    const applyFilter = () => {
+        getReportData();
+        closeModal();
+    }
+
     const getActiveFiltersCount = () => {
-        
+
+        if (filterModalVisible) {
+            return;
+        }
         let count = 0;
-        if(selectedProduct != null){
+        if (selectedProduct != null) {
             count++;
         }
-        if(selectedWeather != null){
+        if (selectedWeather != null) {
             count++;
         }
-        if(dateRange != null && dateRange != 'all'){
+        if (dateRange != null && dateRange != 'all') {
             count++;
         }
         return count;
@@ -137,6 +193,39 @@ const ReportsScreen = ({ navigation }) => {
 
         const weather = weatherOptions.find(w => w.id === selectedWeather.id);
         return weather ? weather.description : 'Hava Durumu Seçin';
+    };
+
+    const sendReportMail = async () => {
+        try {
+            if (reportMail == null) {
+                Alert.alert('Uyarı', 'Gönderilecek Mail Adresini yazmalısınız.');
+                return;
+            }
+
+            if (!checkMail()) {
+                Alert.alert('Uyarı', 'Lütfen geçerli bir mail adresi giriniz.');
+                return;
+            }
+            setSendLoading(true);
+            let params = {
+                product: (selectedProduct == null ? null : selectedProduct.id),
+                weather: (selectedWeather == null ? null : selectedWeather.id),
+                date: dateRange,
+                mail: reportMail
+            }
+            const { data } = await api.post(Endpoint.ReportSend, params);
+            setSendLoading(false);
+
+            if (data && data.status) {
+                Alert.alert('Bilgi', `Rapor ${reportMail} adresine başarıyla gönderilmiştir. Spam kutunuzu da kontrol edebilirsiniz.`);
+                setMailModal(false);
+                setReportMail('');
+            } else {
+                Alert.alert('Uyarı', 'İşlem başarısız.');
+            }
+        } catch (error) {
+            console.log(error)
+        }
     };
 
     const getSelectedDateLabel = () => {
@@ -177,6 +266,11 @@ const ReportsScreen = ({ navigation }) => {
         });
     };
 
+    const checkMail = () => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(reportMail);
+    };
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
@@ -200,34 +294,49 @@ const ReportsScreen = ({ navigation }) => {
 
             {/* Filter Button */}
             <View style={styles.filterContainer}>
-                <TouchableOpacity
-                    style={styles.filterButton}
-                    onPress={openModal}
-                >
-                    <Text style={styles.filterIcon}>🔍</Text>
-                    <Text style={styles.filterButtonText}>Filtreler</Text>
-                    {getActiveFiltersCount() > 0 && (
-                        <View style={styles.filterBadge}>
-                            <Text style={styles.filterBadgeText}>{getActiveFiltersCount()}</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                    <View style={{ flex: 2 }}>
+                        <TouchableOpacity
+                            style={styles.filterButton}
+                            onPress={openModal}
+                        >
+                            <Text style={styles.filterIcon}>🔍</Text>
+                            <Text style={styles.filterButtonText}>Filtreler</Text>
+                            {getActiveFiltersCount() > 0 && (
+                                <View style={styles.filterBadge}>
+                                    <Text style={styles.filterBadgeText}>{getActiveFiltersCount()}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                    <View style={{ flex: 2 }}>
+                        <TouchableOpacity
+                            style={styles.filterButton}
+                            onPress={openModalMail}
+                        >
+                            <Text style={styles.filterIcon}>📧</Text>
+                            <Text style={styles.filterButtonText}>Rapor Gönder</Text>
+
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
             </View>
 
             {/* Table */}
             <View style={styles.tableContainer}>
                 {renderTableHeader()}
-                {reportData.length == 0 && !loading ? 
-                 <View style={styles.emptyState}>
-                                <View style={styles.emptyStateCard}>
-                                  <Text style={styles.emptyIcon}>📦</Text>
-                                  <Text style={styles.emptyTitle}>Henüz kayıt yok</Text>
-                                  <Text style={styles.emptySubtitle}>
-                                    Rapor verisi mevcut değil
-                                  </Text>
-                                </View>
-                              </View>
-                : ''}
+                {reportData.length == 0 && !loading ?
+                    <View style={styles.emptyState}>
+                        <View style={styles.emptyStateCard}>
+                            <Text style={styles.emptyIcon}>📦</Text>
+                            <Text style={styles.emptyTitle}>Henüz kayıt yok</Text>
+                            <Text style={styles.emptySubtitle}>
+                                Rapor verisi mevcut değil
+                            </Text>
+                        </View>
+                    </View>
+                    : ''}
 
                 {loading ?
                     <View>
@@ -416,7 +525,7 @@ const ReportsScreen = ({ navigation }) => {
                             </Button>
                             <Button
                                 mode="contained"
-                                onPress={closeModal}
+                                onPress={applyFilter}
                                 style={styles.applyButton}
                             >
                                 Uygula
@@ -424,6 +533,157 @@ const ReportsScreen = ({ navigation }) => {
                         </View>
                     </Animated.View>
                 </View>
+            </Modal>
+
+
+
+
+            <Modal
+                visible={mailModal}
+                transparent={true}
+                animationType="none"
+                onRequestClose={closeModalMail}
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={{ flex: 1 }}
+                >
+                    <View style={styles.modalOverlay}>
+                        <TouchableOpacity
+                            style={styles.modalBackground}
+                            activeOpacity={1}
+                            onPress={closeModalMail}
+                        />
+
+                        <Animated.View
+                            style={[
+                                styles.mailModalContent,
+                                {
+                                    transform: [{
+                                        translateY: slideAnim.interpolate({
+                                            inputRange: [0, 1],
+                                            outputRange: [screenHeight, 0]
+                                        })
+                                    }]
+                                }
+                            ]}
+                        >
+                            {/* Modern Header */}
+                            <View style={styles.mailModalHeader}>
+                                <View style={styles.mailHeaderLeft}>
+                                    <View style={styles.mailIconContainer}>
+                                        <Text style={styles.mailIcon}>📧</Text>
+                                    </View>
+                                    <View>
+                                        <Text style={styles.mailModalTitle}>Rapor Gönder</Text>
+                                        <Text style={styles.mailModalSubtitle}>E-posta adresini girin</Text>
+                                    </View>
+                                </View>
+                                <TouchableOpacity
+                                    onPress={closeModalMail}
+                                    style={styles.modernCloseButton}
+                                >
+                                    <Text style={styles.modernCloseButtonText}>✕</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <ScrollView
+                                style={styles.mailModalBody}
+                                showsVerticalScrollIndicator={false}
+                                keyboardShouldPersistTaps="handled"
+                                contentContainerStyle={{ flexGrow: 1 }}
+                            >
+                                {/* Email Input Section */}
+                                <View style={styles.mailInputSection}>
+                                    <Text style={styles.mailInputLabel}>E-posta Adresi</Text>
+                                    <View style={styles.mailInputContainer}>
+                                        <View style={styles.emailIconContainer}>
+                                            <Text style={styles.emailInputIcon}>@</Text>
+                                        </View>
+                                        <TextInput
+                                            placeholder='ornek@domain.com'
+                                            value={reportMail}
+                                            onChangeText={text => setReportMail(text)}
+                                            style={styles.mailInput}
+                                            keyboardType="email-address"
+                                            autoCapitalize="none"
+                                            autoCorrect={false}
+                                            placeholderTextColor="#9CA3AF"
+                                            returnKeyType="done"
+                                            blurOnSubmit={true}
+                                        />
+                                    </View>
+                                </View>
+
+                                {/* Info Card */}
+                                <View style={styles.infoCard}>
+                                    <View style={styles.infoIconContainer}>
+                                        <Text style={styles.infoIcon}>ℹ️</Text>
+                                    </View>
+                                    <View style={styles.infoTextContainer}>
+                                        <Text style={styles.infoTitle}>Rapor Bilgisi</Text>
+                                        <Text style={styles.infoText}>
+                                            Mevcut filtrelerinize göre oluşturulan rapor belirtilen e-posta adresine gönderilecektir.
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                {/* Active Filters Display */}
+                                {getActiveFiltersCount() > 0 && (
+                                    <View style={styles.activeFiltersCard}>
+                                        <Text style={styles.activeFiltersTitle}>Aktif Filtreler:</Text>
+                                        <View style={styles.filterChipsContainer}>
+                                            {selectedProduct && (
+                                                <View style={styles.filterChip}>
+                                                    <Text style={styles.filterChipText}>{selectedProduct.name}</Text>
+                                                </View>
+                                            )}
+                                            {selectedWeather && (
+                                                <View style={styles.filterChip}>
+                                                    <Text style={styles.filterChipText}>{selectedWeather.description}</Text>
+                                                </View>
+                                            )}
+                                            {dateRange !== 'all' && (
+                                                <View style={styles.filterChip}>
+                                                    <Text style={styles.filterChipText}>{getSelectedDateLabel()}</Text>
+                                                </View>
+                                            )}
+                                        </View>
+                                    </View>
+                                )}
+                            </ScrollView>
+
+                            {/* Modern Footer */}
+                            <View style={styles.mailModalFooter}>
+                                <TouchableOpacity
+                                    style={styles.cancelMailButton}
+                                    onPress={closeModalMail}
+                                    disabled={sendLoading}
+                                >
+                                    <Text style={styles.cancelMailButtonText}>İptal</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.sendMailButton, sendLoading && styles.sendMailButtonDisabled]}
+                                    onPress={sendReportMail}
+                                    disabled={sendLoading || !reportMail.trim()}
+                                >
+                                    {sendLoading ? (
+                                        <View style={styles.sendButtonContent}>
+                                            <ActivityIndicator size="small" color="#FFFFFF" />
+                                            <Text style={styles.sendMailButtonText}>Gönderiliyor...</Text>
+                                        </View>
+                                    ) : (
+                                        <View style={styles.sendButtonContent}>
+                                            <Text style={styles.sendMailButtonIcon}>📤</Text>
+                                            <Text style={styles.sendMailButtonText}>Gönder</Text>
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        </Animated.View>
+                    </View>
+                </KeyboardAvoidingView>
             </Modal>
         </View>
     );
@@ -558,6 +818,17 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
     },
+    modalContentReportmail: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        maxHeight: '30%',
+        minHeight: '30%',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+    },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -665,6 +936,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#4B6CB7',
     },
+    applyButtonMail: {
+        flex: 1,
+        borderRadius: 0,
+        marginTop: 10,
+        backgroundColor: '#4B6CB7',
+    },
     loadingContainer: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -692,7 +969,7 @@ const styles = StyleSheet.create({
         color: '#6B7280',
         marginTop: 4,
     },
-      emptyState: {
+    emptyState: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
@@ -727,4 +1004,232 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 20,
     },
+    mailModalContent: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        maxHeight: '70%',
+        minHeight: '45%',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -10 },
+        shadowOpacity: 0.25,
+        shadowRadius: 25,
+        elevation: 25,
+    },
+    mailModalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        paddingBottom: 16,
+    },
+    mailHeaderLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    mailIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#EEF2FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    mailIcon: {
+        fontSize: 24,
+    },
+    mailModalTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#1F2937',
+        marginBottom: 2,
+    },
+    mailModalSubtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+    },
+    modernCloseButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#F3F4F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modernCloseButtonText: {
+        fontSize: 18,
+        color: '#6B7280',
+        fontWeight: '600',
+    },
+    mailModalBody: {
+        flex: 1,
+        paddingHorizontal: 24,
+    },
+    mailInputSection: {
+        marginBottom: 24,
+    },
+    mailInputLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: 12,
+    },
+    mailInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        borderRadius: 12,
+        backgroundColor: '#F9FAFB',
+        paddingHorizontal: 16,
+        paddingVertical: 4,
+    },
+    emailIconContainer: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: '#EEF2FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    emailInputIcon: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#4B6CB7',
+    },
+    mailInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#374151',
+        backgroundColor: 'transparent',
+        paddingHorizontal: 0,
+    },
+    infoCard: {
+        flexDirection: 'row',
+        backgroundColor: '#F0F9FF',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20,
+        borderLeftWidth: 4,
+        borderLeftColor: '#0EA5E9',
+    },
+    infoIconContainer: {
+        marginRight: 12,
+        marginTop: 2,
+    },
+    infoIcon: {
+        fontSize: 20,
+    },
+    infoTextContainer: {
+        flex: 1,
+    },
+    infoTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#0F172A',
+        marginBottom: 4,
+    },
+    infoText: {
+        fontSize: 14,
+        color: '#64748B',
+        lineHeight: 20,
+    },
+    activeFiltersCard: {
+        backgroundColor: '#F8FAFC',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    activeFiltersTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: 12,
+    },
+    filterChipsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    filterChip: {
+        backgroundColor: '#4B6CB7',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    filterChipText: {
+        fontSize: 12,
+        color: '#FFFFFF',
+        fontWeight: '500',
+    },
+    mailModalFooter: {
+        flexDirection: 'row',
+        paddingHorizontal: 24,
+        paddingVertical: 24,
+        backgroundColor: '#FAFBFC',
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+        gap: 12,
+    },
+    cancelMailButton: {
+        flex: 1,
+        paddingVertical: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+    },
+    cancelMailButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#6B7280',
+    },
+    sendMailButton: {
+        flex: 2,
+        paddingVertical: 16,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#4B6CB7',
+        shadowColor: '#4B6CB7',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    sendMailButtonDisabled: {
+        backgroundColor: '#9CA3AF',
+        shadowOpacity: 0,
+        elevation: 0,
+    },
+    sendButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    sendMailButtonIcon: {
+        fontSize: 16,
+    },
+    sendMailButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
 });
+
+const newStyles = {
+    // Mail Modal Styles
+
+};

@@ -18,6 +18,7 @@ const Endpoint = {
   EndOfData: `${BASE_URL}/api/endofdays/getEndOfData`,
   EndOfDelete: `${BASE_URL}/api/endofdays/delete`,
   ReportData: `${BASE_URL}/api/reports/getReportData`,
+  ReportSend: `${BASE_URL}/api/reports/createReport`,
 };
 
 export default Endpoint;
