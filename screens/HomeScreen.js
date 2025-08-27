@@ -40,6 +40,15 @@ const HomeScreen = ({ navigation }) => {
       bgColor: '#F3F4F6',
       screen: 'ReportsScreen'
     },
+      {
+      id: 5,
+      title: 'Üretim Tahmini Al',
+      subtitle: 'Bugüne ait üretim tahmini al',
+      icon: 'wb-sunny',
+      color: '#8B5CF6',
+      bgColor: '#F3F4F6',
+      screen: 'GuessScreen'
+    },
     {
       id: 4,
       title: 'Tanımlar',
@@ -49,6 +58,15 @@ const HomeScreen = ({ navigation }) => {
       bgColor: '#FEF3C7',
       screen: 'DefinitionsScreen'
     },
+     {
+      id: 6,
+      title: 'Kullanıcılar',
+      subtitle: 'Sisteme kullanıcı ekleyin veya silin',
+      icon: 'group',
+      color: '#0049e5ff',
+      bgColor: '#d8d8d8ff',
+      screen: 'UsersScreen'
+    },
     {
       id: 5,
       title: 'Profilim',
@@ -56,7 +74,7 @@ const HomeScreen = ({ navigation }) => {
       icon: 'person',
       color: '#EF4444',
       bgColor: '#FEE2E2',
-      screen: 'Profile'
+      screen: 'ProfileScreen'
     }
   ];
 

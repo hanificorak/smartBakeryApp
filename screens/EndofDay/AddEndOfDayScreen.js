@@ -15,11 +15,12 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
     FlatList,
+    Switch
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
-import { Modal, Portal, Provider, Button, ActivityIndicator } from 'react-native-paper';
+import { Modal, Portal, Provider, Button, ActivityIndicator, Checkbox } from 'react-native-paper';
 import axios from 'axios';
 
 const AddEndOfDayScreen = ({ navigation }) => {
@@ -128,7 +129,9 @@ const AddEndOfDayScreen = ({ navigation }) => {
                     name: el.product.name,
                     product_id: el.product_id,
                     amount: el.amount,
-                    current: 0
+                    ert_status: false,
+                    current: 0,
+                    parentdate: el.parentdate
                 }));
                 setProducts(arr);
             }
@@ -151,15 +154,28 @@ const AddEndOfDayScreen = ({ navigation }) => {
         );
     };
 
+    const handleCarryOverChange = (productId, value) => {
+        setProducts(prevProducts =>
+            prevProducts.map(product => {
+                if (product.id === productId) {
+                    return { ...product, ert_status: value };
+                }
+                return product;
+            })
+        );
+    };
+
     const handleSave = async () => {
         try {
 
-            if(products.length == 0){
-                Alert.alert('Uyarı','Bugüne ait stok kaydı mevcut değil.');
+            if (products.length == 0) {
+                Alert.alert('Uyarı', 'Bugüne ait stok kaydı mevcut değil.');
                 return;
             }
             setSaveLoading(true);
+
             const { data } = await api.post(Endpoint.EndOfDayAdd, { data: products, weather_temp: temp, weather_temp_code: selectedWeathers.id });
+
             setSaveLoading(false);
 
             if (data && data.status) {
@@ -214,11 +230,13 @@ const AddEndOfDayScreen = ({ navigation }) => {
                         <Text style={styles.stockLabel}>Mevcut Stok:</Text>
                         <Text style={styles.stockValue}>{product.amount} adet</Text>
                     </View>
+
                 </View>
             </View>
 
             <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Yeni Miktar Girin:</Text>
+                <Text style={styles.inputLabel}>Yeni Miktar Girin: (Satılan)</Text>
+
                 <TextInput
                     style={styles.numberInput}
                     value={product.current}
@@ -227,6 +245,19 @@ const AddEndOfDayScreen = ({ navigation }) => {
                     placeholder="0"
                     placeholderTextColor="#94a3b8"
                 />
+
+                <View style={styles.switchContainer}>
+                    <Text style={styles.switchLabel}>Kalanı Ertesi güne aktar</Text>
+                    <Switch
+                        style={{ marginTop: 6 }}
+                        value={product.ert_status} // her ürün için state’de tut
+                        onValueChange={(value) => handleCarryOverChange(product.id, value)}
+                    />
+                </View>
+                <View style={styles.switchContainer}>
+                    <Text style={styles.switchLabel}>Üretim Tarihi</Text>
+                    <Text> {product.parentdate}</Text>
+                </View>
             </View>
         </View>
     );
@@ -460,32 +491,32 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 40,
-    borderRadius: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginTop: 16,
-  },
-  loadingSubtext: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
-  },
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingCard: {
+        backgroundColor: '#FFFFFF',
+        padding: 40,
+        borderRadius: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    loadingText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1F2937',
+        marginTop: 16,
+    },
+    loadingSubtext: {
+        fontSize: 14,
+        color: '#6B7280',
+        marginTop: 4,
+    },
     productName: {
         fontSize: 18,
         fontWeight: '600',
@@ -560,6 +591,15 @@ const styles = StyleSheet.create({
         borderColor: '#8B5CF6',
         backgroundColor: '#FAF5FF',
     },
+    switchContainer: {
+        marginTop: 10,
+    },
+    switchLabel: {
+        fontSize: 14,
+        marginRight: 8,
+        marginTop: 10,
+        color: "#475569",
+    },
     dropdownButtonText: {
         fontSize: 16,
         color: '#1F2937',
@@ -622,39 +662,39 @@ const styles = StyleSheet.create({
         borderColor: '#8B5CF6',
         backgroundColor: '#FAF5FF',
     },
-        emptyState: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: 100
-        },
-        emptyStateCard: {
-            backgroundColor: '#FFFFFF',
-            padding: 40,
-            borderRadius: 24,
-            alignItems: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.1,
-            shadowRadius: 20,
-            elevation: 10,
-            maxWidth: 280,
-        },
-        emptyIcon: {
-            fontSize: 64,
-            marginBottom: 20,
-        },
-        emptyTitle: {
-            fontSize: 20,
-            fontWeight: '700',
-            color: '#1F2937',
-            textAlign: 'center',
-            marginBottom: 8,
-        },
-        emptySubtitle: {
-            fontSize: 14,
-            color: '#6B7280',
-            textAlign: 'center',
-            lineHeight: 20,
-        },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 100
+    },
+    emptyStateCard: {
+        backgroundColor: '#FFFFFF',
+        padding: 40,
+        borderRadius: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+        maxWidth: 280,
+    },
+    emptyIcon: {
+        fontSize: 64,
+        marginBottom: 20,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1F2937',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+        textAlign: 'center',
+        lineHeight: 20,
+    },
 });

@@ -269,13 +269,13 @@ export default function StockScreen({ navigation, setToken }) {
                     </View>
                 </View>
 
-                {item.description && (
+                {item.desc && (
                     <View style={styles.descriptionCard}>
                         <View style={styles.descriptionHeader}>
                             <Text style={styles.descriptionIcon}>💬</Text>
                             <Text style={styles.descriptionTitle}>Açıklama</Text>
                         </View>
-                        <Text style={styles.descriptionText}>{item.description}</Text>
+                        <Text style={styles.descriptionText}>{item.desc}</Text>
                     </View>
                 )}
 

@@ -41,7 +41,7 @@ const ReportsScreen = ({ navigation }) => {
 
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedWeather, setSelectedWeather] = useState(null);
-    const [dateRange, setDateRange] = useState('all');
+    const [dateRange, setDateRange] = useState('today');
     const [products, setProducts] = useState([]);
     const [weatherOptions, setWeatherOptions] = useState([]);
     const [reportData, setReportData] = useState([]);
@@ -49,14 +49,6 @@ const ReportsScreen = ({ navigation }) => {
     const [mailModal, setMailModal] = useState(false);
     const [reportMail, setReportMail] = useState('');
     const [sendLoading, setSendLoading] = useState(false);
-
-    // const weatherOptions = [
-    //     { label: 'Tümü', value: 'all' },
-    //     { label: 'Güneşli', value: 'Güneşli' },
-    //     { label: 'Yağmurlu', value: 'Yağmurlu' },
-    //     { label: 'Bulutlu', value: 'Bulutlu' },
-    //     { label: 'Karlı', value: 'Karlı' }
-    // ];
 
     const dateRanges = [
         { label: 'Tümü', value: 'all' },
@@ -96,13 +88,13 @@ const ReportsScreen = ({ navigation }) => {
             }
 
             const { data } = await api.post(Endpoint.ReportData, params);
+            console.log(data)
             setLoading(false)
             if (data && data.status) {
                 setReportData(data.obj)
             }
         } catch (error) {
             console.log(error.message)
-
         }
     };
 
@@ -111,9 +103,7 @@ const ReportsScreen = ({ navigation }) => {
         setSelectedWeather(null);
         setDateRange('all');
         closeModal();
-
         getReportData(true);
-
     };
 
     const openModal = () => {
@@ -132,10 +122,8 @@ const ReportsScreen = ({ navigation }) => {
             useNativeDriver: true,
         }).start(() => {
             setFilterModalVisible(false);
-
         });
     };
-
 
     const openModalMail = () => {
         setMailModal(true);
@@ -146,7 +134,6 @@ const ReportsScreen = ({ navigation }) => {
         }).start();
     };
 
-
     const closeModalMail = () => {
         Animated.timing(slideAnim, {
             toValue: 0,
@@ -154,7 +141,6 @@ const ReportsScreen = ({ navigation }) => {
             useNativeDriver: true,
         }).start(() => {
             setMailModal(false);
-
         });
     };
 
@@ -164,7 +150,6 @@ const ReportsScreen = ({ navigation }) => {
     }
 
     const getActiveFiltersCount = () => {
-
         if (filterModalVisible) {
             return;
         }
@@ -175,7 +160,7 @@ const ReportsScreen = ({ navigation }) => {
         if (selectedWeather != null) {
             count++;
         }
-        if (dateRange != null && dateRange != 'all') {
+        if (dateRange != null && dateRange != 'today') {
             count++;
         }
         return count;
@@ -233,28 +218,102 @@ const ReportsScreen = ({ navigation }) => {
         return date ? date.label : 'Tarih Aralığı Seçin';
     };
 
-    const renderTableHeader = () => (
-        <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderText, { flex: 2 }]}>Ürün</Text>
-            <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Satılan</Text>
-            <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Atık</Text>
-            <Text style={[styles.tableHeaderText, { flex: 2 }]}>Hava</Text>
-            <Text style={[styles.tableHeaderText, { flex: 2 }]}>Tarih</Text>
-        </View>
-    );
+    // Modern Card Component for each report item
+    const renderReportCard = ({ item, index }) => (
+        <View style={styles.reportCard}>
+            <LinearGradient
+                colors={['#ffffff', '#f8fafc']}
+                style={styles.cardGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+            >
+                {/* Card Header */}
+                <View style={styles.cardHeader}>
+                    <View style={styles.cardHeaderLeft}>
+                        <View style={styles.productIcon}>
+                            <Text style={styles.productIconText}>📦</Text>
+                        </View>
+                        <View style={styles.cardHeaderInfo}>
+                            <Text style={styles.productName} numberOfLines={2}>
+                                {item.product.name}
+                            </Text>
+                            <Text style={styles.cardDate}>
+                                Gün Sonu Tarihi: {formatDate(item.created_at)}
+                            </Text>
+                        </View>
+                    </View>
+                    <View style={styles.weatherContainer}>
+                        <Text style={styles.weatherEmoji}>
+                            {getWeatherEmoji(item.weather.description)}
+                        </Text>
+                        <Text style={styles.weatherText} numberOfLines={1}>
+                            {item.weather.description}
+                        </Text>
+                    </View>
+                </View>
 
-    const renderTableRow = ({ item }) => (
-        <Card style={styles.tableRow}>
-            <View style={styles.tableRowContent}>
-                <Text style={[styles.tableRowText, { flex: 2 }]}>{item.product.name}</Text>
-                <Text style={[styles.tableRowText, { flex: 1.5 }]}>{item.amount}</Text>
-                <Text style={[styles.tableRowText, { flex: 1.5 }]}>
-                    {item.current}
-                </Text>
-                <Text style={[styles.tableRowText, { flex: 2 }]}>{item.weather.description}</Text>
-                <Text style={[styles.tableRowText, { flex: 2 }]}>{formatDate(item.created_at)}</Text>
-            </View>
-        </Card>
+                <Divider style={styles.cardDivider} />
+
+                {/* Card Body - Stats */}
+                <View style={styles.cardBody}>
+                    <View style={styles.statsContainer}>
+                        <View style={styles.statItem}>
+                            <View style={[styles.statIcon, { backgroundColor: '#E0F2FE' }]}>
+                                <Text style={styles.statIconText}>🏭</Text>
+                            </View>
+                            <View style={styles.statContent}>
+                                <Text style={styles.statLabel}>Üretilen</Text>
+                                <Text style={styles.statValue}>{item.amount}</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.statDivider} />
+
+                        <View style={styles.statItem}>
+                            <View style={[styles.statIcon, { backgroundColor: '#DCFCE7' }]}>
+                                <Text style={styles.statIconText}>💰</Text>
+                            </View>
+                            <View style={styles.statContent}>
+                                <Text style={styles.statLabel}>Satılan</Text>
+                                <Text style={styles.statValue}>{item.sales_amount}</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.statsContainer2}>
+                        <View style={styles.statItem}>
+                            <View style={[styles.statIcon, { backgroundColor: '#FEF3C7' }]}>
+                                <Text style={styles.statIconText}>🗑️</Text>
+                            </View>
+                            <View style={styles.statContent}>
+                                <Text style={styles.statLabel}>Atık</Text>
+                                <Text style={styles.statValue}>{item.remove_amount}</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.statDivider} />
+
+                        <View style={styles.statItem}>
+                            <View style={[styles.statIcon, { backgroundColor: '#F3E8FF' }]}>
+                                <Text style={styles.statIconText}>➡️</Text>
+                            </View>
+                            <View style={styles.statContent}>
+                                <Text style={styles.statLabel}>Ertesi Güne Aktarılan</Text>
+                                <Text style={styles.statValue}>{item.ert_count || 0}</Text>
+                            </View>
+                        </View>
+
+
+                    </View>
+                    {item.parentdate != null ? <View style={{ padding: 10, backgroundColor: '#f1f5f9', borderRadius: 10, marginTop: 10 }}>
+                        <Text>İlk Üretim Tarihi: {item.parentdate}</Text>
+                        <Text>Üretilen sayısı bugüne aktarılan sayısıdır. İlk üretim tarihi üst kısımda yazıyor. </Text>
+                    </View> : <View></View>}
+                </View>
+
+
+            </LinearGradient>
+        </View>
     );
 
     const formatDate = (dateString) => {
@@ -262,8 +321,21 @@ const ReportsScreen = ({ navigation }) => {
         return date.toLocaleDateString('tr-TR', {
             day: '2-digit',
             month: '2-digit',
-            year: 'numeric'
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
+    };
+
+    const getWeatherEmoji = (weather) => {
+        const weatherMap = {
+            'Güneşli': '☀️',
+            'Yağmurlu': '🌧️',
+            'Bulutlu': '☁️',
+            'Karlı': '❄️',
+            'Sisli': '🌫️',
+        };
+        return weatherMap[weather] || '🌤️';
     };
 
     const checkMail = () => {
@@ -288,6 +360,21 @@ const ReportsScreen = ({ navigation }) => {
                         <Text style={styles.headerSubtitle}>
                             Buradan raporlarınızı alabilirsiniz.
                         </Text>
+                        {/* Stats Summary in Header */}
+                        {reportData.length > 0 && (
+                            <View style={styles.headerStats}>
+                                <View style={styles.headerStatItem}>
+                                    <Text style={styles.headerStatValue}>{reportData.length}</Text>
+                                    <Text style={styles.headerStatLabel}>Toplam Kayıt</Text>
+                                </View>
+                                <View style={styles.headerStatItem}>
+                                    <Text style={styles.headerStatValue}>
+                                        {reportData.reduce((sum, item) => sum + parseInt(item.amount || 0), 0)}
+                                    </Text>
+                                    <Text style={styles.headerStatLabel}>Toplam Satış</Text>
+                                </View>
+                            </View>
+                        )}
                     </View>
                 </SafeAreaView>
             </LinearGradient>
@@ -316,16 +403,13 @@ const ReportsScreen = ({ navigation }) => {
                         >
                             <Text style={styles.filterIcon}>📧</Text>
                             <Text style={styles.filterButtonText}>Rapor Gönder</Text>
-
                         </TouchableOpacity>
                     </View>
                 </View>
-
             </View>
 
-            {/* Table */}
-            <View style={styles.tableContainer}>
-                {renderTableHeader()}
+            {/* Reports List */}
+            <View style={styles.reportsContainer}>
                 {reportData.length == 0 && !loading ?
                     <View style={styles.emptyState}>
                         <View style={styles.emptyStateCard}>
@@ -348,16 +432,15 @@ const ReportsScreen = ({ navigation }) => {
                             </View>
                         </View>
                     </View> :
-
                     <FlatList
                         data={reportData}
-                        renderItem={renderTableRow}
+                        renderItem={renderReportCard}
                         keyExtractor={(item) => item.id.toString()}
                         showsVerticalScrollIndicator={false}
-                        style={styles.tableList}
+                        contentContainerStyle={styles.reportsList}
+                        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
                     />
                 }
-
             </View>
 
             {/* Filter Modal */}
@@ -535,9 +618,7 @@ const ReportsScreen = ({ navigation }) => {
                 </View>
             </Modal>
 
-
-
-
+            {/* Mail Modal */}
             <Modal
                 visible={mailModal}
                 transparent={true}
@@ -694,7 +775,7 @@ export default ReportsScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#f1f5f9',
     },
     header: {
         paddingBottom: 0,
@@ -719,11 +800,34 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 5,
     },
+    headerStats: {
+        flexDirection: 'row',
+        marginTop: 16,
+        gap: 20,
+    },
+    headerStatItem: {
+        alignItems: 'center',
+    },
+    headerStatValue: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#ffffff',
+    },
+    headerStatLabel: {
+        fontSize: 12,
+        color: '#cbd5e1',
+        marginTop: 2,
+    },
     filterContainer: {
         padding: 16,
         backgroundColor: '#ffffff',
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
     },
     filterButton: {
         flexDirection: 'row',
@@ -733,6 +837,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 12,
         alignSelf: 'flex-start',
+        marginHorizontal: 4,
     },
     filterIcon: {
         fontSize: 18,
@@ -757,49 +862,237 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
     },
-    tableContainer: {
+    reportsContainer: {
         flex: 1,
         paddingHorizontal: 16,
         paddingBottom: 16,
     },
-    tableHeader: {
-        marginTop: 15,
+    reportsList: {
+        paddingTop: 16,
+        paddingBottom: 20,
+    },
 
-        flexDirection: 'row',
-        backgroundColor: '#f8fafc',
-        paddingVertical: 16,
-        borderRadius: 12,
-        marginBottom: 8,
+    // Modern Card Styles
+    reportCard: {
+        marginHorizontal: 4,
+        borderRadius: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 8,
+        backgroundColor: 'transparent',
+    },
+    cardGradient: {
+        borderRadius: 16,
+        padding: 20,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: '#e2e8f0',
     },
-    tableHeaderText: {
-        fontWeight: '700',
-        fontSize: 14,
-        color: '#374151',
-        textAlign: 'center',
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 16,
     },
-    tableList: {
-        padding: 5,
+    cardHeaderLeft: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        flex: 1,
+        marginRight: 12,
+    },
+    productIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#EEF2FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    productIconText: {
+        fontSize: 20,
+    },
+    cardHeaderInfo: {
         flex: 1,
     },
-    tableRow: {
-        marginBottom: 8,
-        elevation: 2,
-        backgroundColor: 'white',
-
+    productName: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1f2937',
+        lineHeight: 24,
+        marginBottom: 4,
     },
-    tableRowContent: {
-        flexDirection: 'row',
-        paddingVertical: 16,
-        paddingHorizontal: 16,
+    cardDate: {
+        fontSize: 13,
+        color: '#6b7280',
+        fontWeight: '500',
+    },
+    weatherContainer: {
         alignItems: 'center',
+        backgroundColor: '#f0f9ff',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#0ea5e9',
+        minWidth: 80,
     },
-    tableRowText: {
-        fontSize: 14,
-        color: '#374151',
+    weatherEmoji: {
+        fontSize: 20,
+        marginBottom: 4,
+    },
+    weatherText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#0369a1',
         textAlign: 'center',
     },
+    cardDivider: {
+        marginVertical: 16,
+        backgroundColor: '#e5e7eb',
+    },
+    cardBody: {
+        marginBottom: 16,
+    },
+    statsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    statsContainer2: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    statItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    statIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#DCFCE7',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    statIconText: {
+        fontSize: 16,
+    },
+    statContent: {
+        flex: 1,
+    },
+    statLabel: {
+        fontSize: 13,
+        color: '#6b7280',
+        fontWeight: '500',
+        marginBottom: 2,
+    },
+    statValue: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
+    },
+    statDivider: {
+        width: 1,
+        height: 40,
+        backgroundColor: '#e5e7eb',
+        marginHorizontal: 16,
+    },
+    cardFooter: {
+        borderTopWidth: 1,
+        borderTopColor: '#f3f4f6',
+        paddingTop: 16,
+    },
+    cardActionButton: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    cardActionText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#4B6CB7',
+    },
+    cardActionArrow: {
+        fontSize: 16,
+        color: '#4B6CB7',
+        fontWeight: '700',
+    },
+
+    // Loading and Empty States
+    loadingContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 50,
+    },
+    loadingCard: {
+        backgroundColor: '#FFFFFF',
+        padding: 40,
+        borderRadius: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    loadingText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1F2937',
+        marginTop: 16,
+    },
+    loadingSubtext: {
+        fontSize: 14,
+        color: '#6B7280',
+        marginTop: 4,
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 100,
+    },
+    emptyStateCard: {
+        backgroundColor: '#FFFFFF',
+        padding: 40,
+        borderRadius: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+        maxWidth: 280,
+    },
+    emptyIcon: {
+        fontSize: 64,
+        marginBottom: 20,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1F2937',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+
+    // Modal Styles
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -813,17 +1106,6 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 20,
         maxHeight: '80%',
         minHeight: '60%',
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-    },
-    modalContentReportmail: {
-        backgroundColor: 'white',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        maxHeight: '30%',
-        minHeight: '30%',
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -936,74 +1218,8 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#4B6CB7',
     },
-    applyButtonMail: {
-        flex: 1,
-        borderRadius: 0,
-        marginTop: 10,
-        backgroundColor: '#4B6CB7',
-    },
-    loadingContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 50
-    },
-    loadingCard: {
-        backgroundColor: '#FFFFFF',
-        padding: 40,
-        borderRadius: 24,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 10,
-    },
-    loadingText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#1F2937',
-        marginTop: 16,
-    },
-    loadingSubtext: {
-        fontSize: 14,
-        color: '#6B7280',
-        marginTop: 4,
-    },
-    emptyState: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 100
-    },
-    emptyStateCard: {
-        backgroundColor: '#FFFFFF',
-        padding: 40,
-        borderRadius: 24,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 10,
-        maxWidth: 280,
-    },
-    emptyIcon: {
-        fontSize: 64,
-        marginBottom: 20,
-    },
-    emptyTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#1F2937',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    emptySubtitle: {
-        fontSize: 14,
-        color: '#6B7280',
-        textAlign: 'center',
-        lineHeight: 20,
-    },
+
+    // Mail Modal Styles
     mailModalContent: {
         backgroundColor: 'white',
         borderTopLeftRadius: 24,
@@ -1228,8 +1444,3 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
     },
 });
-
-const newStyles = {
-    // Mail Modal Styles
-
-};

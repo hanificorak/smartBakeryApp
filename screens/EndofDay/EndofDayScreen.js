@@ -27,6 +27,7 @@ const EndofDayScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const { data } = await api.post(Endpoint.EndOfData);
+      console.log(data)
       setLoading(false);
       if (data && data.status) {
         setDailyData(data.obj || []);
@@ -48,6 +49,7 @@ const EndofDayScreen = ({ navigation }) => {
           onPress: async () => {
             try {
               const { data } = await api.post(Endpoint.EndOfDelete, { id: id });
+              console.log(data)
               if (data && data.status) {
                 Alert.alert('Bilgi', 'Kayıt başarıyla silindi.')
                 getEndData();
@@ -91,7 +93,7 @@ const EndofDayScreen = ({ navigation }) => {
           </View>
           <TouchableOpacity
             style={styles.deleteButton}
-            onPress={() => deleteRecord(data.id)}
+            onPress={() => deleteRecord(data.end_of_id)}
           >
             <Text style={styles.deleteButtonText}>🗑️</Text>
           </TouchableOpacity>
@@ -104,12 +106,16 @@ const EndofDayScreen = ({ navigation }) => {
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Satılan</Text>
-            <Text style={styles.statValue}>{data.current} adet</Text>
+            <Text style={styles.statValue}>{data.sales_amount} adet</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Atık</Text>
-            <Text style={styles.statValue}>{data.amount - data.current} adet</Text>
+            <Text style={styles.statValue}>{data.remove_amount} adet</Text>
           </View>
+          {data.ert_count != 0  ? <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Ertesi Güne Aktarılan</Text>
+            <Text style={styles.statValue}>{data.ert_count} adet</Text>
+          </View> :  ''}
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Sıcaklık</Text>
             <Text style={[styles.statValue, styles.wasteValue]}>{data.temperature}°C</Text>
@@ -213,7 +219,7 @@ const EndofDayScreen = ({ navigation }) => {
                     icon={icons[index % icons.length]}
                   />
                 ))}
-                <View style={styles.totalCard}>
+                {/* <View style={styles.totalCard}>
                   <Text style={styles.totalText}>
                     Toplam Üretilen:{' '}
                     <Text style={styles.totalNumber}>
@@ -226,7 +232,7 @@ const EndofDayScreen = ({ navigation }) => {
                       {dailyData.reduce((sum, item) => sum + (item.amount - item.current), 0)} adet
                     </Text>
                   </Text>
-                </View>
+                </View> */}
               </>
             ) : (
               <View style={styles.emptyState}>
@@ -354,7 +360,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop:100
+    marginTop: 100
   },
   emptyStateCard: {
     backgroundColor: '#FFFFFF',
