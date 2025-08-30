@@ -1,5 +1,5 @@
-const BASE_URL = "http://127.0.0.1:8000";
-// const BASE_URL = "https://smartbakery.nubifysoftware.com";
+// const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = "https://smartbakery.nubifysoftware.com";
 
 const Endpoint = {
   Login: `${BASE_URL}/api/auth/login`,
@@ -24,6 +24,14 @@ const Endpoint = {
   UpdatePassword: `${BASE_URL}/api/profile/updatePassword`,
   AddUser: `${BASE_URL}/api/users/addUser`,
   GetUsers: `${BASE_URL}/api/users/getUsers`,
+  GetCompanyInfo: `${BASE_URL}/api/company/getData`,
+  SaveSettings: `${BASE_URL}/api/company/save`,
+  ReinstallStart: `${BASE_URL}/api/reinstall/start`,
+  UserChange: `${BASE_URL}/api/user/userChange`,
+  FreezerList: `${BASE_URL}/api/freezer/getData`,
+  FreeSave: `${BASE_URL}/api/freezer/save`,
+  FreeDelete: `${BASE_URL}/api/freezer/delete`,
+  FreeReportSend: `${BASE_URL}/api/freezer/createReport`,
 };
 
 export default Endpoint;

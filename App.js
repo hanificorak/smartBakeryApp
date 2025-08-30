@@ -17,6 +17,11 @@ import ReportsScreen from './screens/Reports/ReportsScreen';
 import GuessScreen from './screens/Guess/GuessScreen';
 import ProfileScreen from './screens/Profile/ProfileScreen';
 import UsersScreen from './screens/Users/UsersScreen';
+import CompanyScreen from './screens/Company/CompanyScreen';
+import ReinstallScreen from './screens/Reinstall/ReinstallScreen';
+import UserSelectScreen from './screens/UserSelect/UserSelectScreen';
+import FreezerScreen from './screens/Freezer/FreezerScreen';
+import AddFreezerScreen from './screens/Freezer/AddFreezerScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +29,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const [location, setLocation] = useState(null);
+  const [screen, setScreen] = useState(null);
 
   useEffect(() => {
     const checkToken = async () => {
@@ -61,11 +67,18 @@ export default function App() {
       Alert.alert('Hata', 'Konum alınamadı');
     }
   };
+  const getUserType = async () => {
+    // is_admin
+    const is_admin = await AsyncStorage.getItem('is_admin');
+    setScreen((is_admin == 'admin' ? 'Home' : 'UserSelectScreen'))
+  };
 
   useEffect(() => {
     if (!loading && token) {
       getLocation();
     }
+
+    getUserType();
   }, [loading, token]);
 
   if (loading) {
@@ -78,22 +91,30 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={token ? 'Home' : 'Login'}>
+      <Stack.Navigator initialRouteName={token ? screen : 'Login'}>
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" options={{ headerShown: false }}>
           {(props) => <LoginScreen {...props} setToken={setToken} />}
         </Stack.Screen>
-        <Stack.Screen name="Home" options={{ title:'Ana Sayfa' }}>
+        <Stack.Screen name="Home" options={{ title: 'Ana Sayfa' }}>
           {(props) => <HomeScreen {...props} location={location} />}
         </Stack.Screen>
-        <Stack.Screen name="StockScreen" component={StockScreen} options={{ headerShown: true, title:'Stok Girişi' }} />
-        <Stack.Screen name="DefinitionsScreen" component={DefinitionsScreen} options={{ headerShown: true, title:'Tanımlar' }} />
-        <Stack.Screen name="EndofDayScreen" component={EndofDayScreen} options={{ headerShown: true, title:'Gün Sonu İşlemleri' }} />
-        <Stack.Screen name="AddEndOfDayScreen" component={AddEndOfDayScreen} options={{ headerShown: true, title:'Gün Sonu Ekle' }} />
-        <Stack.Screen name="ReportsScreen" component={ReportsScreen} options={{ headerShown: true, title:'Raporlar' }} />
-        <Stack.Screen name="GuessScreen" component={GuessScreen} options={{ headerShown: true, title:'Günlük Üretim Tahmini' }} />
-        <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: true, title:'Profilim' }} />
-        <Stack.Screen name="UsersScreen" component={UsersScreen} options={{ headerShown: true, title:'Kullanıcılar' }} />
+        <Stack.Screen name="StockScreen" component={StockScreen} options={{ headerShown: true, title: 'Stok Girişi' }} />
+        <Stack.Screen name="DefinitionsScreen" component={DefinitionsScreen} options={{ headerShown: true, title: 'Tanımlar' }} />
+        <Stack.Screen name="EndofDayScreen" component={EndofDayScreen} options={{ headerShown: true, title: 'Gün Sonu İşlemleri' }} />
+        <Stack.Screen name="AddEndOfDayScreen" component={AddEndOfDayScreen} options={{ headerShown: true, title: 'Gün Sonu Ekle' }} />
+        <Stack.Screen name="ReportsScreen" component={ReportsScreen} options={{ headerShown: true, title: 'Raporlar' }} />
+        <Stack.Screen name="GuessScreen" component={GuessScreen} options={{ headerShown: true, title: 'Günlük Üretim Tahmini' }} />
+        <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: true, title: 'Profilim' }} />
+        <Stack.Screen name="UsersScreen" component={UsersScreen} options={{ headerShown: true, title: 'Kullanıcılar' }} />
+        <Stack.Screen name="CompanyScreen" component={CompanyScreen} options={{ headerShown: true, title: 'İşletme Ayarları' }} />
+        <Stack.Screen name="ReinstallScreen" component={ReinstallScreen} options={{ headerShown: true, title: 'Re-Install' }} />
+        <Stack.Screen name="FreezerScreen" component={FreezerScreen} options={{ headerShown: true, title: 'Dolap Çalışma Takibi' }} />
+        <Stack.Screen name="AddFreezerScreen" component={AddFreezerScreen} options={{ headerShown: true, title: 'Dolap Çalışma Kaydı Ekle' }} />
+        <Stack.Screen name="UserSelectScreen" options={{ headerShown: true,title:'Kullanıcı Seçin' }}>
+          {(props) => <UserSelectScreen {...props} setToken={setToken} />}
+        </Stack.Screen>
+      
       </Stack.Navigator>
     </NavigationContainer>
   );

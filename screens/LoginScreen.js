@@ -67,20 +67,25 @@ export default function LoginScreen({ navigation, setToken }) {
 
 
             const { data } = await axios.post(Endpoint.Login, { email: email, password: password });
-
+            console.log('ddd', data)
             setIsLoading(false);
 
             if (data && data.status) {
-                await AsyncStorage.setItem('token', data.access_token);;
+                await AsyncStorage.setItem('token', data.access_token);
+                await AsyncStorage.setItem('is_admin', (data.admin_status == 1 ? 'admin' : 'user'));
+                console.log(data.admin_status);
                 setToken(data.access_token);
-
-                navigation.replace('Home');
-
+                if (data.admin_status == 1) {
+                    navigation.replace('Home');
+                } else {
+                    navigation.replace('UserSelectScreen');
+                }
             } else {
                 Alert.alert('Uyarı', 'E-Posta ve şifrenizi lütfen kontrol edin.')
             }
 
         } catch (error) {
+            console.log(error)
         }
     };
     const register = async () => {

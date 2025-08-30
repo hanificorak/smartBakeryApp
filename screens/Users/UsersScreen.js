@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Bu import'u ekle
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
 import {
@@ -31,6 +32,8 @@ import {
 const { width, height } = Dimensions.get('window');
 
 export default function UsersScreen({ navigation, setToken }) {
+    const insets = useSafeAreaInsets(); // Safe area insets'i al
+    
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -98,17 +101,17 @@ export default function UsersScreen({ navigation, setToken }) {
             errors.lastName = 'Soyad gerekli';
         }
 
-        if (!formData.email.trim()) {
-            errors.email = 'Email gerekli';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            errors.email = 'Geçerli bir email adresi girin';
-        }
+        // if (!formData.email.trim()) {
+        //     errors.email = 'Email gerekli';
+        // } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        //     errors.email = 'Geçerli bir email adresi girin';
+        // }
 
-        if (!formData.password.trim()) {
-            errors.password = 'Şifre gerekli';
-        } else if (formData.password.length < 6) {
-            errors.password = 'Şifre en az 6 karakter olmalı';
-        }
+        // if (!formData.password.trim()) {
+        //     errors.password = 'Şifre gerekli';
+        // } else if (formData.password.length < 6) {
+        //     errors.password = 'Şifre en az 6 karakter olmalı';
+        // }
 
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
@@ -127,6 +130,7 @@ export default function UsersScreen({ navigation, setToken }) {
                     password: formData.password,
                     firm_id: 1,
                 });
+                console.log(data)
                 if (data && data.status) {
                     loadUsers();
                     Alert.alert('Bilgi', 'Kullanıcı başarıyla eklendi.');
@@ -230,7 +234,7 @@ export default function UsersScreen({ navigation, setToken }) {
 
                             <View style={styles.formContainer}>
                                 <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Ad Soyad</Text>
+                                    <Text style={styles.inputLabel}>Ad Soyad * </Text>
                                     <TextInput
                                         style={[styles.input, formErrors.firstName && styles.inputError]}
                                         value={formData.firstName}
@@ -242,8 +246,6 @@ export default function UsersScreen({ navigation, setToken }) {
                                         <Text style={styles.errorText}>{formErrors.firstName}</Text>
                                     )}
                                 </View>
-
-
 
                                 <View style={styles.inputGroup}>
                                     <Text style={styles.inputLabel}>Email</Text>
@@ -261,7 +263,7 @@ export default function UsersScreen({ navigation, setToken }) {
                                     )}
                                 </View>
 
-                                <View style={styles.inputGroup}>
+                                {/* <View style={styles.inputGroup}>
                                     <Text style={styles.inputLabel}>Şifre</Text>
                                     <TextInput
                                         style={[styles.input, formErrors.password && styles.inputError]}
@@ -274,7 +276,7 @@ export default function UsersScreen({ navigation, setToken }) {
                                     {formErrors.password && (
                                         <Text style={styles.errorText}>{formErrors.password}</Text>
                                     )}
-                                </View>
+                                </View> */}
 
                                 <TouchableOpacity
                                     style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
@@ -304,7 +306,6 @@ export default function UsersScreen({ navigation, setToken }) {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#667eea" />
 
-
             <LinearGradient colors={['#4B6CB7', '#182848']} style={styles.header}>
                 <Animated.View style={[styles.headerContent, { opacity: fadeAnim }]}>
                     <Text style={styles.headerTitle}>Kullanıcılar</Text>
@@ -324,7 +325,10 @@ export default function UsersScreen({ navigation, setToken }) {
                         renderItem={renderUser}
                         keyExtractor={(item) => item.id.toString()}
                         showsVerticalScrollIndicator={false}
-                        contentContainerStyle={styles.listContainer}
+                        contentContainerStyle={[
+                            styles.listContainer,
+                            { paddingBottom: insets.bottom + 100 } // FlatList'e bottom padding ekle
+                        ]}
                         refreshControl={
                             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                         }
@@ -338,8 +342,9 @@ export default function UsersScreen({ navigation, setToken }) {
                 )}
             </View>
 
+            {/* FAB'a bottom insets ekle */}
             <TouchableOpacity
-                style={styles.fab}
+                style={[styles.fab, { bottom: 30 + insets.bottom }]}
                 onPress={() => setAddModalVisible(true)}
                 activeOpacity={0.8}
             >
@@ -357,7 +362,7 @@ export default function UsersScreen({ navigation, setToken }) {
                 visible={snackbarVisible}
                 onDismiss={() => setSnackbarVisible(false)}
                 duration={3000}
-                style={styles.snackbar}
+                style={[styles.snackbar, { bottom: insets.bottom }]} // Snackbar'a da bottom insets ekle
             >
                 {snackbarMessage}
             </Snackbar>
@@ -394,7 +399,6 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         padding: 20,
-        paddingBottom: 100,
     },
     userCard: {
         backgroundColor: '#fff',
@@ -448,7 +452,6 @@ const styles = StyleSheet.create({
     },
     fab: {
         position: 'absolute',
-        bottom: 30,
         right: 20,
         width: 60,
         height: 60,

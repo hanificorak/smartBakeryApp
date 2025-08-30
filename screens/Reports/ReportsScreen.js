@@ -15,6 +15,7 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
+    useColorScheme,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -25,8 +26,10 @@ import {
     Divider,
     TextInput,
 } from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
+import { Dropdown } from "react-native-element-dropdown";
 
 const ReportsScreen = ({ navigation }) => {
     const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -36,6 +39,19 @@ const ReportsScreen = ({ navigation }) => {
     const [productMenuVisible, setProductMenuVisible] = useState(false);
     const [weatherMenuVisible, setWeatherMenuVisible] = useState(false);
     const [dateMenuVisible, setDateMenuVisible] = useState(false);
+
+    // Date picker states
+    const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+    const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date());
+    const [hasCustomDateRange, setHasCustomDateRange] = useState(false);
+
+    // Text input date states
+    const [startDateText, setStartDateText] = useState('');
+    const [endDateText, setEndDateText] = useState('');
+    const [startDateError, setStartDateError] = useState('');
+    const [endDateError, setEndDateError] = useState('');
 
     const screenHeight = Dimensions.get('window').height;
 
@@ -49,18 +65,145 @@ const ReportsScreen = ({ navigation }) => {
     const [mailModal, setMailModal] = useState(false);
     const [reportMail, setReportMail] = useState('');
     const [sendLoading, setSendLoading] = useState(false);
+    const [value, setValue] = useState(null);
+    const [showdateSelect, setShowdateSelect] = useState(false);
+    const [tempDate, setTempDate] = useState(new Date());
+    const [dateType, setDateType] = useState(null);
 
     const dateRanges = [
         { label: 'Tümü', value: 'all' },
         { label: 'Bugün', value: 'today' },
         { label: 'Bu Hafta', value: 'week' },
-        { label: 'Bu Ay', value: 'month' }
+        { label: 'Bu Ay', value: 'month' },
+        { label: 'Özel Tarih Aralığı', value: 'custom' }
+    ];
+
+    const data = [
+        { label: "Toplam Rapor", value: "toplam" },
+        { label: "Günlük Rapor", value: "gunluk" },
     ];
 
     useEffect(() => {
         getParam();
         getReportData();
     }, []);
+
+    // Date formatting and validation functions
+    const formatDateInput = (text) => {
+        // Remove all non-numeric characters
+        const numbersOnly = text.replace(/\D/g, '');
+        
+        // Add dots automatically
+        if (numbersOnly.length <= 2) {
+            return numbersOnly;
+        } else if (numbersOnly.length <= 4) {
+            return numbersOnly.slice(0, 2) + '.' + numbersOnly.slice(2);
+        } else {
+            return numbersOnly.slice(0, 2) + '.' + numbersOnly.slice(2, 4) + '.' + numbersOnly.slice(4, 8);
+        }
+    };
+
+    const validateDate = (dateString) => {
+        // Check format: DD.MM.YYYY
+        const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+        const match = dateString.match(dateRegex);
+        
+        if (!match) {
+            return { isValid: false, error: 'Tarih formatı: GG.AA.YYYY' };
+        }
+
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        const year = parseInt(match[3], 10);
+
+        // Basic validation
+        if (month < 1 || month > 12) {
+            return { isValid: false, error: 'Geçersiz ay (1-12)' };
+        }
+
+        if (day < 1 || day > 31) {
+            return { isValid: false, error: 'Geçersiz gün (1-31)' };
+        }
+
+        if (year < 1900 || year > new Date().getFullYear() + 10) {
+            return { isValid: false, error: 'Geçersiz yıl' };
+        }
+
+        // Create date object
+        const dateObj = new Date(year, month - 1, day);
+        
+        // Check if the date is valid (e.g., not 31.02.2023)
+        if (dateObj.getDate() !== day || dateObj.getMonth() !== month - 1 || dateObj.getFullYear() !== year) {
+            return { isValid: false, error: 'Geçersiz tarih' };
+        }
+
+        return { isValid: true, date: dateObj };
+    };
+
+    const parseCustomDates = () => {
+        let startDateObj = null;
+        let endDateObj = null;
+
+        if (startDateText.length === 10) {
+            const startValidation = validateDate(startDateText);
+            if (startValidation.isValid) {
+                startDateObj = startValidation.date;
+                setStartDate(startDateObj);
+                setStartDateError('');
+            } else {
+                setStartDateError(startValidation.error);
+            }
+        }
+
+        if (endDateText.length === 10) {
+            const endValidation = validateDate(endDateText);
+            if (endValidation.isValid) {
+                endDateObj = endValidation.date;
+                setEndDate(endDateObj);
+                setEndDateError('');
+            } else {
+                setEndDateError(endValidation.error);
+            }
+        }
+
+        return { startDateObj, endDateObj };
+    };
+
+    const handleStartDateChange = (text) => {
+        const formatted = formatDateInput(text);
+        setStartDateText(formatted);
+        
+        if (formatted.length === 10) {
+            const validation = validateDate(formatted);
+            if (validation.isValid) {
+                setStartDate(validation.date);
+                setStartDateError('');
+                setHasCustomDateRange(true);
+            } else {
+                setStartDateError(validation.error);
+            }
+        } else {
+            setStartDateError('');
+        }
+    };
+
+    const handleEndDateChange = (text) => {
+        const formatted = formatDateInput(text);
+        setEndDateText(formatted);
+        
+        if (formatted.length === 10) {
+            const validation = validateDate(formatted);
+            if (validation.isValid) {
+                setEndDate(validation.date);
+                setEndDateError('');
+                setHasCustomDateRange(true);
+            } else {
+                setEndDateError(validation.error);
+            }
+        } else {
+            setEndDateError('');
+        }
+    };
 
     const getParam = async () => {
         const { data } = await api.post(Endpoint.StockParams);
@@ -71,12 +214,21 @@ const ReportsScreen = ({ navigation }) => {
     };
 
     const getReportData = async (clear = false) => {
+  
         try {
             setLoading(true);
             let params = {
                 product: (selectedProduct == null ? null : selectedProduct.id),
                 weather: (selectedWeather == null ? null : selectedWeather.id),
                 date: dateRange,
+                startDate:startDate,
+                endDate:endDate
+            }
+
+            // Add custom date range if selected
+            if (dateRange === 'custom' && hasCustomDateRange) {
+                params.startDate = startDate.toISOString().split('T')[0];
+                params.endDate = endDate.toISOString().split('T')[0];
             }
 
             if (clear) {
@@ -84,11 +236,12 @@ const ReportsScreen = ({ navigation }) => {
                     product: null,
                     weather: null,
                     date: 'all',
+                    startDate: null,
+                    endDate: null,
                 }
             }
 
             const { data } = await api.post(Endpoint.ReportData, params);
-            console.log(data)
             setLoading(false)
             if (data && data.status) {
                 setReportData(data.obj)
@@ -102,8 +255,32 @@ const ReportsScreen = ({ navigation }) => {
         setSelectedProduct(null);
         setSelectedWeather(null);
         setDateRange('all');
+        setHasCustomDateRange(false);
+        setStartDate(new Date());
+        setEndDate(new Date());
+        setStartDateText('');
+        setEndDateText('');
+        setStartDateError('');
+        setEndDateError('');
         closeModal();
         getReportData(true);
+    };
+
+    const openDatePicker = async (type) => {
+        setFilterModalVisible(false);
+        setShowdateSelect(true);
+        setDateType(type);
+        // Set tempDate to current date for the picker
+        if (type === 'start') {
+            setTempDate(startDate);
+        } else {
+            setTempDate(endDate);
+        }
+    };
+
+    const closeDatePicker = async () => {
+        setShowdateSelect(false);
+        setFilterModalVisible(true)
     };
 
     const openModal = () => {
@@ -145,6 +322,26 @@ const ReportsScreen = ({ navigation }) => {
     };
 
     const applyFilter = () => {
+        // Validate custom dates before applying filter
+        if (dateRange === 'custom') {
+            const { startDateObj, endDateObj } = parseCustomDates();
+            
+            if (startDateText.length === 10 && endDateText.length === 10) {
+                if (startDateError || endDateError) {
+                    Alert.alert('Uyarı', 'Lütfen geçerli tarihler girin.');
+                    return;
+                }
+                
+                if (startDateObj && endDateObj && startDateObj > endDateObj) {
+                    Alert.alert('Uyarı', 'Başlangıç tarihi bitiş tarihinden küçük olmalıdır.');
+                    return;
+                }
+            } else if (startDateText.length > 0 || endDateText.length > 0) {
+                Alert.alert('Uyarı', 'Lütfen her iki tarihi de eksiksiz girin (GG.AA.YYYY formatında).');
+                return;
+            }
+        }
+        
         getReportData();
         closeModal();
     }
@@ -196,9 +393,20 @@ const ReportsScreen = ({ navigation }) => {
                 product: (selectedProduct == null ? null : selectedProduct.id),
                 weather: (selectedWeather == null ? null : selectedWeather.id),
                 date: dateRange,
-                mail: reportMail
+                mail: reportMail,
+                type: value,
+                startDate:startDate,
+                endDate:endDate
             }
+
+            // Add custom date range if selected
+            if (dateRange === 'custom' && hasCustomDateRange) {
+                params.startDate = startDate.toISOString().split('T')[0];
+                params.endDate = endDate.toISOString().split('T')[0];
+            }
+
             const { data } = await api.post(Endpoint.ReportSend, params);
+
             setSendLoading(false);
 
             if (data && data.status) {
@@ -215,7 +423,68 @@ const ReportsScreen = ({ navigation }) => {
 
     const getSelectedDateLabel = () => {
         const date = dateRanges.find(d => d.value === dateRange);
+        if (dateRange === 'custom' && hasCustomDateRange) {
+            return `${formatDateShort(startDate)} - ${formatDateShort(endDate)}`;
+        }
         return date ? date.label : 'Tarih Aralığı Seçin';
+    };
+
+    const formatDateShort = (date) => {
+        return date.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
+    const onStartDateChange = (event, selectedDate) => {
+        setShowStartDatePicker(false);
+        if (selectedDate) {
+            setStartDate(selectedDate);
+            setHasCustomDateRange(true);
+        }
+    };
+
+    const onEndDateChange = (event, selectedDate) => {
+        setShowEndDatePicker(false);
+        if (selectedDate) {
+            setEndDate(selectedDate);
+            setHasCustomDateRange(true);
+        }
+    };
+
+    const onChange = (event, selectedDate) => {
+        if (Platform.OS === 'android') {
+            setShowdateSelect(false);
+            if (selectedDate) {
+                if (dateType === "start") {
+                    setStartDate(selectedDate);
+                    setHasCustomDateRange(true);
+                } else {
+                    setEndDate(selectedDate);
+                    setHasCustomDateRange(true);
+                }
+            }
+            setFilterModalVisible(true);
+        } else {
+            // iOS handling
+            if (selectedDate) {
+                setTempDate(selectedDate);
+            }
+        }
+    };
+
+    const handleDateRangeSelection = (range) => {
+        setDateRange(range.value);
+        setDateMenuVisible(false);
+
+        if (range.value !== 'custom') {
+            setHasCustomDateRange(false);
+            setStartDateText('');
+            setEndDateText('');
+            setStartDateError('');
+            setEndDateError('');
+        }
     };
 
     // Modern Card Component for each report item
@@ -302,16 +571,12 @@ const ReportsScreen = ({ navigation }) => {
                                 <Text style={styles.statValue}>{item.ert_count || 0}</Text>
                             </View>
                         </View>
-
-
                     </View>
                     {item.parentdate != null ? <View style={{ padding: 10, backgroundColor: '#f1f5f9', borderRadius: 10, marginTop: 10 }}>
                         <Text>İlk Üretim Tarihi: {item.parentdate}</Text>
                         <Text>Üretilen sayısı bugüne aktarılan sayısıdır. İlk üretim tarihi üst kısımda yazıyor. </Text>
                     </View> : <View></View>}
                 </View>
-
-
             </LinearGradient>
         </View>
     );
@@ -325,6 +590,18 @@ const ReportsScreen = ({ navigation }) => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const confirmDate = () => {
+        // Apply the temp date to the appropriate state
+        if (dateType === "start") {
+            setStartDate(tempDate);
+        } else {
+            setEndDate(tempDate);
+        }
+        setHasCustomDateRange(true);
+        setShowdateSelect(false);
+        setFilterModalVisible(true);
     };
 
     const getWeatherEmoji = (weather) => {
@@ -543,6 +820,17 @@ const ReportsScreen = ({ navigation }) => {
                                 </TouchableOpacity>
                                 {weatherMenuVisible && (
                                     <View style={styles.dropdownList}>
+                                        <TouchableOpacity
+                                            style={styles.dropdownItem}
+                                            onPress={() => {
+                                                setSelectedWeather(null);
+                                                setWeatherMenuVisible(false);
+                                            }}
+                                        >
+                                            <Text style={selectedWeather === null ? styles.selectedDropdownText : styles.dropdownText}>
+                                                Tümü
+                                            </Text>
+                                        </TouchableOpacity>
                                         {weatherOptions.map((weather) => (
                                             <TouchableOpacity
                                                 key={weather.id}
@@ -552,7 +840,7 @@ const ReportsScreen = ({ navigation }) => {
                                                     setWeatherMenuVisible(false);
                                                 }}
                                             >
-                                                <Text style={selectedWeather === weather.id ? styles.selectedDropdownText : styles.dropdownText}>
+                                                <Text style={selectedWeather?.id === weather.id ? styles.selectedDropdownText : styles.dropdownText}>
                                                     {weather.description}
                                                 </Text>
                                             </TouchableOpacity>
@@ -583,10 +871,7 @@ const ReportsScreen = ({ navigation }) => {
                                             <TouchableOpacity
                                                 key={range.value}
                                                 style={styles.dropdownItem}
-                                                onPress={() => {
-                                                    setDateRange(range.value);
-                                                    setDateMenuVisible(false);
-                                                }}
+                                                onPress={() => handleDateRangeSelection(range)}
                                             >
                                                 <Text style={dateRange === range.value ? styles.selectedDropdownText : styles.dropdownText}>
                                                     {range.label}
@@ -595,7 +880,71 @@ const ReportsScreen = ({ navigation }) => {
                                         ))}
                                     </View>
                                 )}
+
+                                {/* Custom Date Range Section */}
+                                {dateRange === 'custom' && (
+                                    <View style={styles.customDateSection}>
+                                        <Text style={styles.customDateTitle}>Özel Tarih Aralığı</Text>
+
+                                        {/* Start Date Input */}
+                                        <View style={styles.dateInputRow}>
+                                            <Text style={styles.dateLabel}>Başlangıç Tarihi:</Text>
+                                            <View style={styles.dateInputContainer}>
+                                                <TextInput
+                                                    style={[
+                                                        styles.dateTextInput,
+                                                        startDateError ? styles.dateTextInputError : null
+                                                    ]}
+                                                    value={startDateText}
+                                                    onChangeText={handleStartDateChange}
+                                                    placeholder="GG.AA.YYYY"
+                                                    placeholderTextColor="#9CA3AF"
+                                                    keyboardType="numeric"
+                                                    maxLength={10}
+                                                    underlineColorAndroid="transparent"
+                                                />
+                                                <Text style={styles.dateInputIcon}>📅</Text>
+                                            </View>
+                                            {startDateError ? (
+                                                <Text style={styles.dateErrorText}>{startDateError}</Text>
+                                            ) : null}
+                                        </View>
+
+                                        {/* End Date Input */}
+                                        <View style={styles.dateInputRow}>
+                                            <Text style={styles.dateLabel}>Bitiş Tarihi:</Text>
+                                            <View style={styles.dateInputContainer}>
+                                                <TextInput
+                                                    style={[
+                                                        styles.dateTextInput,
+                                                        endDateError ? styles.dateTextInputError : null
+                                                    ]}
+                                                    value={endDateText}
+                                                    onChangeText={handleEndDateChange}
+                                                    placeholder="GG.AA.YYYY"
+                                                    placeholderTextColor="#9CA3AF"
+                                                    keyboardType="numeric"
+                                                    maxLength={10}
+                                                    underlineColorAndroid="transparent"
+                                                />
+                                                <Text style={styles.dateInputIcon}>📅</Text>
+                                            </View>
+                                            {endDateError ? (
+                                                <Text style={styles.dateErrorText}>{endDateError}</Text>
+                                            ) : null}
+                                        </View>
+
+                                        {/* Date Format Info */}
+                                        <View style={styles.dateFormatInfo}>
+                                            <Text style={styles.dateFormatIcon}>ℹ️</Text>
+                                            <Text style={styles.dateFormatText}>
+                                                Tarih formatı: GG.AA.YYYY (örnek: 18.10.2024)
+                                            </Text>
+                                        </View>
+                                    </View>
+                                )}
                             </View>
+
                         </ScrollView>
 
                         <View style={styles.modalFooter}>
@@ -615,6 +964,48 @@ const ReportsScreen = ({ navigation }) => {
                             </Button>
                         </View>
                     </Animated.View>
+                </View>
+            </Modal>
+
+            {/* Date Picker Modal */}
+            <Modal
+                visible={showdateSelect}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowdateSelect(false)}
+            >
+                <View style={styles.dateModalOverlay}>
+                    <View style={styles.dateModalContainer}>
+                        <View style={styles.dateModalHeader}>
+                            <Text style={styles.dateModalTitle}>Tarih Seçin</Text>
+                        </View>
+
+                        <DateTimePicker
+                            value={tempDate} // Always use tempDate which is guaranteed to be a Date object
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={onChange}
+                            textColor={useColorScheme === 'dark' ? '#fff' : '#000'}
+                            style={styles.datePicker}
+                        />
+
+                        {Platform.OS === 'ios' && (
+                            <View style={styles.dateModalActions}>
+                                <TouchableOpacity
+                                    style={styles.dateModalButton}
+                                    onPress={() => closeDatePicker()}
+                                >
+                                    <Text style={styles.dateModalCancelText}>İptal</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.dateModalButton, styles.dateModalConfirmButton]}
+                                    onPress={confirmDate}
+                                >
+                                    <Text style={styles.dateModalConfirmText}>Tamam</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </View>
                 </View>
             </Modal>
 
@@ -692,6 +1083,20 @@ const ReportsScreen = ({ navigation }) => {
                                             placeholderTextColor="#9CA3AF"
                                             returnKeyType="done"
                                             blurOnSubmit={true}
+                                        />
+                                    </View>
+
+                                    <View style={{ marginTop: 15 }}>
+                                        <Text>Rapor Tipi</Text>
+
+                                        <Dropdown
+                                            style={styles.dropdown}
+                                            data={data}
+                                            labelField="label"
+                                            valueField="value"
+                                            placeholder="Seçiniz"
+                                            value={value}
+                                            onChange={item => setValue(item.value)}
                                         />
                                     </View>
                                 </View>
@@ -889,6 +1294,27 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#e2e8f0',
     },
+    secondaryButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        paddingHorizontal: 20,
+        justifyContent: 'center',
+    },
+    secondaryButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    secondaryButtonIcon: {
+        fontSize: 16,
+    },
+    secondaryButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -927,6 +1353,15 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#6b7280',
         fontWeight: '500',
+    },
+    dropdown: {
+        height: 50,
+        borderColor: "#D1D5DB",
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: "#fff",
+        marginTop: 5,
     },
     weatherContainer: {
         alignItems: 'center',
@@ -1179,7 +1614,7 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 8,
         borderBottomRightRadius: 8,
         backgroundColor: '#ffffff',
-        maxHeight: 200,
+        maxHeight: 250,
         elevation: 3,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -1204,6 +1639,70 @@ const styles = StyleSheet.create({
     divider: {
         marginVertical: 16,
     },
+
+    // Custom Date Picker Styles
+    customDateSection: {
+        marginTop: 16,
+        padding: 16,
+        backgroundColor: '#f8fafc',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    customDateTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: 16,
+    },
+    datePickerRow: {
+        marginBottom: 12,
+    },
+    dateLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#6b7280',
+        marginBottom: 8,
+    },
+    datePickerButton: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderColor: '#d1d5db',
+        borderRadius: 8,
+        backgroundColor: '#ffffff',
+    },
+    datePickerButtonText: {
+        fontSize: 16,
+        color: '#374151',
+        fontWeight: '500',
+    },
+    calendarIcon: {
+        fontSize: 16,
+    },
+    warningContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+        padding: 12,
+        backgroundColor: '#fef3cd',
+        borderRadius: 8,
+        borderLeftWidth: 4,
+        borderLeftColor: '#f59e0b',
+    },
+    warningIcon: {
+        fontSize: 16,
+        marginRight: 8,
+    },
+    warningText: {
+        fontSize: 14,
+        color: '#92400e',
+        flex: 1,
+    },
+
     modalFooter: {
         flexDirection: 'row',
         padding: 20,
@@ -1443,4 +1942,118 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#FFFFFF',
     },
+    dateModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    dateModalContainer: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        padding: 24,
+        width: '100%',
+        maxWidth: 340,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.3,
+        shadowRadius: 24,
+        elevation: 20,
+    },
+    dateModalHeader: {
+        alignItems: 'center',
+        marginBottom: 20,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    dateModalTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#1F2937',
+        letterSpacing: -0.3,
+    },
+    datePicker: {
+        backgroundColor: '#FFFFFF',
+    },
+    dateModalActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 24,
+        gap: 12,
+    },
+    dateModalButton: {
+        flex: 1,
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderRadius: 16,
+        alignItems: 'center',
+        backgroundColor: '#F3F4F6',
+    },
+    dateModalConfirmButton: {
+        backgroundColor: '#8B5CF6',
+    },
+    dateModalCancelText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#6B7280',
+    },
+
+      dateInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#d1d5db',
+        backgroundColor:'white',
+        borderRadius: 8,
+        backgroundColor: '#ffffff',
+        paddingHorizontal: 12,
+        paddingVertical: 8
+    },
+    dateTextInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#374151',
+        paddingHorizontal: 0,
+        paddingVertical: 4,
+        fontWeight: '500',
+    },
+    dateTextInputError: {
+        borderColor: '#ef4444',
+        backgroundColor: '#fef2f2',
+    },
+    dateInputIcon: {
+        fontSize: 16,
+        marginLeft: 8,
+        color: '#6b7280',
+    },
+    dateErrorText: {
+        fontSize: 12,
+        color: '#ef4444',
+        marginTop: 4,
+        marginLeft: 4,
+    },
+    dateFormatInfo: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: '#f0f9ff',
+        padding: 12,
+        borderRadius: 8,
+        borderLeftWidth: 4,
+        borderLeftColor: '#0ea5e9',
+        marginTop: 8,
+    },
+    dateFormatIcon: {
+        fontSize: 14,
+        marginRight: 8,
+        marginTop: 1,
+    },
+    dateFormatText: {
+        fontSize: 12,
+        color: '#0369a1',
+        flex: 1,
+        lineHeight: 16,
+    },
+
 });

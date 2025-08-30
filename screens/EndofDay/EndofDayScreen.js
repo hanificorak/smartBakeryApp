@@ -27,7 +27,6 @@ const EndofDayScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const { data } = await api.post(Endpoint.EndOfData);
-      console.log(data)
       setLoading(false);
       if (data && data.status) {
         setDailyData(data.obj || []);
@@ -49,7 +48,6 @@ const EndofDayScreen = ({ navigation }) => {
           onPress: async () => {
             try {
               const { data } = await api.post(Endpoint.EndOfDelete, { id: id });
-              console.log(data)
               if (data && data.status) {
                 Alert.alert('Bilgi', 'Kayıt başarıyla silindi.')
                 getEndData();
@@ -73,7 +71,7 @@ const EndofDayScreen = ({ navigation }) => {
         'Bugüne ait gün sonu kaydı girilmiş. Bugüne ait kaydı silerek işlem yapabilirsiniz.'
       );
     } else {
-      navigation.replace('AddEndOfDayScreen');
+        navigation.replace('AddEndOfDayScreen');
     }
   };
 

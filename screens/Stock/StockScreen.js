@@ -357,7 +357,7 @@ export default function StockScreen({ navigation, setToken }) {
                                         <Text style={styles.primaryButtonText}>Yeni Giriş</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
-
+{/* 
                                 <TouchableOpacity
                                     style={styles.secondaryButton}
                                     onPress={() => setShowdateSelect(true)}
@@ -367,7 +367,7 @@ export default function StockScreen({ navigation, setToken }) {
                                         <Text style={styles.secondaryButtonIcon}>📅</Text>
                                         <Text style={styles.secondaryButtonText}>Tarih</Text>
                                     </View>
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </View>
                         </Animated.View>
                     </View>

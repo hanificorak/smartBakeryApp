@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons'; // veya başka bir icon kütüphanesi
 
 const HomeScreen = ({ navigation }) => {
+  const [admin, setAdmin] = useState(null);
+
   const menuItems = [
     {
       id: 1,
@@ -40,7 +42,7 @@ const HomeScreen = ({ navigation }) => {
       bgColor: '#F3F4F6',
       screen: 'ReportsScreen'
     },
-      {
+    {
       id: 5,
       title: 'Üretim Tahmini Al',
       subtitle: 'Bugüne ait üretim tahmini al',
@@ -48,6 +50,15 @@ const HomeScreen = ({ navigation }) => {
       color: '#8B5CF6',
       bgColor: '#F3F4F6',
       screen: 'GuessScreen'
+    },
+    {
+      id: 9,
+      title: 'Buzdolabı Çalışma Takibi',
+      subtitle: 'Dolaplara ait çalışma takibi',
+      icon: 'ac-unit',
+      color: '#8B5CF6',
+      bgColor: '#F3F4F6',
+      screen: 'FreezerScreen'
     },
     {
       id: 4,
@@ -58,7 +69,7 @@ const HomeScreen = ({ navigation }) => {
       bgColor: '#FEF3C7',
       screen: 'DefinitionsScreen'
     },
-     {
+    {
       id: 6,
       title: 'Kullanıcılar',
       subtitle: 'Sisteme kullanıcı ekleyin veya silin',
@@ -68,15 +79,45 @@ const HomeScreen = ({ navigation }) => {
       screen: 'UsersScreen'
     },
     {
-      id: 5,
+      id: 7,
       title: 'Profilim',
       subtitle: 'Kullanıcı profili ve ayarlar',
       icon: 'person',
       color: '#EF4444',
       bgColor: '#FEE2E2',
       screen: 'ProfileScreen'
+    },
+    {
+      id: 8,
+      title: 'İşletme Ayarları',
+      subtitle: 'İşletmenize ait bilgleri girebilirsiniz.',
+      icon: 'business',
+      color: '#8B5CF6',
+      bgColor: '#F3F4F6',
+      screen: 'CompanyScreen'
+    },
+    {
+      id: 10,
+      title: 'Re-Install',
+      subtitle: 'Uygulama tamir aracı.',
+      icon: 'refresh',
+      color: '#8B5CF6',
+      bgColor: '#F3F4F6',
+      screen: 'ReinstallScreen'
     }
   ];
+
+  useEffect(() => {
+
+    checkAdmin();
+  }, []);
+
+
+  const checkAdmin = async () => {
+    const admin = await AsyncStorage.getItem('is_admin');
+    setAdmin(admin);
+    console.log('AAAA', admin)
+  };
 
   const handleMenuPress = async (item) => {
     navigation.navigate(item.screen);
@@ -95,14 +136,14 @@ const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>smartBakery - Akıllı Fırın</Text>
           <Text style={styles.headerSubtitle}>Hoş geldiniz!</Text>
         </View>
-        
+
         <TouchableOpacity
           onPress={handleLogout}
           style={styles.logoutButton}
@@ -117,27 +158,27 @@ const HomeScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Hoş Geldin Kartı */}
-  
 
-        {/* Menü Öğeleri */}
+
         <View style={styles.menuContainer}>
-          {menuItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.menuItem}
-              onPress={() => handleMenuPress(item)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.iconContainer, { backgroundColor: item.bgColor }]}>
-                <Icon name={item.icon} size={24} color={item.color} />
-              </View>
-              
-              <Text style={styles.menuTitle}>{item.title}</Text>
-              <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+          {menuItems
+            .filter((item) => admin === "admin" || item.id !== 3)
+            .map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.menuItem}
+                onPress={() => handleMenuPress(item)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconContainer, { backgroundColor: item.bgColor }]}>
+                  <Icon name={item.icon} size={24} color={item.color} />
+                </View>
 
+                <Text style={styles.menuTitle}>{item.title}</Text>
+                <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+              </TouchableOpacity>
+            ))}
+        </View>
         {/* Alt Bilgi */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>

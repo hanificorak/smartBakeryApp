@@ -89,7 +89,6 @@ export default function RegisterScreen({ navigation, setToken }) {
                 password: password 
             });
 
-            setIsLoading(false);
 
             if (data && data.status) {
                 Alert.alert('Kayıt işlemi başarıyla gerçekleşti')

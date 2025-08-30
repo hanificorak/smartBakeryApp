@@ -183,7 +183,6 @@ const GuessScreen = ({ navigation }) => {
 
     const calcDay = async (product) => {
         const { data } = await api.post(Endpoint.GuessData, { weather_code: weatherData.conditionId,product_id:product.id });
-        console.log(data)
         if (data && data.status) {
             setDetailText(`Bugün ${data.obj.day}. Hava: ${data.obj.weather}, Geçmişte ortalama ${data.obj.average_produced} adet üretip ${data.obj.average_sold} adet satmışsın.`)
             setWaitMessage(`Bugün yaklaşık ${data.obj.suggested_production} adet üretmen önerilir.`)
