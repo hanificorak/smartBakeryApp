@@ -12,19 +12,24 @@ import {
     Platform,
     ScrollView,
     Alert,
+    Button,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 import Endpoint from '../tools/endpoint';
+import { useTranslation } from "react-i18next";
+import "../src/i18n"; // sadece import etmen yeterli
 
 const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation, setToken }) {
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
 
     // Animasyon değerleri
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -45,7 +50,14 @@ export default function LoginScreen({ navigation, setToken }) {
                 useNativeDriver: true,
             }),
         ]).start();
+        clearData();
     }, []);
+
+
+    const changeLanguage = async (lang) => {
+        await i18n.changeLanguage(lang);
+        await AsyncStorage.setItem("user-language", lang); // kaydet
+    };
 
     const handleLogin = async () => {
         try {
@@ -67,9 +79,17 @@ export default function LoginScreen({ navigation, setToken }) {
 
 
             const { data } = await axios.post(Endpoint.Login, { email: email, password: password });
-            console.log('ddd', data)
             setIsLoading(false);
 
+            console.log(data)
+            if (!data.is_onay) {
+                Alert.alert(t('warning'), t('login.approve_msg'));
+                return;
+            }
+            if (!data.user_status) {
+                Alert.alert(t('warning'), t('login.passive_msg'));
+                return;
+            }
             if (data && data.status) {
                 await AsyncStorage.setItem('token', data.access_token);
                 await AsyncStorage.setItem('is_admin', (data.admin_status == 1 ? 'admin' : 'user'));
@@ -81,19 +101,30 @@ export default function LoginScreen({ navigation, setToken }) {
                     navigation.replace('UserSelectScreen');
                 }
             } else {
-                Alert.alert('Uyarı', 'E-Posta ve şifrenizi lütfen kontrol edin.')
+                Alert.alert(t('warning'), t('login.login_error'))
             }
 
         } catch (error) {
             console.log(error)
         }
     };
+
+    const clearData = async () => {
+        const lang = await AsyncStorage.getItem('user-language');
+        if(lang != null){
+            changeLanguage(lang)
+        }
+
+        AsyncStorage.removeItem('token');
+        AsyncStorage.removeItem('is_admin');
+    };
+
     const register = async () => {
         navigation.replace('Register');
-
     };
 
     const isFormValid = email.length > 0 && password.length > 0;
+    const { t, i18n } = useTranslation();
 
     return (
         <KeyboardAvoidingView
@@ -134,8 +165,8 @@ export default function LoginScreen({ navigation, setToken }) {
                             <View style={styles.logoContainer}>
                                 <Text style={styles.logoText}>🚀</Text>
                             </View>
-                            <Text style={styles.welcomeText}>Hoş Geldiniz</Text>
-                            <Text style={styles.subtitleText}>Hesabınıza giriş yapın</Text>
+                            <Text style={styles.welcomeText}>{t('login.welcome')}</Text>
+                            <Text style={styles.subtitleText}>{t('login.sub_message')}</Text>
                         </View>
 
                         {/* Form Container */}
@@ -148,7 +179,7 @@ export default function LoginScreen({ navigation, setToken }) {
                                 </View>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="E-posta adresiniz"
+                                    placeholder={t('login.email')}
                                     placeholderTextColor="#A0A0A0"
                                     value={email}
                                     onChangeText={setEmail}
@@ -165,7 +196,7 @@ export default function LoginScreen({ navigation, setToken }) {
                                 </View>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Şifreniz"
+                                    placeholder={t('login.password')}
                                     placeholderTextColor="#A0A0A0"
                                     value={password}
                                     onChangeText={setPassword}
@@ -180,10 +211,6 @@ export default function LoginScreen({ navigation, setToken }) {
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Forgot Password */}
-                            <TouchableOpacity style={styles.forgotPasswordContainer}>
-                                <Text style={styles.forgotPasswordText}>Şifremi Unuttum?</Text>
-                            </TouchableOpacity>
 
                             {/* Login Button */}
                             <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
@@ -205,10 +232,10 @@ export default function LoginScreen({ navigation, setToken }) {
                                         {isLoading ? (
                                             <View style={styles.loadingContainer}>
                                                 <View style={styles.spinner} />
-                                                <Text style={styles.buttonText}>Giriş Yapılıyor...</Text>
+                                                <Text style={styles.buttonText}>{t('login.login_loading')}</Text>
                                             </View>
                                         ) : (
-                                            <Text style={styles.buttonText}>Giriş Yap</Text>
+                                            <Text style={styles.buttonText}>{t('login.login')}</Text>
                                         )}
                                     </LinearGradient>
                                 </TouchableOpacity>
@@ -217,14 +244,20 @@ export default function LoginScreen({ navigation, setToken }) {
 
                             {/* Sign Up Link */}
                             <View style={styles.signupContainer}>
-                                <Text style={styles.signupText}>Hesabınız yok mu? </Text>
+                                <Text style={styles.signupText}>{t('login.register_msg')} </Text>
                                 <TouchableOpacity onPress={register}>
-                                    <Text style={styles.signupLink}>Kayıt Ol</Text>
+                                    <Text style={styles.signupLink}>{t('login.register')}</Text>
                                 </TouchableOpacity>
                             </View>
 
                         </View>
                     </Animated.View>
+
+
+
+                    <Button title="Türkçe" onPress={() => changeLanguage("tr")} />
+                    <Button title="Deutsch" onPress={() => changeLanguage("de")} />
+
                 </ScrollView>
             </LinearGradient>
         </KeyboardAvoidingView>
@@ -288,7 +321,7 @@ const styles = StyleSheet.create({
         fontSize: 40,
     },
     welcomeText: {
-        fontSize: 32,
+        fontSize: 27,
         fontWeight: 'bold',
         color: 'white',
         marginBottom: 8,

@@ -24,36 +24,53 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Bu import'u ekle
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
+import { Dropdown, MultiSelect } from "react-native-element-dropdown";
 import {
     Snackbar,
     ActivityIndicator,
 } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
 export default function UsersScreen({ navigation, setToken }) {
     const insets = useSafeAreaInsets(); // Safe area insets'i al
-    
+
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [addModalVisible, setAddModalVisible] = useState(false);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [value, setValue] = useState("0");
+    const [admin, setAdmin] = useState(null);
 
     // Form state
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
         email: '',
-        password: ''
+        password: '',
+        id: null,
     });
     const [formErrors, setFormErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
+    const [userStatus, setUserStatus] = useState("1");
 
     // Animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(50)).current;
+
+    const data = [
+        { label: "Kullanıcı", value: "0" },
+        { label: "Admin", value: "1" },
+    ];
+
+    const dataStatus = [
+        { label: "Pasif", value: "0" },
+        { label: "Aktif", value: "1" },
+    ];
+
 
     // Load users
     const loadUsers = async () => {
@@ -63,9 +80,9 @@ export default function UsersScreen({ navigation, setToken }) {
             // // const response = await api.get(Endpoint.users);
             // // setUsers(response.data);
 
-            const {data} = await api.post(Endpoint.GetUsers);
+            const { data } = await api.post(Endpoint.GetUsers);
             console.log(data)
-            if(data && data.status){
+            if (data && data.status) {
                 setUsers(data.obj);
             }
             // // Demo data
@@ -75,7 +92,7 @@ export default function UsersScreen({ navigation, setToken }) {
             //         { id: 2, firstName: 'Mehmet', lastName: 'Demir', email: 'mehmet@example.com' },
             //         { id: 3, firstName: 'Ayşe', lastName: 'Kaya', email: 'ayse@example.com' },
             //     ]);
-                setLoading(false);
+            setLoading(false);
             // }, 1000);
         } catch (error) {
             setLoading(false);
@@ -100,19 +117,6 @@ export default function UsersScreen({ navigation, setToken }) {
         if (!formData.lastName.trim()) {
             errors.lastName = 'Soyad gerekli';
         }
-
-        // if (!formData.email.trim()) {
-        //     errors.email = 'Email gerekli';
-        // } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        //     errors.email = 'Geçerli bir email adresi girin';
-        // }
-
-        // if (!formData.password.trim()) {
-        //     errors.password = 'Şifre gerekli';
-        // } else if (formData.password.length < 6) {
-        //     errors.password = 'Şifre en az 6 karakter olmalı';
-        // }
-
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -129,6 +133,9 @@ export default function UsersScreen({ navigation, setToken }) {
                     email: formData.email,
                     password: formData.password,
                     firm_id: 1,
+                    id: formData.id,
+                    perm: value,
+                    status:userStatus
                 });
                 console.log(data)
                 if (data && data.status) {
@@ -152,6 +159,12 @@ export default function UsersScreen({ navigation, setToken }) {
         }
     };
 
+    const checkAdmin = async () => {
+        const admin = await AsyncStorage.getItem('is_admin');
+        setAdmin(admin);
+    };
+
+
     const showSnackbar = (message) => {
         setSnackbarMessage(message);
         setSnackbarVisible(true);
@@ -159,6 +172,7 @@ export default function UsersScreen({ navigation, setToken }) {
 
     // Effects
     useEffect(() => {
+        checkAdmin();
         loadUsers();
     }, []);
 
@@ -200,11 +214,44 @@ export default function UsersScreen({ navigation, setToken }) {
             <View style={styles.userInfo}>
                 <Text style={styles.userName}>{item.name}</Text>
                 <Text style={styles.userEmail}>{item.email}</Text>
+                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.status == 1 ? 'Aktif' : 'Pasif'}</Text>
+
+                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.is_admin == 1 ? 'Admin' : 'Kullanıcı'}</Text>
+                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.admin_onay == 1 ? 'Onaylı Kullanıcı' : 'Onay Bekliyor'}</Text>
             </View>
-            <TouchableOpacity style={styles.userActionButton}>
-                <Text style={styles.actionButtonText}>⋮</Text>
+            <TouchableOpacity style={styles.userActionButton} onPress={() => editUser(item)}>
+                <Text style={styles.actionButtonText}>Düzenle</Text>
             </TouchableOpacity>
         </Animated.View>
+    );
+
+    const editUser = (item) => (
+        setFormData({
+            firstName: item.name,
+            lastName: '',
+            email: item.email,
+            id: item.id
+
+        }),
+        setValue(item.is_admin.toString()),
+        setUserStatus(item.status.toString()),
+        setAddModalVisible(true)
+    );
+
+    const userCheckOpen = () => (
+        navigation.replace('UserCheckScreen')
+
+    );
+
+    const openModal = () => (
+        setFormData({
+            firstName: '',
+            lastName: '',
+            email: '',
+            id: null
+
+        }),
+        setAddModalVisible(true)
     );
 
     const renderAddModal = () => (
@@ -262,6 +309,33 @@ export default function UsersScreen({ navigation, setToken }) {
                                         <Text style={styles.errorText}>{formErrors.email}</Text>
                                     )}
                                 </View>
+                                <View style={{ marginTop: 0 }}>
+                                    <Text>Durum</Text>
+
+                                    <Dropdown
+                                        style={styles.dropdown}
+                                        data={dataStatus}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Seçiniz"
+                                        value={userStatus}
+                                        onChange={item => setUserStatus(item.value)}
+                                    />
+                                </View>
+
+                                {admin == "admin" ? <View style={{ marginTop: 15 }}>
+                                    <Text>Yetki Durumu</Text>
+
+                                    <Dropdown
+                                        style={styles.dropdown}
+                                        data={data}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Seçiniz"
+                                        value={value}
+                                        onChange={item => setValue(item.value)}
+                                    />
+                                </View> : <View></View>}
 
                                 {/* <View style={styles.inputGroup}>
                                     <Text style={styles.inputLabel}>Şifre</Text>
@@ -311,9 +385,17 @@ export default function UsersScreen({ navigation, setToken }) {
                     <Text style={styles.headerTitle}>Kullanıcılar</Text>
                     <Text style={styles.headerSubtitle}>{users.length} kullanıcı</Text>
                 </Animated.View>
+
+
             </LinearGradient>
+            {admin == "admin" ? <View style={{ margin: 10 }}>
+                <TouchableOpacity style={[styles.userActionButton, {}]} onPress={() => userCheckOpen()}>
+                    <Text style={[styles.actionButtonText, { textAlign: 'center', fontSize: 15 }]}>Kullanıcı Onay İşlemleri</Text>
+                </TouchableOpacity>
+            </View> : <View></View>}
 
             <View style={styles.content}>
+
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#667eea" />
@@ -344,8 +426,8 @@ export default function UsersScreen({ navigation, setToken }) {
 
             {/* FAB'a bottom insets ekle */}
             <TouchableOpacity
-                style={[styles.fab, { bottom: 30 + insets.bottom }]}
-                onPress={() => setAddModalVisible(true)}
+                style={[styles.fab, { bottom: 50 + insets.bottom, marginRight: 20 }]}
+                onPress={() => openModal()}
                 activeOpacity={0.8}
             >
                 <LinearGradient
@@ -445,10 +527,12 @@ const styles = StyleSheet.create({
     },
     userActionButton: {
         padding: 10,
+        backgroundColor: '#667eea',
+        borderRadius: 10
     },
     actionButtonText: {
-        fontSize: 20,
-        color: '#666',
+        fontSize: 12,
+        color: 'white',
     },
     fab: {
         position: 'absolute',
@@ -583,5 +667,14 @@ const styles = StyleSheet.create({
     },
     snackbar: {
         backgroundColor: '#333',
+    },
+    dropdown: {
+        height: 50,
+        borderColor: "#D1D5DB",
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: "#fff",
+        marginTop: 5,
     },
 });

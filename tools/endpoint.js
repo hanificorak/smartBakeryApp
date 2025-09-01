@@ -1,5 +1,5 @@
-// const BASE_URL = "http://127.0.0.1:8000";
-const BASE_URL = "https://smartbakery.nubifysoftware.com";
+const BASE_URL = "http://127.0.0.1:8000";
+// const BASE_URL = "https://smartbakery.nubifysoftware.com";
 
 const Endpoint = {
   Login: `${BASE_URL}/api/auth/login`,
@@ -20,18 +20,24 @@ const Endpoint = {
   ReportData: `${BASE_URL}/api/reports/getReportData`,
   ReportSend: `${BASE_URL}/api/reports/createReport`,
   GuessData: `${BASE_URL}/api/guess/getData`,
+  GuessMail: `${BASE_URL}/api/guess/totalGuessPdfMail`,
   UpdateProfile: `${BASE_URL}/api/profile/updateProfile`,
   UpdatePassword: `${BASE_URL}/api/profile/updatePassword`,
+  GetProfileData: `${BASE_URL}/api/profile/getProfileData`,
   AddUser: `${BASE_URL}/api/users/addUser`,
   GetUsers: `${BASE_URL}/api/users/getUsers`,
+  GetWaitData: `${BASE_URL}/api/users/getWaitData`,
+  ApproveUser: `${BASE_URL}/api/users/approve`,
   GetCompanyInfo: `${BASE_URL}/api/company/getData`,
   SaveSettings: `${BASE_URL}/api/company/save`,
   ReinstallStart: `${BASE_URL}/api/reinstall/start`,
-  UserChange: `${BASE_URL}/api/user/userChange`,
+  UserChange: `${BASE_URL}/api/user/userChange`,  
   FreezerList: `${BASE_URL}/api/freezer/getData`,
   FreeSave: `${BASE_URL}/api/freezer/save`,
   FreeDelete: `${BASE_URL}/api/freezer/delete`,
   FreeReportSend: `${BASE_URL}/api/freezer/createReport`,
+  LastStockData: `${BASE_URL}/api/laststock/getData`,
+  LastStockSave: `${BASE_URL}/api/laststock/save`,
 };
 
 export default Endpoint;

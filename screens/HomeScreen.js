@@ -10,15 +10,18 @@ import {
   StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons'; // veya başka bir icon kütüphanesi
+import { useTranslation } from "react-i18next";
+import "../src/i18n"; // sadece import etmen yeterli
 
 const HomeScreen = ({ navigation }) => {
   const [admin, setAdmin] = useState(null);
+  const { t, i18n } = useTranslation();
 
   const menuItems = [
     {
       id: 1,
-      title: 'Stok Girişi',
-      subtitle: 'Günlük stok işlemleri',
+      title: t('menu.stock_login'),
+      subtitle: t('menu.stock_login_msg'),
       icon: 'inventory',
       color: '#3B82F6',
       bgColor: '#EFF6FF',
@@ -26,8 +29,8 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 2,
-      title: 'Gün Sonu İşlemleri',
-      subtitle: 'Günlük kapanış işlemleri',
+      title: t('menu.end_of_day'),
+      subtitle: t('menu.end_of_day_msg'),
       icon: 'trending-up',
       color: '#10B981',
       bgColor: '#ECFDF5',
@@ -35,8 +38,8 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 3,
-      title: 'Raporlar',
-      subtitle: 'Detaylı raporlar ve analizler',
+      title: t('menu.reports'),
+      subtitle: t('menu.report_msg'),
       icon: 'bar-chart',
       color: '#8B5CF6',
       bgColor: '#F3F4F6',
@@ -44,8 +47,8 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 5,
-      title: 'Üretim Tahmini Al',
-      subtitle: 'Bugüne ait üretim tahmini al',
+      title: t('menu.guess'),
+      subtitle: t('menu.guess_msg'),
       icon: 'wb-sunny',
       color: '#8B5CF6',
       bgColor: '#F3F4F6',
@@ -53,8 +56,8 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 9,
-      title: 'Buzdolabı Çalışma Takibi',
-      subtitle: 'Dolaplara ait çalışma takibi',
+      title: t('menu.freezer'),
+      subtitle: t('menu.freezer_msg'),
       icon: 'ac-unit',
       color: '#8B5CF6',
       bgColor: '#F3F4F6',
@@ -62,8 +65,8 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 4,
-      title: 'Tanımlar',
-      subtitle: 'Sistem ayarları ve tanımlar',
+      title: t('menu.def'),
+      subtitle: t('menu.def_msg'),
       icon: 'settings',
       color: '#F59E0B',
       bgColor: '#FEF3C7',
@@ -71,8 +74,8 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 6,
-      title: 'Kullanıcılar',
-      subtitle: 'Sisteme kullanıcı ekleyin veya silin',
+      title: t('menu.users'),
+      subtitle: t('menu.users_msg'),
       icon: 'group',
       color: '#0049e5ff',
       bgColor: '#d8d8d8ff',
@@ -80,8 +83,8 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 7,
-      title: 'Profilim',
-      subtitle: 'Kullanıcı profili ve ayarlar',
+      title: t('menu.profile'),
+      subtitle: t('menu.profile_msg'),
       icon: 'person',
       color: '#EF4444',
       bgColor: '#FEE2E2',
@@ -89,8 +92,8 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 8,
-      title: 'İşletme Ayarları',
-      subtitle: 'İşletmenize ait bilgleri girebilirsiniz.',
+      title: t('menu.comp'),
+      subtitle: t('menu.comp_msg'),
       icon: 'business',
       color: '#8B5CF6',
       bgColor: '#F3F4F6',
@@ -99,7 +102,7 @@ const HomeScreen = ({ navigation }) => {
     {
       id: 10,
       title: 'Re-Install',
-      subtitle: 'Uygulama tamir aracı.',
+      subtitle: 'Re-Install.',
       icon: 'refresh',
       color: '#8B5CF6',
       bgColor: '#F3F4F6',
@@ -124,9 +127,6 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleLogout = () => {
-    // Çıkış işlemleri
-    // AsyncStorage'dan token'ı temizle
-    // Login ekranına yönlendir
     navigation.reset({
       index: 0,
       routes: [{ name: 'Login' }],
@@ -140,8 +140,8 @@ const HomeScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>smartBakery - Akıllı Fırın</Text>
-          <Text style={styles.headerSubtitle}>Hoş geldiniz!</Text>
+          <Text style={styles.headerTitle}>smartBakery - {t('home.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('welcome')}</Text>
         </View>
 
         <TouchableOpacity
@@ -179,13 +179,7 @@ const HomeScreen = ({ navigation }) => {
               </TouchableOpacity>
             ))}
         </View>
-        {/* Alt Bilgi */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Stok Yönetim Sistemi v1.0{'\n'}
-            Tüm hakları saklıdır.
-          </Text>
-        </View>
+
       </ScrollView>
     </SafeAreaView>
   );

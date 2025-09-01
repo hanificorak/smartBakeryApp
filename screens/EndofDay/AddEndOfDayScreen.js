@@ -22,8 +22,12 @@ import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
 import { Modal, Portal, Provider, Button, ActivityIndicator, Checkbox } from 'react-native-paper';
 import axios from 'axios';
+import { useTranslation } from "react-i18next";
+import "../../src/i18n";
 
 const AddEndOfDayScreen = ({ navigation }) => {
+      const { t, i18n } = useTranslation();
+    
     const [products, setProducts] = useState([]);
     const [inputValues, setInputValues] = useState({});
     const [temp, setTemp] = useState('');
@@ -71,9 +75,23 @@ const AddEndOfDayScreen = ({ navigation }) => {
                 let weather_item_js = JSON.parse(weather_item);
                 let weather_item_response = weather_item_js?.data?.data?.current_weather;
 
-                setTemp(weather_item_response.temperature);
-                setTempCode(weather_item_response.weathercode);
-                getWeatherCodeItem(weather_item_response.weathercode);
+                let time = weather_item_js.time; // string tarih
+                let date = new Date(time);       // Date nesnesine çevir
+                let now = new Date();            // şu anki zaman
+                let diffMs = now - date;
+
+                // milisaniyeyi saate çevir
+                let diffHours = diffMs / (1000 * 60 * 60);
+
+                if (diffHours >= 2) {
+                    getWeatherDataApi(latitude, longitude);
+                } else {
+                    setTemp(weather_item_response.temperature);
+                    setTempCode(weather_item_response.weathercode);
+                    getWeatherCodeItem(weather_item_response.weathercode);
+                }
+
+
             }
         } catch (error) {
             console.log('Hava Durumu Hatası', error.message);
@@ -227,15 +245,15 @@ const AddEndOfDayScreen = ({ navigation }) => {
                 <View style={styles.productInfo}>
                     <Text style={styles.productName}>{product.name}</Text>
                     <View style={styles.stockContainer}>
-                        <Text style={styles.stockLabel}>Mevcut Stok:</Text>
-                        <Text style={styles.stockValue}>{product.amount} adet</Text>
+                        <Text style={styles.stockLabel}>{t('endof.current_amount')}:</Text>
+                        <Text style={styles.stockValue}>{product.amount} {t('stock.unit')}</Text>
                     </View>
 
                 </View>
             </View>
 
             <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Yeni Miktar Girin: (Satılan)</Text>
+                <Text style={styles.inputLabel}>{t('endof.new_amount_input')}</Text>
 
                 <TextInput
                     style={styles.numberInput}

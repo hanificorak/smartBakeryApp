@@ -14,8 +14,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Endpoint from '../../tools/endpoint';
 import api from '../../tools/api';
 import { ActivityIndicator } from 'react-native-paper';
+import { useTranslation } from "react-i18next";
+import "../../src/i18n";
 
 const EndofDayScreen = ({ navigation }) => {
+  const { t, i18n } = useTranslation();
+
   const [dailyData, setDailyData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -38,25 +42,25 @@ const EndofDayScreen = ({ navigation }) => {
 
   const deleteRecord = async (id) => {
     Alert.alert(
-      'Silme Onayı',
-      'Bu kaydı silmek istediğinize emin misiniz?',
+      t('stock.delete_title'),
+      t('endof.remove_msg'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Evet, Sil',
+          text: t('delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               const { data } = await api.post(Endpoint.EndOfDelete, { id: id });
               if (data && data.status) {
-                Alert.alert('Bilgi', 'Kayıt başarıyla silindi.')
+                Alert.alert(t('info'), t('endof.remove_msg_det'))
                 getEndData();
               } else {
-                Alert.alert('Hata', 'Kayıt silinemedi.');
+                Alert.alert(t('warning'), t('app_error'));
               }
             } catch (error) {
               console.log(error);
-              Alert.alert('Hata', 'Bir hata oluştu.');
+              Alert.alert(t('warning'), t('app_error'));
             }
           },
         },
@@ -67,11 +71,11 @@ const EndofDayScreen = ({ navigation }) => {
   const openAddEndOfDay = () => {
     if (dailyData.length > 0) {
       Alert.alert(
-        'Uyarı',
-        'Bugüne ait gün sonu kaydı girilmiş. Bugüne ait kaydı silerek işlem yapabilirsiniz.'
+        t('warning'),
+        t('endof.rd_msg')
       );
     } else {
-        navigation.replace('AddEndOfDayScreen');
+      navigation.replace('AddEndOfDayScreen');
     }
   };
 
@@ -99,27 +103,27 @@ const EndofDayScreen = ({ navigation }) => {
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Bugün Üretilen</Text>
-            <Text style={styles.statValue}>{data.amount} adet</Text>
+            <Text style={styles.statLabel}>{t('endof.now_amount')}</Text>
+            <Text style={styles.statValue}>{data.amount} {t('stock.unit')}</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Satılan</Text>
-            <Text style={styles.statValue}>{data.sales_amount} adet</Text>
+            <Text style={styles.statLabel}>{t('endof.sales_amount')}</Text>
+            <Text style={styles.statValue}>{data.sales_amount} {t('stock.unit')}</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Atık</Text>
-            <Text style={styles.statValue}>{data.remove_amount} adet</Text>
+            <Text style={styles.statLabel}>{t('endof.att')}</Text>
+            <Text style={styles.statValue}>{data.remove_amount} {t('stock.unit')}</Text>
           </View>
-          {data.ert_count != 0  ? <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Ertesi Güne Aktarılan</Text>
-            <Text style={styles.statValue}>{data.ert_count} adet</Text>
-          </View> :  ''}
+          {data.ert_count != 0 ? <View style={styles.statItem}>
+            <Text style={styles.statLabel}>{t('endof.ert_text')}</Text>
+            <Text style={styles.statValue}>{data.ert_count} {t('stock.unit')}</Text>
+          </View> : ''}
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Sıcaklık</Text>
+            <Text style={styles.statLabel}>{t('endof.temp')}</Text>
             <Text style={[styles.statValue, styles.wasteValue]}>{data.temperature}°C</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Hava Durumu</Text>
+            <Text style={styles.statLabel}>{t('endof.weather')}</Text>
             <Text style={[styles.statValue, styles.wasteValue]}>{data.weather.description}</Text>
           </View>
         </View>
@@ -157,14 +161,14 @@ const EndofDayScreen = ({ navigation }) => {
             >
               <View style={styles.headerTop}>
                 <View>
-                  <Text style={styles.headerTitle}>Gün Sonu İşlemleri</Text>
+                  <Text style={styles.headerTitle}>{t('endof.title')}</Text>
                   <Text style={styles.headerSubtitle}>
                     {formattedDate}
                   </Text>
                 </View>
                 <View style={styles.headerStats}>
                   <Text style={styles.statsNumber}>{dailyData.length}</Text>
-                  <Text style={styles.statsLabel}>Kayıt</Text>
+                  <Text style={styles.statsLabel}>{t('record')}</Text>
                 </View>
               </View>
 
@@ -181,7 +185,7 @@ const EndofDayScreen = ({ navigation }) => {
                     end={{ x: 1, y: 0 }}
                   >
                     <Text style={styles.primaryButtonIcon}>+</Text>
-                    <Text style={styles.primaryButtonText}>Yeni Giriş</Text>
+                    <Text style={styles.primaryButtonText}>{t('stock.new_rec')}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
 
@@ -202,8 +206,8 @@ const EndofDayScreen = ({ navigation }) => {
               <View style={styles.loadingContainer}>
                 <View style={styles.loadingCard}>
                   <ActivityIndicator size="large" color="#667eea" />
-                  <Text style={styles.loadingText}>Yükleniyor...</Text>
-                  <Text style={styles.loadingSubtext}>Kayıtlar yükleniyor</Text>
+                  <Text style={styles.loadingText}>{t('loading')}</Text>
+                  <Text style={styles.loadingSubtext}>{t('loading')}</Text>
                 </View>
               </View>
             ) : dailyData.length > 0 ? (
@@ -236,9 +240,9 @@ const EndofDayScreen = ({ navigation }) => {
               <View style={styles.emptyState}>
                 <View style={styles.emptyStateCard}>
                   <Text style={styles.emptyIcon}>📦</Text>
-                  <Text style={styles.emptyTitle}>Henüz kayıt yok</Text>
+                  <Text style={styles.emptyTitle}>{t('no_record')}</Text>
                   <Text style={styles.emptySubtitle}>
-                    Yeni bir gün sonu ekleyerek başlayın
+                    {t('endof.rec_msg')}
                   </Text>
                 </View>
               </View>

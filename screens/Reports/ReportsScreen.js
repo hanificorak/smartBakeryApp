@@ -29,7 +29,12 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
-import { Dropdown } from "react-native-element-dropdown";
+import { Dropdown, MultiSelect } from "react-native-element-dropdown";
+import AntDesign from '@expo/vector-icons/AntDesign';
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import { WebView } from "react-native-webview";
+
 
 const ReportsScreen = ({ navigation }) => {
     const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -65,10 +70,16 @@ const ReportsScreen = ({ navigation }) => {
     const [mailModal, setMailModal] = useState(false);
     const [reportMail, setReportMail] = useState('');
     const [sendLoading, setSendLoading] = useState(false);
-    const [value, setValue] = useState(null);
+    const [value, setValue] = useState("gunluk");
+    const [WeatherView, setWeatherView] = useState(null);
     const [showdateSelect, setShowdateSelect] = useState(false);
     const [tempDate, setTempDate] = useState(new Date());
     const [dateType, setDateType] = useState(null);
+
+    const [selectedProd, setSelectedProd] = useState([]);
+    const [pdfView, setPdfView] = useState(false);
+    const [pdfPath, setpdfPath] = useState('');
+
 
     const dateRanges = [
         { label: 'Tümü', value: 'all' },
@@ -83,6 +94,11 @@ const ReportsScreen = ({ navigation }) => {
         { label: "Günlük Rapor", value: "gunluk" },
     ];
 
+    const dataWeather = [
+        { label: "Göster", value: "view" },
+        { label: "Gösterme", value: "not_view" },
+    ];
+
     useEffect(() => {
         getParam();
         getReportData();
@@ -92,7 +108,7 @@ const ReportsScreen = ({ navigation }) => {
     const formatDateInput = (text) => {
         // Remove all non-numeric characters
         const numbersOnly = text.replace(/\D/g, '');
-        
+
         // Add dots automatically
         if (numbersOnly.length <= 2) {
             return numbersOnly;
@@ -107,7 +123,7 @@ const ReportsScreen = ({ navigation }) => {
         // Check format: DD.MM.YYYY
         const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
         const match = dateString.match(dateRegex);
-        
+
         if (!match) {
             return { isValid: false, error: 'Tarih formatı: GG.AA.YYYY' };
         }
@@ -131,7 +147,7 @@ const ReportsScreen = ({ navigation }) => {
 
         // Create date object
         const dateObj = new Date(year, month - 1, day);
-        
+
         // Check if the date is valid (e.g., not 31.02.2023)
         if (dateObj.getDate() !== day || dateObj.getMonth() !== month - 1 || dateObj.getFullYear() !== year) {
             return { isValid: false, error: 'Geçersiz tarih' };
@@ -172,7 +188,7 @@ const ReportsScreen = ({ navigation }) => {
     const handleStartDateChange = (text) => {
         const formatted = formatDateInput(text);
         setStartDateText(formatted);
-        
+
         if (formatted.length === 10) {
             const validation = validateDate(formatted);
             if (validation.isValid) {
@@ -190,7 +206,7 @@ const ReportsScreen = ({ navigation }) => {
     const handleEndDateChange = (text) => {
         const formatted = formatDateInput(text);
         setEndDateText(formatted);
-        
+
         if (formatted.length === 10) {
             const validation = validateDate(formatted);
             if (validation.isValid) {
@@ -214,15 +230,14 @@ const ReportsScreen = ({ navigation }) => {
     };
 
     const getReportData = async (clear = false) => {
-  
         try {
             setLoading(true);
             let params = {
-                product: (selectedProduct == null ? null : selectedProduct.id),
+                product: (selectedProduct == "all" ? null : (selectedProduct == null ? null : selectedProduct.id)),
                 weather: (selectedWeather == null ? null : selectedWeather.id),
                 date: dateRange,
-                startDate:startDate,
-                endDate:endDate
+                startDate: startDate,
+                endDate: endDate
             }
 
             // Add custom date range if selected
@@ -235,7 +250,7 @@ const ReportsScreen = ({ navigation }) => {
                 params = {
                     product: null,
                     weather: null,
-                    date: 'all',
+                    date: 'today',
                     startDate: null,
                     endDate: null,
                 }
@@ -254,7 +269,7 @@ const ReportsScreen = ({ navigation }) => {
     const clearFilters = async () => {
         setSelectedProduct(null);
         setSelectedWeather(null);
-        setDateRange('all');
+        setDateRange('today');
         setHasCustomDateRange(false);
         setStartDate(new Date());
         setEndDate(new Date());
@@ -264,18 +279,6 @@ const ReportsScreen = ({ navigation }) => {
         setEndDateError('');
         closeModal();
         getReportData(true);
-    };
-
-    const openDatePicker = async (type) => {
-        setFilterModalVisible(false);
-        setShowdateSelect(true);
-        setDateType(type);
-        // Set tempDate to current date for the picker
-        if (type === 'start') {
-            setTempDate(startDate);
-        } else {
-            setTempDate(endDate);
-        }
     };
 
     const closeDatePicker = async () => {
@@ -303,6 +306,10 @@ const ReportsScreen = ({ navigation }) => {
     };
 
     const openModalMail = () => {
+        setReportMail('');
+        setSelectedProd([]);
+        setValue('gunluk');
+        setWeatherView('view');
         setMailModal(true);
         Animated.timing(slideAnim, {
             toValue: 1,
@@ -325,13 +332,13 @@ const ReportsScreen = ({ navigation }) => {
         // Validate custom dates before applying filter
         if (dateRange === 'custom') {
             const { startDateObj, endDateObj } = parseCustomDates();
-            
+
             if (startDateText.length === 10 && endDateText.length === 10) {
                 if (startDateError || endDateError) {
                     Alert.alert('Uyarı', 'Lütfen geçerli tarihler girin.');
                     return;
                 }
-                
+
                 if (startDateObj && endDateObj && startDateObj > endDateObj) {
                     Alert.alert('Uyarı', 'Başlangıç tarihi bitiş tarihinden küçük olmalıdır.');
                     return;
@@ -341,7 +348,7 @@ const ReportsScreen = ({ navigation }) => {
                 return;
             }
         }
-        
+
         getReportData();
         closeModal();
     }
@@ -364,7 +371,9 @@ const ReportsScreen = ({ navigation }) => {
     };
 
     const getSelectedProductLabel = () => {
+
         if (!selectedProduct) return 'Ürün Seçin';
+        if (selectedProduct == "all") return 'Tümü';
         return selectedProduct.name;
     };
 
@@ -377,14 +386,15 @@ const ReportsScreen = ({ navigation }) => {
         return weather ? weather.description : 'Hava Durumu Seçin';
     };
 
-    const sendReportMail = async () => {
+    const sendReportMail = async (type = "mail") => {
         try {
+
             if (reportMail == null) {
                 Alert.alert('Uyarı', 'Gönderilecek Mail Adresini yazmalısınız.');
                 return;
             }
 
-            if (!checkMail()) {
+            if (!checkMail() && type == "mail") {
                 Alert.alert('Uyarı', 'Lütfen geçerli bir mail adresi giriniz.');
                 return;
             }
@@ -395,8 +405,11 @@ const ReportsScreen = ({ navigation }) => {
                 date: dateRange,
                 mail: reportMail,
                 type: value,
-                startDate:startDate,
-                endDate:endDate
+                startDate: startDate,
+                endDate: endDate,
+                hiddenProd: selectedProd,
+                weatherView: WeatherView,
+                type_dt: type
             }
 
             // Add custom date range if selected
@@ -406,13 +419,22 @@ const ReportsScreen = ({ navigation }) => {
             }
 
             const { data } = await api.post(Endpoint.ReportSend, params);
-
+            console.log(data)
             setSendLoading(false);
 
             if (data && data.status) {
-                Alert.alert('Bilgi', `Rapor ${reportMail} adresine başarıyla gönderilmiştir. Spam kutunuzu da kontrol edebilirsiniz.`);
-                setMailModal(false);
-                setReportMail('');
+                if (type == "mail") {
+                    Alert.alert('Bilgi', `Rapor ${reportMail} adresine başarıyla gönderilmiştir. Spam kutunuzu da kontrol edebilirsiniz.`);
+                    setMailModal(false);
+                    setReportMail('');
+                } else {
+                    setpdfPath(data.sub_info)
+                    // console.log(data.sub_info)
+                    setMailModal(false);
+                    setTimeout(() => {
+                        setPdfView(true);
+                    }, 1000);
+                }
             } else {
                 Alert.alert('Uyarı', 'İşlem başarısız.');
             }
@@ -420,6 +442,18 @@ const ReportsScreen = ({ navigation }) => {
             console.log(error)
         }
     };
+
+    async function openPdf(pdfUrl) {
+        try {
+            const fileUri = FileSystem.documentDirectory + "report.pdf";
+            // PDF indir
+            const { uri } = await FileSystem.downloadAsync(pdfUrl, fileUri);
+            // Cihazda aç
+            await Sharing.shareAsync(uri);
+        } catch (error) {
+            console.error("PDF açılırken hata:", error);
+        }
+    }
 
     const getSelectedDateLabel = () => {
         const date = dateRanges.find(d => d.value === dateRange);
@@ -615,9 +649,18 @@ const ReportsScreen = ({ navigation }) => {
         return weatherMap[weather] || '🌤️';
     };
 
+    const closepdfModal = () => {
+        setPdfView(false);
+        setMailModal(true)
+    };
+
     const checkMail = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(reportMail);
+    };
+
+    const reportPreview = () => {
+        sendReportMail("link")
     };
 
     return (
@@ -720,6 +763,76 @@ const ReportsScreen = ({ navigation }) => {
                 }
             </View>
 
+
+            {/* VİEW */}
+
+            <Modal
+                visible={pdfView}
+                transparent={true}
+                animationType="none"
+
+            >
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity
+                        style={styles.modalBackground}
+                        activeOpacity={1}
+
+                    />
+                    <Animated.View
+                        style={[
+                            styles.modalContent,
+                            {
+                                transform: [{
+                                    translateY: slideAnim.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [screenHeight, 0]
+                                    })
+                                }]
+                            }
+                        ]}
+                    >
+                        {/* Header */}
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>PDF Önizleme</Text>
+                            <TouchableOpacity
+                                onPress={closepdfModal}
+                                style={styles.closeButton}
+                            >
+                                <Text style={styles.closeButtonText}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Body */}
+                        <View style={styles.modalBody}>
+                            {/* Buraya PDF gösterimi */}
+                            {/* Örneğin react-native-pdf ile */}
+
+                            <WebView
+                                source={{
+                                    uri: pdfPath,
+                                }}
+                                style={{ flex: 1 }}
+                            />
+
+
+                        </View>
+
+                        {/* Footer */}
+                        <View style={styles.modalFooter}>
+                            <Button
+                                mode="outlined"
+                                onPress={closepdfModal}
+                                style={styles.clearButton}
+                            >
+                                Kapat
+                            </Button>
+
+                        </View>
+                    </Animated.View>
+                </View>
+            </Modal>
+
+
             {/* Filter Modal */}
             <Modal
                 visible={filterModalVisible}
@@ -776,7 +889,7 @@ const ReportsScreen = ({ navigation }) => {
                                         <TouchableOpacity
                                             style={styles.dropdownItem}
                                             onPress={() => {
-                                                setSelectedProduct(null);
+                                                setSelectedProduct("all");
                                                 setProductMenuVisible(false);
                                             }}
                                         >
@@ -1085,6 +1198,35 @@ const ReportsScreen = ({ navigation }) => {
                                             blurOnSubmit={true}
                                         />
                                     </View>
+                                    <View style={{ marginTop: 15 }}>
+                                        <Text>Gizlenecek Ürünler</Text>
+                                        <MultiSelect
+                                            style={styles.dropdown}
+                                            placeholderStyle={styles.placeholderStyle}
+                                            selectedTextStyle={styles.selectedTextStyle}
+                                            inputSearchStyle={styles.inputSearchStyle}
+                                            iconStyle={styles.iconStyle}
+                                            search
+                                            data={products}
+                                            labelField="name"
+                                            valueField="id"
+                                            placeholder="Ürün Seç"
+                                            searchPlaceholder="Arayın..."
+                                            value={selectedProd}
+                                            onChange={item => {
+                                                setSelectedProd(item);
+                                            }}
+                                            renderLeftIcon={() => (
+                                                <AntDesign
+                                                    style={styles.icon}
+                                                    color="black"
+                                                    name="Safety"
+                                                    size={20}
+                                                />
+                                            )}
+                                            selectedStyle={styles.selectedStyle}
+                                        />
+                                    </View>
 
                                     <View style={{ marginTop: 15 }}>
                                         <Text>Rapor Tipi</Text>
@@ -1099,6 +1241,20 @@ const ReportsScreen = ({ navigation }) => {
                                             onChange={item => setValue(item.value)}
                                         />
                                     </View>
+                                    <View style={{ marginTop: 15 }}>
+                                        <Text>Hava Durumu Gösterimi</Text>
+
+                                        <Dropdown
+                                            style={styles.dropdown}
+                                            data={dataWeather}
+                                            labelField="label"
+                                            valueField="value"
+                                            placeholder="Seçiniz"
+                                            value={WeatherView}
+                                            onChange={item => setWeatherView(item.value)}
+                                        />
+                                    </View>
+
                                 </View>
 
                                 {/* Info Card */}
@@ -1137,6 +1293,19 @@ const ReportsScreen = ({ navigation }) => {
                                         </View>
                                     </View>
                                 )}
+
+
+
+                                <TouchableOpacity
+                                    onPress={reportPreview}
+                                    style={[styles.sendMailButton, sendLoading && styles.sendMailButtonDisabled]}
+                                >
+                                    <View style={styles.sendButtonContent}>
+                                        <Text style={styles.sendMailButtonIcon}></Text>
+                                        <Text style={styles.sendMailButtonText}>Önizleme</Text>
+                                    </View>
+                                </TouchableOpacity>
+
                             </ScrollView>
 
                             {/* Modern Footer */}
@@ -1151,7 +1320,7 @@ const ReportsScreen = ({ navigation }) => {
 
                                 <TouchableOpacity
                                     style={[styles.sendMailButton, sendLoading && styles.sendMailButtonDisabled]}
-                                    onPress={sendReportMail}
+                                    onPress={() => sendReportMail('mail')}
                                     disabled={sendLoading || !reportMail.trim()}
                                 >
                                     {sendLoading ? (
@@ -1539,8 +1708,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        maxHeight: '80%',
-        minHeight: '60%',
+        maxHeight: '100%',
+        minHeight: '85%',
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -1614,7 +1783,6 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 8,
         borderBottomRightRadius: 8,
         backgroundColor: '#ffffff',
-        maxHeight: 250,
         elevation: 3,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -1723,8 +1891,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        maxHeight: '70%',
-        minHeight: '45%',
+        maxHeight: '100%',
+        minHeight: '60%',
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -2000,12 +2168,12 @@ const styles = StyleSheet.create({
         color: '#6B7280',
     },
 
-      dateInputContainer: {
+    dateInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
         borderColor: '#d1d5db',
-        backgroundColor:'white',
+        backgroundColor: 'white',
         borderRadius: 8,
         backgroundColor: '#ffffff',
         paddingHorizontal: 12,

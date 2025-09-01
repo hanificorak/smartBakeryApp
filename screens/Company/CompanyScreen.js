@@ -370,6 +370,7 @@ const styles = StyleSheet.create({
     saveButton: {
         borderRadius: 12,
         overflow: 'hidden',
+        marginBottom:25
     },
     saveButtonDisabled: {
         opacity: 0.7,

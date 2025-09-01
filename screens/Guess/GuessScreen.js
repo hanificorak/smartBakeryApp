@@ -46,6 +46,8 @@ const GuessScreen = ({ navigation }) => {
     const [calcModalVisible, setCalcModalVisible] = useState(false)
     const [wait_message, setWaitMessage] = useState('')
     const [detail_text, setDetailText] = useState('')
+    const [mailModalVisible, setMailModalVisible] = useState(false);
+    const [email, setEmail] = useState('');
 
     useEffect(() => {
         getWeatherInfo();
@@ -82,7 +84,23 @@ const GuessScreen = ({ navigation }) => {
             } else {
                 let weather_item_js = JSON.parse(weather_item);
                 let weather_item_response = weather_item_js?.data?.data?.current_weather;
-                setWdata(weather_item_response.temperature, weather_item_response.weathercode)
+
+                let time = weather_item_js.time; // string tarih
+                let date = new Date(time);       // Date nesnesine çevir
+                let now = new Date();            // şu anki zaman
+                let diffMs = now - date;
+
+                // milisaniyeyi saate çevir
+                let diffHours = diffMs / (1000 * 60 * 60);
+
+                if (diffHours >= 2) {
+                    getWeatherDataApi(latitude, longitude);
+                } else {
+                    setWdata(weather_item_response.temperature, weather_item_response.weathercode)
+                }
+
+
+
             }
         } catch (error) {
             console.log('Hava Durumu Hatası', error.message);
@@ -104,6 +122,7 @@ const GuessScreen = ({ navigation }) => {
                 AsyncStorage.setItem('weather_data', JSON.stringify({ data: response, time: new Date().toISOString() }));
                 const currentWeather = response?.data?.current_weather;
                 setWdata(currentWeather.temperature, currentWeather.weathercode)
+                console.log("currentWeather", currentWeather)
             } else {
                 console.log('Hava Durumu API Hatası');
             }
@@ -181,8 +200,20 @@ const GuessScreen = ({ navigation }) => {
         );
     };
 
+    const sendMail = async () => {
+        const { data } = await api.post(Endpoint.GuessMail, { weather: weatherData.conditionId, email: email });
+        console.log(data)
+        if (data && data.status) {
+            setMailModalVisible(false);
+            Alert.alert('Bilgi', 'Mail başarıyla gönderildi');
+        } else {
+            Alert.alert('Uyarı', 'İşlem başarısız.');
+        }
+    };
+
     const calcDay = async (product) => {
-        const { data } = await api.post(Endpoint.GuessData, { weather_code: weatherData.conditionId,product_id:product.id });
+        const { data } = await api.post(Endpoint.GuessData, { weather_code: weatherData.conditionId, product_id: product.id });
+        console.log(data)
         if (data && data.status) {
             setDetailText(`Bugün ${data.obj.day}. Hava: ${data.obj.weather}, Geçmişte ortalama ${data.obj.average_produced} adet üretip ${data.obj.average_sold} adet satmışsın.`)
             setWaitMessage(`Bugün yaklaşık ${data.obj.suggested_production} adet üretmen önerilir.`)
@@ -244,6 +275,20 @@ const GuessScreen = ({ navigation }) => {
                 <TouchableOpacity style={styles.weatherSection} onPress={showModal}>
                     <Text style={styles.condition}>{weatherData.condition}</Text>
                     <Text style={styles.conditionChangeText}>Durumu Değiştir</Text>
+                </TouchableOpacity>
+            </View>
+
+
+            <View style={{ marginLeft: 20, marginRight: 20, marginTop: 10 }}>
+                <TouchableOpacity
+                    style={{
+                        padding: 10,
+                        backgroundColor: '#667eea',
+                        borderRadius: 10
+                    }}
+                    onPress={() => setMailModalVisible(true)}  // Modal açılır
+                >
+                    <Text style={{ color: 'white', textAlign: 'center' }}>Mail Gönder</Text>
                 </TouchableOpacity>
             </View>
 
@@ -410,6 +455,53 @@ const GuessScreen = ({ navigation }) => {
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
+            <Modal
+                transparent
+                visible={mailModalVisible}
+                onRequestClose={() => setMailModalVisible(false)}
+                animationType="fade"
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.centeredOverlay}
+                >
+                    <View style={styles.mailModalContainer}>
+                        <Text style={styles.mailModalTitle}>Mail Adresi Gir</Text>
+
+                        <TextInput
+                            style={styles.mailInput}
+                            value={email}
+                            onChangeText={setEmail}
+                            placeholder="örnek@mail.com"
+                            keyboardType="email-address"
+                            autoFocus
+                            placeholderTextColor="#9ca3af"
+                        />
+
+                        <View style={styles.mailModalButtons}>
+                            <TouchableOpacity
+                                style={[styles.mailButton, styles.cancelButton]}
+                                onPress={() => setMailModalVisible(false)}
+                            >
+                                <Text style={styles.cancelText}>İptal</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.mailButton, styles.sendButton]}
+                                onPress={() => {
+                                    if (!email.includes('@')) {
+                                        Alert.alert('Hata', 'Geçerli bir mail adresi giriniz');
+                                        return;
+                                    }
+                                 
+                                    sendMail();
+                                }}
+                            >
+                                <Text style={styles.sendText}>Gönder</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </ScrollView>
     );
 };
@@ -453,7 +545,65 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
     },
-
+    centeredOverlay: {
+        flex: 1,
+        justifyContent: 'center', // dikey ortala
+        alignItems: 'center',     // yatay ortala
+        backgroundColor: 'rgba(0,0,0,0.5)', // arka plan karartma
+    },
+    mailModalContainer: {
+        width: '85%',
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+        elevation: 5,
+    },
+    mailModalTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 15,
+        textAlign: 'center',
+        color: '#111827',
+    },
+    mailInput: {
+        borderWidth: 1,
+        borderColor: '#d1d5db',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 16,
+        marginBottom: 20,
+        color: '#111827',
+    },
+    mailModalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    mailButton: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginHorizontal: 5,
+    },
+    cancelButton: {
+        backgroundColor: '#f3f4f6',
+    },
+    sendButton: {
+        backgroundColor: '#3b82f6',
+    },
+    cancelText: {
+        color: '#374151',
+        fontWeight: '600',
+    },
+    sendText: {
+        color: '#fff',
+        fontWeight: '600',
+    },
     modalTitle: {
         flex: 1,
         fontSize: 20,

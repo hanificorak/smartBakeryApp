@@ -26,10 +26,14 @@ import api from '../../tools/api';
 import { ActivityIndicator, Button } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useColorScheme } from 'react-native';
+import { useTranslation } from "react-i18next";
+import "../../src/i18n"; 
 
 const { width, height } = Dimensions.get('window');
 
 export default function StockScreen({ navigation, setToken }) {
+      const { t, i18n } = useTranslation();
+    
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [stockEntries, setStockEntries] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
@@ -46,7 +50,7 @@ export default function StockScreen({ navigation, setToken }) {
     const [tempDate, setTempDate] = useState(new Date());
     const [loading, setLoading] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
-    const colorScheme = useColorScheme(); // 'light' veya 'dark'
+    const colorScheme = useColorScheme(); 
 
 
 
@@ -124,7 +128,7 @@ export default function StockScreen({ navigation, setToken }) {
 
     const addStockEntry = async () => {
         if (!selectedProduct || !quantity) {
-            Alert.alert('Hata', 'Ürün adı ve miktar alanları zorunludur.');
+            Alert.alert(t('warning'), t('stock.warning_save'));
             return;
         }
 
@@ -137,11 +141,11 @@ export default function StockScreen({ navigation, setToken }) {
         setSaveLoading(false);
 
         if (data && data.status) {
-            Alert.alert('Bilgi', 'Kayıt başarıyla eklendi.');
+            Alert.alert(t('info'), t('stock.success_msg'));
             getStockData();
             closeModal();
         } else {
-            Alert.alert('Uyarı', 'İşlem başarısız.');
+            Alert.alert(t('warning'),t('app_error'));
         }
     };
 
@@ -170,25 +174,25 @@ export default function StockScreen({ navigation, setToken }) {
 
     const deleteStockEntry = (id) => {
         Alert.alert(
-            'Silme Onayı',
-            'Bu stok kaydını silmek istediğinizden emin misiniz?',
+            t('stock.delete_title'),
+            t('stock.delete_msg'),
             [
-                { text: 'İptal', style: 'cancel' },
+                { text: t('cancel'), style: 'cancel' },
                 {
-                    text: 'Sil',
+                    text: t('delete'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             const { data } = await api.post(Endpoint.StockDelete, { stock_id: id.id });
                             if (data && data.status) {
-                                Alert.alert('Bilgi', 'Stok kaydı başarıyla silindi.');
+                                Alert.alert(t('info'), t('stock.delete_success'));
                                 getStockData();
                             } else {
                                 if (data.sub_info == "usage_rec") {
-                                    Alert.alert('Uyarı', 'Seçilen kayda günlük stok girilmiş. Bu kayıt silinemez.');
+                                    Alert.alert(t('warning'), t('stock.stock_del_detail'));
                                     return;
                                 }
-                                Alert.alert('Uyarı', 'İşlem başarısız.');
+                                Alert.alert(t('warning'), t('app_error'));
                             }
                         } catch (error) {
                             console.error('Silme hatası:', error);
@@ -206,6 +210,10 @@ export default function StockScreen({ navigation, setToken }) {
             month: '2-digit',
             year: 'numeric'
         });
+    };
+
+    const openLastScreen = () => {
+        navigation.replace('LastStockScreen')
     };
 
     const formatDateTime = (dateString) => {
@@ -252,7 +260,7 @@ export default function StockScreen({ navigation, setToken }) {
                         </View>
                         <View>
                             <Text style={styles.statValue}>{item.amount}</Text>
-                            <Text style={styles.statLabel}>Miktar</Text>
+                            <Text style={styles.statLabel}>{t('stock.amount')}</Text>
                         </View>
                     </View>
 
@@ -264,7 +272,7 @@ export default function StockScreen({ navigation, setToken }) {
                         </View>
                         <View>
                             <Text style={styles.statValue}>{formatDateTime(item.created_at).split(' ')[1]}</Text>
-                            <Text style={styles.statLabel}>Saat</Text>
+                            <Text style={styles.statLabel}>{t('stock.time')}</Text>
                         </View>
                     </View>
                 </View>
@@ -273,7 +281,7 @@ export default function StockScreen({ navigation, setToken }) {
                     <View style={styles.descriptionCard}>
                         <View style={styles.descriptionHeader}>
                             <Text style={styles.descriptionIcon}>💬</Text>
-                            <Text style={styles.descriptionTitle}>Açıklama</Text>
+                            <Text style={styles.descriptionTitle}>{t('stock.desc')}</Text>
                         </View>
                         <Text style={styles.descriptionText}>{item.desc}</Text>
                     </View>
@@ -330,18 +338,33 @@ export default function StockScreen({ navigation, setToken }) {
                         >
                             <View style={styles.headerTop}>
                                 <View>
-                                    <Text style={styles.headerTitle}>Stok Yönetimi</Text>
+                                    <Text style={styles.headerTitle}>{t('stock.title')}</Text>
                                     <Text style={styles.headerSubtitle}>
                                         {formatDate(selectedDate)}
                                     </Text>
                                 </View>
                                 <View style={styles.headerStats}>
                                     <Text style={styles.statsNumber}>{stockEntries.length}</Text>
-                                    <Text style={styles.statsLabel}>Kayıt</Text>
+                                    <Text style={styles.statsLabel}>{t('record')}</Text>
                                 </View>
                             </View>
 
                             <View style={styles.actionButtons}>
+                                <TouchableOpacity
+                                    style={styles.primaryButton}
+                                    onPress={openLastScreen}
+                                    activeOpacity={0.8}
+                                >
+                                    <LinearGradient
+                                        colors={['#182848', '#182848']}
+                                        style={styles.buttonGradient}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                    >
+                                        <Text style={styles.primaryButtonIcon}> </Text>
+                                        <Text style={styles.primaryButtonText}>{t('stock.last_btn')}</Text>
+                                    </LinearGradient>
+                                </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.primaryButton}
                                     onPress={openModal}
@@ -354,10 +377,10 @@ export default function StockScreen({ navigation, setToken }) {
                                         end={{ x: 1, y: 0 }}
                                     >
                                         <Text style={styles.primaryButtonIcon}>+</Text>
-                                        <Text style={styles.primaryButtonText}>Yeni Giriş</Text>
+                                        <Text style={styles.primaryButtonText}>{t('stock.new_rec')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
-{/* 
+                                {/* 
                                 <TouchableOpacity
                                     style={styles.secondaryButton}
                                     onPress={() => setShowdateSelect(true)}
@@ -380,17 +403,17 @@ export default function StockScreen({ navigation, setToken }) {
                     <View style={styles.loadingContainer}>
                         <View style={styles.loadingCard}>
                             <ActivityIndicator size="large" color="#667eea" />
-                            <Text style={styles.loadingText}>Yükleniyor...</Text>
-                            <Text style={styles.loadingSubtext}>Stok kayıtları getiriliyor</Text>
+                            <Text style={styles.loadingText}>{t('loading')}</Text>
+                            <Text style={styles.loadingSubtext}>{t('stock.loading')}</Text>
                         </View>
                     </View>
                 ) : stockEntries.length === 0 ? (
                     <View style={styles.emptyState}>
                         <View style={styles.emptyStateCard}>
                             <Text style={styles.emptyIcon}>📦</Text>
-                            <Text style={styles.emptyTitle}>Henüz kayıt yok</Text>
+                            <Text style={styles.emptyTitle}>{t('no_record')}</Text>
                             <Text style={styles.emptySubtitle}>
-                                Yeni bir stok girişi ekleyerek başlayın
+                                {t('stock.add_msg')}
                             </Text>
                         </View>
                     </View>
@@ -434,8 +457,8 @@ export default function StockScreen({ navigation, setToken }) {
                                 <View style={styles.modalHeader}>
                                     <View style={styles.modalHandle} />
                                     <View style={styles.modalTitleContainer}>
-                                        <Text style={styles.modalTitle}>Yeni Stok Girişi</Text>
-                                        <Text style={styles.modalSubtitle}>Ürün bilgilerini girin</Text>
+                                        <Text style={styles.modalTitle}>{t('stock.add_title')}</Text>
+                                        <Text style={styles.modalSubtitle}>{t('stock.add_sub')}</Text>
                                     </View>
                                     <TouchableOpacity
                                         onPress={closeModal}
@@ -452,7 +475,7 @@ export default function StockScreen({ navigation, setToken }) {
                                     {/* Product Selection */}
                                     <View style={styles.inputContainer}>
                                         <Text style={styles.inputLabel}>
-                                            <Text style={styles.labelIcon}>📦</Text> Ürün Seçimi
+                                            <Text style={styles.labelIcon}>📦</Text> {t('stock.product_sel')}
                                         </Text>
                                         <TouchableOpacity
                                             style={[
@@ -466,7 +489,7 @@ export default function StockScreen({ navigation, setToken }) {
                                                     styles.dropdownText,
                                                     !selectedProduct && styles.placeholderText
                                                 ]}>
-                                                    {selectedProduct.name || 'Ürün seçiniz'}
+                                                    {selectedProduct.name ||t('stock.product_sel')}
                                                 </Text>
                                                 <Animated.View
                                                     style={[
@@ -499,7 +522,7 @@ export default function StockScreen({ navigation, setToken }) {
                                     {/* Quantity Input */}
                                     <View style={styles.inputContainer}>
                                         <Text style={styles.inputLabel}>
-                                            <Text style={styles.labelIcon}>📊</Text> Miktar
+                                            <Text style={styles.labelIcon}>📊</Text> {t('stock.amount')}
                                         </Text>
                                         <View style={[
                                             styles.modernInput,
@@ -513,14 +536,14 @@ export default function StockScreen({ navigation, setToken }) {
                                                 keyboardType="numeric"
                                                 placeholderTextColor="#A0A0A0"
                                             />
-                                            <Text style={styles.inputUnit}>adet</Text>
+                                            <Text style={styles.inputUnit}>{t('stock.unit')}</Text>
                                         </View>
                                     </View>
 
                                     {/* Description Input */}
                                     <View style={styles.inputContainer}>
                                         <Text style={styles.inputLabel}>
-                                            <Text style={styles.labelIcon}>💬</Text> Açıklama (İsteğe bağlı)
+                                            <Text style={styles.labelIcon}>💬</Text> {t('stock.desc')}
                                         </Text>
                                         <View style={[
                                             styles.modernTextArea,
@@ -530,7 +553,6 @@ export default function StockScreen({ navigation, setToken }) {
                                                 style={styles.textAreaField}
                                                 value={description}
                                                 onChangeText={setDescription}
-                                                placeholder="Ek bilgiler..."
                                                 multiline
                                                 numberOfLines={3}
                                                 placeholderTextColor="#A0A0A0"
@@ -554,7 +576,7 @@ export default function StockScreen({ navigation, setToken }) {
                                             start={{ x: 0, y: 0 }}
                                             end={{ x: 1, y: 0 }}
                                         >
-                                            <Text style={styles.saveButtonText}>{saveLoading ? 'Kayıt ediliyor...' : 'Kaydet'}</Text>
+                                            <Text style={styles.saveButtonText}>{saveLoading ? t('saving') : t('save')}</Text>
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
@@ -574,7 +596,7 @@ export default function StockScreen({ navigation, setToken }) {
                 <View style={styles.dateModalOverlay}>
                     <View style={styles.dateModalContainer}>
                         <View style={styles.dateModalHeader}>
-                            <Text style={styles.dateModalTitle}>Tarih Seçin</Text>
+                            <Text style={styles.dateModalTitle}>{t('stock.date_sel')}</Text>
                         </View>
 
                         <DateTimePicker

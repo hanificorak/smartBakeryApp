@@ -22,6 +22,8 @@ import ReinstallScreen from './screens/Reinstall/ReinstallScreen';
 import UserSelectScreen from './screens/UserSelect/UserSelectScreen';
 import FreezerScreen from './screens/Freezer/FreezerScreen';
 import AddFreezerScreen from './screens/Freezer/AddFreezerScreen';
+import LastStockScreen from './screens/Stock/LastStockScreen';
+import UserCheckScreen from './screens/Users/UserCheckScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -92,10 +94,10 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName={token ? screen : 'Login'}>
-        <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" options={{ headerShown: false }}>
           {(props) => <LoginScreen {...props} setToken={setToken} />}
         </Stack.Screen>
+        <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Home" options={{ title: 'Ana Sayfa' }}>
           {(props) => <HomeScreen {...props} location={location} />}
         </Stack.Screen>
@@ -111,10 +113,12 @@ export default function App() {
         <Stack.Screen name="ReinstallScreen" component={ReinstallScreen} options={{ headerShown: true, title: 'Re-Install' }} />
         <Stack.Screen name="FreezerScreen" component={FreezerScreen} options={{ headerShown: true, title: 'Dolap Çalışma Takibi' }} />
         <Stack.Screen name="AddFreezerScreen" component={AddFreezerScreen} options={{ headerShown: true, title: 'Dolap Çalışma Kaydı Ekle' }} />
-        <Stack.Screen name="UserSelectScreen" options={{ headerShown: true,title:'Kullanıcı Seçin' }}>
+        <Stack.Screen name="LastStockScreen" component={LastStockScreen} options={{ headerShown: true, title: 'Düne Ait Kayıtlar' }} />
+        <Stack.Screen name="UserCheckScreen" component={UserCheckScreen} options={{ headerShown: true, title: 'Kullanıcı Onay İşlemleri' }} />
+        <Stack.Screen name="UserSelectScreen" options={{ headerShown: true, title: 'Kullanıcı Seçin' }}>
           {(props) => <UserSelectScreen {...props} setToken={setToken} />}
         </Stack.Screen>
-      
+
       </Stack.Navigator>
     </NavigationContainer>
   );

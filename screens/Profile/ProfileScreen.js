@@ -49,16 +49,17 @@ const ProfileScreen = ({ navigation }) => {
     const loadUserData = async () => {
         try {
             setLoading(true);
-            // API'den kullanıcı verilerini yükle
-            // const response = await api.get(Endpoint.GET_USER_PROFILE);
-            // setUserData(response.data);
 
-            // Geçici test verisi
-            setUserData({
-                firstName: 'Ahmet',
-                lastName: 'Yılmaz',
-                email: 'ahmet.yilmaz@email.com',
+            const {data} = await api.post(Endpoint.GetProfileData);
+            setLoading(false)
+            if(data && data.status){
+setUserData({
+                firstName: data.obj.name,
+                email: data.obj.email,
             });
+            }
+            
+            
         } catch (error) {
             Alert.alert('Hata', 'Profil bilgileri yüklenirken bir hata oluştu.');
         } finally {
@@ -67,7 +68,7 @@ const ProfileScreen = ({ navigation }) => {
     };
 
     const handleUpdateProfile = async () => {
-        if (!userData.firstName.trim() || !userData.lastName.trim() || !userData.email.trim()) {
+        if (!userData.firstName.trim() || !userData.email.trim()) {
             Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
             return;
         }
@@ -78,8 +79,7 @@ const ProfileScreen = ({ navigation }) => {
             return;
         }
 
-        try {
-            setLoading(true);
+         setLoading(true);
 
             const { data } = await api.post(Endpoint.UpdateProfile, { name: userData.firstName, email: userData.email });
             setIsEditing(false);
@@ -89,12 +89,6 @@ const ProfileScreen = ({ navigation }) => {
             } else {
                 Alert.alert('Uyarı','İşlem başarısız.');
             }
-
-        } catch (error) {
-            Alert.alert('Hata', 'Profil güncellenirken bir hata oluştu.');
-        } finally {
-            setLoading(false);
-        }
     };
 
     const handleChangePassword = async () => {
@@ -126,12 +120,6 @@ const ProfileScreen = ({ navigation }) => {
                     Alert.alert('Uyarı','İşlem başarısız.');
                 }
             }
-            // API çağrısı
-            // await api.put(Endpoint.CHANGE_PASSWORD, {
-            //     currentPassword: passwords.currentPassword,
-            //     newPassword: passwords.newPassword,
-            // });
-
             Alert.alert('Başarılı', 'Şifreniz başarıyla değiştirildi.');
             setPasswords({
                 currentPassword: '',

@@ -152,6 +152,14 @@ export default function UserSelectScreen({ navigation, setToken }) {
     }, []);
 
     const handleUserSelect = (user) => {
+        if (user.admin_onay == 0) {
+            Alert.alert('Uyarı', 'Kullanıcı kaydı yönetici onayı bekliyor.');
+            return;
+        }
+             if (user.status == 0) {
+            Alert.alert('Uyarı', 'Kullanıcı kaydı pasif.');
+            return;
+        }
         setSelectedUser(user);
 
         Alert.alert(
