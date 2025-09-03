@@ -30,10 +30,13 @@ import {
     ActivityIndicator,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
+import '../../src/i18n';
 
 const { width, height } = Dimensions.get('window');
 
 export default function UsersScreen({ navigation, setToken }) {
+    const { t } = useTranslation();
     const insets = useSafeAreaInsets(); // Safe area insets'i al
 
     const [users, setUsers] = useState([]);
@@ -96,7 +99,7 @@ export default function UsersScreen({ navigation, setToken }) {
             // }, 1000);
         } catch (error) {
             setLoading(false);
-            showSnackbar('Kullanıcılar yüklenirken hata oluştu');
+            showSnackbar(t('users.load_error'));
         }
     };
 
@@ -111,11 +114,11 @@ export default function UsersScreen({ navigation, setToken }) {
         const errors = {};
 
         if (!formData.firstName.trim()) {
-            errors.firstName = 'Ad gerekli';
+            errors.firstName = t('users.first_name_required');
         }
 
         if (!formData.lastName.trim()) {
-            errors.lastName = 'Soyad gerekli';
+            errors.lastName = t('users.last_name_required');
         }
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
@@ -140,12 +143,12 @@ export default function UsersScreen({ navigation, setToken }) {
                 console.log(data)
                 if (data && data.status) {
                     loadUsers();
-                    Alert.alert('Bilgi', 'Kullanıcı başarıyla eklendi.');
+                    Alert.alert(t('info'), t('users.add_success'));
                     setFormData({ firstName: '', lastName: '', email: '', password: '' });
                     setFormErrors({});
                     setAddModalVisible(false);
                 } else {
-                    Alert.alert('Uyarı', 'İşlem başarısız.');
+                    Alert.alert(t('warning'), t('users.operation_failed'));
                 }
 
             } catch (error) {
@@ -153,7 +156,7 @@ export default function UsersScreen({ navigation, setToken }) {
             }
 
         } catch (error) {
-            showSnackbar('Kullanıcı eklenirken hata oluştu');
+            showSnackbar(t('users.add_error'));
         } finally {
             setSubmitting(false);
         }
@@ -214,13 +217,13 @@ export default function UsersScreen({ navigation, setToken }) {
             <View style={styles.userInfo}>
                 <Text style={styles.userName}>{item.name}</Text>
                 <Text style={styles.userEmail}>{item.email}</Text>
-                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.status == 1 ? 'Aktif' : 'Pasif'}</Text>
+                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.status == 1 ? t('users.active') : t('users.passive')}</Text>
 
-                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.is_admin == 1 ? 'Admin' : 'Kullanıcı'}</Text>
-                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.admin_onay == 1 ? 'Onaylı Kullanıcı' : 'Onay Bekliyor'}</Text>
+                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.is_admin == 1 ? t('users.admin') : t('users.user')}</Text>
+                <Text style={{ fontSize: 11, color: 'gray', marginTop: 4 }}>{item.admin_onay == 1 ? t('users.approved') : t('users.pending')}</Text>
             </View>
             <TouchableOpacity style={styles.userActionButton} onPress={() => editUser(item)}>
-                <Text style={styles.actionButtonText}>Düzenle</Text>
+                <Text style={styles.actionButtonText}>{t('users.edit')}</Text>
             </TouchableOpacity>
         </Animated.View>
     );
@@ -273,20 +276,20 @@ export default function UsersScreen({ navigation, setToken }) {
                                     onPress={() => setAddModalVisible(false)}
                                     style={styles.cancelButton}
                                 >
-                                    <Text style={styles.cancelButtonText}>İptal</Text>
+                                    <Text style={styles.cancelButtonText}>{t('users.cancel')}</Text>
                                 </TouchableOpacity>
-                                <Text style={styles.modalTitle}>Yeni Kullanıcı</Text>
+                                <Text style={styles.modalTitle}>{t('users.new_user')}</Text>
                                 <View style={styles.placeholder} />
                             </View>
 
                             <View style={styles.formContainer}>
                                 <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Ad Soyad * </Text>
+                                    <Text style={styles.inputLabel}>{t('users.full_name_label')}</Text>
                                     <TextInput
                                         style={[styles.input, formErrors.firstName && styles.inputError]}
                                         value={formData.firstName}
                                         onChangeText={(text) => setFormData(prev => ({ ...prev, firstName: text }))}
-                                        placeholder="Adınızı ve soyadınızı girin"
+                                        placeholder={t('users.full_name_placeholder')}
                                         placeholderTextColor="#999"
                                     />
                                     {formErrors.firstName && (
@@ -295,12 +298,12 @@ export default function UsersScreen({ navigation, setToken }) {
                                 </View>
 
                                 <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Email</Text>
+                                    <Text style={styles.inputLabel}>{t('users.email')}</Text>
                                     <TextInput
                                         style={[styles.input, formErrors.email && styles.inputError]}
                                         value={formData.email}
                                         onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-                                        placeholder="email@example.com"
+                                        placeholder={t('users.email_placeholder')}
                                         placeholderTextColor="#999"
                                         keyboardType="email-address"
                                         autoCapitalize="none"
@@ -310,28 +313,28 @@ export default function UsersScreen({ navigation, setToken }) {
                                     )}
                                 </View>
                                 <View style={{ marginTop: 0 }}>
-                                    <Text>Durum</Text>
+                                    <Text>{t('users.status')}</Text>
 
                                     <Dropdown
                                         style={styles.dropdown}
                                         data={dataStatus}
                                         labelField="label"
                                         valueField="value"
-                                        placeholder="Seçiniz"
+                                        placeholder={t('users.select')}
                                         value={userStatus}
                                         onChange={item => setUserStatus(item.value)}
                                     />
                                 </View>
 
                                 {admin == "admin" ? <View style={{ marginTop: 15 }}>
-                                    <Text>Yetki Durumu</Text>
+                                    <Text>{t('users.role')}</Text>
 
                                     <Dropdown
                                         style={styles.dropdown}
                                         data={data}
                                         labelField="label"
                                         valueField="value"
-                                        placeholder="Seçiniz"
+                                        placeholder={t('users.select')}
                                         value={value}
                                         onChange={item => setValue(item.value)}
                                     />
@@ -364,7 +367,7 @@ export default function UsersScreen({ navigation, setToken }) {
                                             colors={['#667eea', '#764ba2']}
                                             style={styles.submitButtonGradient}
                                         >
-                                            <Text style={styles.submitButtonText}>Kullanıcı Ekle</Text>
+                                            <Text style={styles.submitButtonText}>{t('users.add_user')}</Text>
                                         </LinearGradient>
                                     )}
                                 </TouchableOpacity>
@@ -382,8 +385,8 @@ export default function UsersScreen({ navigation, setToken }) {
 
             <LinearGradient colors={['#4B6CB7', '#182848']} style={styles.header}>
                 <Animated.View style={[styles.headerContent, { opacity: fadeAnim }]}>
-                    <Text style={styles.headerTitle}>Kullanıcılar</Text>
-                    <Text style={styles.headerSubtitle}>{users.length} kullanıcı</Text>
+                    <Text style={styles.headerTitle}>{t('users.title')}</Text>
+                    <Text style={styles.headerSubtitle}>{t('users.count', { count: users.length })}</Text>
                 </Animated.View>
 
 
@@ -399,7 +402,7 @@ export default function UsersScreen({ navigation, setToken }) {
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#667eea" />
-                        <Text style={styles.loadingText}>Kullanıcılar yükleniyor...</Text>
+                        <Text style={styles.loadingText}>{t('users.loading')}</Text>
                     </View>
                 ) : (
                     <FlatList
@@ -416,8 +419,8 @@ export default function UsersScreen({ navigation, setToken }) {
                         }
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyText}>Henüz kullanıcı bulunmuyor</Text>
-                                <Text style={styles.emptySubtext}>Yeni kullanıcı eklemek için + butonuna tıklayın</Text>
+                                <Text style={styles.emptyText}>{t('users.empty')}</Text>
+                                <Text style={styles.emptySubtext}>{t('users.empty_sub')}</Text>
                             </View>
                         }
                     />

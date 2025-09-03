@@ -35,8 +35,12 @@ import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { WebView } from "react-native-webview";
 
+import { useTranslation } from "react-i18next";
+import "../../src/i18n";
 
 const ReportsScreen = ({ navigation }) => {
+    const { t, i18n } = useTranslation();
+
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [slideAnim] = useState(new Animated.Value(0));
 
@@ -82,21 +86,21 @@ const ReportsScreen = ({ navigation }) => {
 
 
     const dateRanges = [
-        { label: 'Tümü', value: 'all' },
-        { label: 'Bugün', value: 'today' },
-        { label: 'Bu Hafta', value: 'week' },
-        { label: 'Bu Ay', value: 'month' },
-        { label: 'Özel Tarih Aralığı', value: 'custom' }
+        { label: t('report.date_all'), value: 'all' },
+        { label: t('report.date_now'), value: 'today' },
+        { label: t('report.date_week'), value: 'week' },
+        { label: t('report.date_month'), value: 'month' },
+        { label: t('report.custom_date'), value: 'custom' }
     ];
 
     const data = [
-        { label: "Toplam Rapor", value: "toplam" },
-        { label: "Günlük Rapor", value: "gunluk" },
+        { label: t('report.type_total'), value: "toplam" },
+        { label: t('report.type_daily'), value: "gunluk" },
     ];
 
     const dataWeather = [
-        { label: "Göster", value: "view" },
-        { label: "Gösterme", value: "not_view" },
+        { label: t('report.show'), value: "view" },
+        { label: t('report.hide'), value: "not_view" },
     ];
 
     useEffect(() => {
@@ -335,16 +339,16 @@ const ReportsScreen = ({ navigation }) => {
 
             if (startDateText.length === 10 && endDateText.length === 10) {
                 if (startDateError || endDateError) {
-                    Alert.alert('Uyarı', 'Lütfen geçerli tarihler girin.');
+                    Alert.alert(t('warning'), t('report.enter_valid_dates'));
                     return;
                 }
 
                 if (startDateObj && endDateObj && startDateObj > endDateObj) {
-                    Alert.alert('Uyarı', 'Başlangıç tarihi bitiş tarihinden küçük olmalıdır.');
+                    Alert.alert(t('warning'), t('report.start_before_end'));
                     return;
                 }
             } else if (startDateText.length > 0 || endDateText.length > 0) {
-                Alert.alert('Uyarı', 'Lütfen her iki tarihi de eksiksiz girin (GG.AA.YYYY formatında).');
+                Alert.alert(t('warning'), t('report.enter_both_dates'));
                 return;
             }
         }
@@ -372,30 +376,30 @@ const ReportsScreen = ({ navigation }) => {
 
     const getSelectedProductLabel = () => {
 
-        if (!selectedProduct) return 'Ürün Seçin';
-        if (selectedProduct == "all") return 'Tümü';
+        if (!selectedProduct) return t('report.select_product');
+        if (selectedProduct == "all") return t('report.all');
         return selectedProduct.name;
     };
 
     const getSelectedWeatherLabel = () => {
         if (selectedWeather == null) {
-            return "Hava Durumu Seçin"
+            return t('report.select_weather')
         }
 
         const weather = weatherOptions.find(w => w.id === selectedWeather.id);
-        return weather ? weather.description : 'Hava Durumu Seçin';
+        return weather ? weather.description : t('report.select_weather');
     };
 
     const sendReportMail = async (type = "mail") => {
         try {
 
             if (reportMail == null) {
-                Alert.alert('Uyarı', 'Gönderilecek Mail Adresini yazmalısınız.');
+                Alert.alert(t('warning'), t('report.enter_email'));
                 return;
             }
 
             if (!checkMail() && type == "mail") {
-                Alert.alert('Uyarı', 'Lütfen geçerli bir mail adresi giriniz.');
+                Alert.alert(t('warning'), t('report.invalid_email'));
                 return;
             }
             setSendLoading(true);
@@ -424,7 +428,7 @@ const ReportsScreen = ({ navigation }) => {
 
             if (data && data.status) {
                 if (type == "mail") {
-                    Alert.alert('Bilgi', `Rapor ${reportMail} adresine başarıyla gönderilmiştir. Spam kutunuzu da kontrol edebilirsiniz.`);
+                    Alert.alert(t('info'), t('report.mail_success', { email: reportMail }));
                     setMailModal(false);
                     setReportMail('');
                 } else {
@@ -436,7 +440,7 @@ const ReportsScreen = ({ navigation }) => {
                     }, 1000);
                 }
             } else {
-                Alert.alert('Uyarı', 'İşlem başarısız.');
+                Alert.alert(t('warning'), t('report.operation_failed'));
             }
         } catch (error) {
             console.log(error)
@@ -460,7 +464,7 @@ const ReportsScreen = ({ navigation }) => {
         if (dateRange === 'custom' && hasCustomDateRange) {
             return `${formatDateShort(startDate)} - ${formatDateShort(endDate)}`;
         }
-        return date ? date.label : 'Tarih Aralığı Seçin';
+        return date ? date.label : t('report.select_date_range');
     };
 
     const formatDateShort = (date) => {
@@ -541,7 +545,7 @@ const ReportsScreen = ({ navigation }) => {
                                 {item.product.name}
                             </Text>
                             <Text style={styles.cardDate}>
-                                Gün Sonu Tarihi: {formatDate(item.created_at)}
+                                {t('report.eod_date')} {formatDate(item.created_at)}
                             </Text>
                         </View>
                     </View>
@@ -565,7 +569,7 @@ const ReportsScreen = ({ navigation }) => {
                                 <Text style={styles.statIconText}>🏭</Text>
                             </View>
                             <View style={styles.statContent}>
-                                <Text style={styles.statLabel}>Üretilen</Text>
+                                <Text style={styles.statLabel}>{t('report.produced')}</Text>
                                 <Text style={styles.statValue}>{item.amount}</Text>
                             </View>
                         </View>
@@ -577,7 +581,7 @@ const ReportsScreen = ({ navigation }) => {
                                 <Text style={styles.statIconText}>💰</Text>
                             </View>
                             <View style={styles.statContent}>
-                                <Text style={styles.statLabel}>Satılan</Text>
+                                <Text style={styles.statLabel}>{t('report.sold')}</Text>
                                 <Text style={styles.statValue}>{item.sales_amount}</Text>
                             </View>
                         </View>
@@ -589,7 +593,7 @@ const ReportsScreen = ({ navigation }) => {
                                 <Text style={styles.statIconText}>🗑️</Text>
                             </View>
                             <View style={styles.statContent}>
-                                <Text style={styles.statLabel}>Atık</Text>
+                                <Text style={styles.statLabel}>{t('report.waste')}</Text>
                                 <Text style={styles.statValue}>{item.remove_amount}</Text>
                             </View>
                         </View>
@@ -601,14 +605,14 @@ const ReportsScreen = ({ navigation }) => {
                                 <Text style={styles.statIconText}>➡️</Text>
                             </View>
                             <View style={styles.statContent}>
-                                <Text style={styles.statLabel}>Ertesi Güne Aktarılan</Text>
+                                <Text style={styles.statLabel}>{t('report.carry_over')}</Text>
                                 <Text style={styles.statValue}>{item.ert_count || 0}</Text>
                             </View>
                         </View>
                     </View>
                     {item.parentdate != null ? <View style={{ padding: 10, backgroundColor: '#f1f5f9', borderRadius: 10, marginTop: 10 }}>
-                        <Text>İlk Üretim Tarihi: {item.parentdate}</Text>
-                        <Text>Üretilen sayısı bugüne aktarılan sayısıdır. İlk üretim tarihi üst kısımda yazıyor. </Text>
+                        <Text>{t('report.first_production_date')} {item.parentdate}</Text>
+                        <Text>{t('report.parent_info')} </Text>
                     </View> : <View></View>}
                 </View>
             </LinearGradient>
@@ -675,23 +679,23 @@ const ReportsScreen = ({ navigation }) => {
                 <SafeAreaView>
                     <View style={styles.headerContent}>
                         <View style={styles.headerTop}>
-                            <Text style={styles.headerTitle}>Raporlar</Text>
+                            <Text style={styles.headerTitle}>{t('report.title')}</Text>
                         </View>
                         <Text style={styles.headerSubtitle}>
-                            Buradan raporlarınızı alabilirsiniz.
+                            {t('report.subtitle')}
                         </Text>
                         {/* Stats Summary in Header */}
                         {reportData.length > 0 && (
                             <View style={styles.headerStats}>
                                 <View style={styles.headerStatItem}>
                                     <Text style={styles.headerStatValue}>{reportData.length}</Text>
-                                    <Text style={styles.headerStatLabel}>Toplam Kayıt</Text>
+                                    <Text style={styles.headerStatLabel}>{t('report.total_records')}</Text>
                                 </View>
                                 <View style={styles.headerStatItem}>
                                     <Text style={styles.headerStatValue}>
                                         {reportData.reduce((sum, item) => sum + parseInt(item.amount || 0), 0)}
                                     </Text>
-                                    <Text style={styles.headerStatLabel}>Toplam Satış</Text>
+                                    <Text style={styles.headerStatLabel}>{t('report.total_sales')}</Text>
                                 </View>
                             </View>
                         )}
@@ -708,7 +712,7 @@ const ReportsScreen = ({ navigation }) => {
                             onPress={openModal}
                         >
                             <Text style={styles.filterIcon}>🔍</Text>
-                            <Text style={styles.filterButtonText}>Filtreler</Text>
+                            <Text style={styles.filterButtonText}>{t('report.filters')}</Text>
                             {getActiveFiltersCount() > 0 && (
                                 <View style={styles.filterBadge}>
                                     <Text style={styles.filterBadgeText}>{getActiveFiltersCount()}</Text>
@@ -722,7 +726,7 @@ const ReportsScreen = ({ navigation }) => {
                             onPress={openModalMail}
                         >
                             <Text style={styles.filterIcon}>📧</Text>
-                            <Text style={styles.filterButtonText}>Rapor Gönder</Text>
+                            <Text style={styles.filterButtonText}>{t('report.send_report')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -734,9 +738,9 @@ const ReportsScreen = ({ navigation }) => {
                     <View style={styles.emptyState}>
                         <View style={styles.emptyStateCard}>
                             <Text style={styles.emptyIcon}>📦</Text>
-                            <Text style={styles.emptyTitle}>Henüz kayıt yok</Text>
+                            <Text style={styles.emptyTitle}>{t('report.empty_title')}</Text>
                             <Text style={styles.emptySubtitle}>
-                                Rapor verisi mevcut değil
+                                {t('report.empty_subtitle')}
                             </Text>
                         </View>
                     </View>
@@ -747,8 +751,8 @@ const ReportsScreen = ({ navigation }) => {
                         <View style={styles.loadingContainer}>
                             <View style={styles.loadingCard}>
                                 <ActivityIndicator size="large" color="#667eea" />
-                                <Text style={styles.loadingText}>Yükleniyor...</Text>
-                                <Text style={styles.loadingSubtext}>Kayıtlar yükleniyor</Text>
+                                <Text style={styles.loadingText}>{t('report.loading')}</Text>
+                                <Text style={styles.loadingSubtext}>{t('report.loading_records')}</Text>
                             </View>
                         </View>
                     </View> :
@@ -793,7 +797,7 @@ const ReportsScreen = ({ navigation }) => {
                     >
                         {/* Header */}
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>PDF Önizleme</Text>
+                            <Text style={styles.modalTitle}>{t('report.pdf_preview')}</Text>
                             <TouchableOpacity
                                 onPress={closepdfModal}
                                 style={styles.closeButton}
@@ -824,7 +828,7 @@ const ReportsScreen = ({ navigation }) => {
                                 onPress={closepdfModal}
                                 style={styles.clearButton}
                             >
-                                Kapat
+                                {t('report.close')}
                             </Button>
 
                         </View>
@@ -860,7 +864,7 @@ const ReportsScreen = ({ navigation }) => {
                         ]}
                     >
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Filtreler</Text>
+                            <Text style={styles.modalTitle}>{t('report.filters')}</Text>
                             <TouchableOpacity
                                 onPress={closeModal}
                                 style={styles.closeButton}
@@ -872,7 +876,7 @@ const ReportsScreen = ({ navigation }) => {
                         <ScrollView style={styles.modalBody}>
                             {/* Product Dropdown */}
                             <View style={styles.filterSection}>
-                                <Text style={styles.filterSectionTitle}>Ürün</Text>
+                                <Text style={styles.filterSectionTitle}>{t('report.product')}</Text>
                                 <TouchableOpacity
                                     style={styles.dropdownButton}
                                     onPress={() => setProductMenuVisible(!productMenuVisible)}
@@ -894,7 +898,7 @@ const ReportsScreen = ({ navigation }) => {
                                             }}
                                         >
                                             <Text style={selectedProduct === null ? styles.selectedDropdownText : styles.dropdownText}>
-                                                Tümü
+                                                {t('report.all')}
                                             </Text>
                                         </TouchableOpacity>
                                         {products.map((product) => (
@@ -919,7 +923,7 @@ const ReportsScreen = ({ navigation }) => {
 
                             {/* Weather Dropdown */}
                             <View style={styles.filterSection}>
-                                <Text style={styles.filterSectionTitle}>Hava Durumu</Text>
+                                <Text style={styles.filterSectionTitle}>{t('report.weather')}</Text>
                                 <TouchableOpacity
                                     style={styles.dropdownButton}
                                     onPress={() => setWeatherMenuVisible(!weatherMenuVisible)}
@@ -941,7 +945,7 @@ const ReportsScreen = ({ navigation }) => {
                                             }}
                                         >
                                             <Text style={selectedWeather === null ? styles.selectedDropdownText : styles.dropdownText}>
-                                                Tümü
+                                                {t('report.all')}
                                             </Text>
                                         </TouchableOpacity>
                                         {weatherOptions.map((weather) => (
@@ -966,7 +970,7 @@ const ReportsScreen = ({ navigation }) => {
 
                             {/* Date Range Dropdown */}
                             <View style={styles.filterSection}>
-                                <Text style={styles.filterSectionTitle}>Tarih Aralığı</Text>
+                                <Text style={styles.filterSectionTitle}>{t('report.date_range')}</Text>
                                 <TouchableOpacity
                                     style={styles.dropdownButton}
                                     onPress={() => setDateMenuVisible(!dateMenuVisible)}
@@ -997,11 +1001,11 @@ const ReportsScreen = ({ navigation }) => {
                                 {/* Custom Date Range Section */}
                                 {dateRange === 'custom' && (
                                     <View style={styles.customDateSection}>
-                                        <Text style={styles.customDateTitle}>Özel Tarih Aralığı</Text>
+                                        <Text style={styles.customDateTitle}>{t('report.custom_date')}</Text>
 
                                         {/* Start Date Input */}
                                         <View style={styles.dateInputRow}>
-                                            <Text style={styles.dateLabel}>Başlangıç Tarihi:</Text>
+                                            <Text style={styles.dateLabel}>{t('report.start_date')}</Text>
                                             <View style={styles.dateInputContainer}>
                                                 <TextInput
                                                     style={[
@@ -1010,7 +1014,7 @@ const ReportsScreen = ({ navigation }) => {
                                                     ]}
                                                     value={startDateText}
                                                     onChangeText={handleStartDateChange}
-                                                    placeholder="GG.AA.YYYY"
+                                                    placeholder={t('report.date_placeholder')}
                                                     placeholderTextColor="#9CA3AF"
                                                     keyboardType="numeric"
                                                     maxLength={10}
@@ -1025,7 +1029,7 @@ const ReportsScreen = ({ navigation }) => {
 
                                         {/* End Date Input */}
                                         <View style={styles.dateInputRow}>
-                                            <Text style={styles.dateLabel}>Bitiş Tarihi:</Text>
+                                            <Text style={styles.dateLabel}>{t('report.end_date')}</Text>
                                             <View style={styles.dateInputContainer}>
                                                 <TextInput
                                                     style={[
@@ -1034,7 +1038,7 @@ const ReportsScreen = ({ navigation }) => {
                                                     ]}
                                                     value={endDateText}
                                                     onChangeText={handleEndDateChange}
-                                                    placeholder="GG.AA.YYYY"
+                                                    placeholder={t('report.date_placeholder')}
                                                     placeholderTextColor="#9CA3AF"
                                                     keyboardType="numeric"
                                                     maxLength={10}
@@ -1051,7 +1055,7 @@ const ReportsScreen = ({ navigation }) => {
                                         <View style={styles.dateFormatInfo}>
                                             <Text style={styles.dateFormatIcon}>ℹ️</Text>
                                             <Text style={styles.dateFormatText}>
-                                                Tarih formatı: GG.AA.YYYY (örnek: 18.10.2024)
+                                                {t('report.date_format_info')}
                                             </Text>
                                         </View>
                                     </View>
@@ -1066,14 +1070,14 @@ const ReportsScreen = ({ navigation }) => {
                                 onPress={clearFilters}
                                 style={styles.clearButton}
                             >
-                                Temizle
+                                {t('report.clear')}
                             </Button>
                             <Button
                                 mode="contained"
                                 onPress={applyFilter}
                                 style={styles.applyButton}
                             >
-                                Uygula
+                                {t('report.apply')}
                             </Button>
                         </View>
                     </Animated.View>
@@ -1090,7 +1094,7 @@ const ReportsScreen = ({ navigation }) => {
                 <View style={styles.dateModalOverlay}>
                     <View style={styles.dateModalContainer}>
                         <View style={styles.dateModalHeader}>
-                            <Text style={styles.dateModalTitle}>Tarih Seçin</Text>
+                            <Text style={styles.dateModalTitle}>{t('report.select_date')}</Text>
                         </View>
 
                         <DateTimePicker
@@ -1108,13 +1112,13 @@ const ReportsScreen = ({ navigation }) => {
                                     style={styles.dateModalButton}
                                     onPress={() => closeDatePicker()}
                                 >
-                                    <Text style={styles.dateModalCancelText}>İptal</Text>
+                                    <Text style={styles.dateModalCancelText}>{t('report.cancel')}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[styles.dateModalButton, styles.dateModalConfirmButton]}
                                     onPress={confirmDate}
                                 >
-                                    <Text style={styles.dateModalConfirmText}>Tamam</Text>
+                                    <Text style={styles.dateModalConfirmText}>{t('report.ok')}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -1160,8 +1164,8 @@ const ReportsScreen = ({ navigation }) => {
                                         <Text style={styles.mailIcon}>📧</Text>
                                     </View>
                                     <View>
-                                        <Text style={styles.mailModalTitle}>Rapor Gönder</Text>
-                                        <Text style={styles.mailModalSubtitle}>E-posta adresini girin</Text>
+                                        <Text style={styles.mailModalTitle}>{t('report.send_report')}</Text>
+                                        <Text style={styles.mailModalSubtitle}>{t('report.email_address')}</Text>
                                     </View>
                                 </View>
                                 <TouchableOpacity
@@ -1180,13 +1184,13 @@ const ReportsScreen = ({ navigation }) => {
                             >
                                 {/* Email Input Section */}
                                 <View style={styles.mailInputSection}>
-                                    <Text style={styles.mailInputLabel}>E-posta Adresi</Text>
+                                    <Text style={styles.mailInputLabel}>{t('report.email_address')}</Text>
                                     <View style={styles.mailInputContainer}>
                                         <View style={styles.emailIconContainer}>
                                             <Text style={styles.emailInputIcon}>@</Text>
                                         </View>
                                         <TextInput
-                                            placeholder='ornek@domain.com'
+                                            placeholder={t('report.email_placeholder')}
                                             value={reportMail}
                                             onChangeText={text => setReportMail(text)}
                                             style={styles.mailInput}
@@ -1199,7 +1203,7 @@ const ReportsScreen = ({ navigation }) => {
                                         />
                                     </View>
                                     <View style={{ marginTop: 15 }}>
-                                        <Text>Gizlenecek Ürünler</Text>
+                                        <Text>{t('report.hidden_products')}</Text>
                                         <MultiSelect
                                             style={styles.dropdown}
                                             placeholderStyle={styles.placeholderStyle}
@@ -1210,8 +1214,8 @@ const ReportsScreen = ({ navigation }) => {
                                             data={products}
                                             labelField="name"
                                             valueField="id"
-                                            placeholder="Ürün Seç"
-                                            searchPlaceholder="Arayın..."
+                                            placeholder={t('report.select_product_placeholder')}
+                                            searchPlaceholder={t('report.search_placeholder')}
                                             value={selectedProd}
                                             onChange={item => {
                                                 setSelectedProd(item);
@@ -1229,27 +1233,27 @@ const ReportsScreen = ({ navigation }) => {
                                     </View>
 
                                     <View style={{ marginTop: 15 }}>
-                                        <Text>Rapor Tipi</Text>
+                                        <Text>{t('report.report_type')}</Text>
 
                                         <Dropdown
                                             style={styles.dropdown}
                                             data={data}
                                             labelField="label"
                                             valueField="value"
-                                            placeholder="Seçiniz"
+                                            placeholder={t('report.select')}
                                             value={value}
                                             onChange={item => setValue(item.value)}
                                         />
                                     </View>
                                     <View style={{ marginTop: 15 }}>
-                                        <Text>Hava Durumu Gösterimi</Text>
+                                        <Text>{t('report.weather_view')}</Text>
 
                                         <Dropdown
                                             style={styles.dropdown}
                                             data={dataWeather}
                                             labelField="label"
                                             valueField="value"
-                                            placeholder="Seçiniz"
+                                            placeholder={t('report.select')}
                                             value={WeatherView}
                                             onChange={item => setWeatherView(item.value)}
                                         />
@@ -1263,9 +1267,9 @@ const ReportsScreen = ({ navigation }) => {
                                         <Text style={styles.infoIcon}>ℹ️</Text>
                                     </View>
                                     <View style={styles.infoTextContainer}>
-                                        <Text style={styles.infoTitle}>Rapor Bilgisi</Text>
+                                        <Text style={styles.infoTitle}>{t('report.info_title')}</Text>
                                         <Text style={styles.infoText}>
-                                            Mevcut filtrelerinize göre oluşturulan rapor belirtilen e-posta adresine gönderilecektir.
+                                            {t('report.info_text')}
                                         </Text>
                                     </View>
                                 </View>
@@ -1273,7 +1277,7 @@ const ReportsScreen = ({ navigation }) => {
                                 {/* Active Filters Display */}
                                 {getActiveFiltersCount() > 0 && (
                                     <View style={styles.activeFiltersCard}>
-                                        <Text style={styles.activeFiltersTitle}>Aktif Filtreler:</Text>
+                                        <Text style={styles.activeFiltersTitle}>{t('report.active_filters')}</Text>
                                         <View style={styles.filterChipsContainer}>
                                             {selectedProduct && (
                                                 <View style={styles.filterChip}>
@@ -1302,7 +1306,7 @@ const ReportsScreen = ({ navigation }) => {
                                 >
                                     <View style={styles.sendButtonContent}>
                                         <Text style={styles.sendMailButtonIcon}></Text>
-                                        <Text style={styles.sendMailButtonText}>Önizleme</Text>
+                                        <Text style={styles.sendMailButtonText}>{t('report.preview')}</Text>
                                     </View>
                                 </TouchableOpacity>
 
@@ -1315,7 +1319,7 @@ const ReportsScreen = ({ navigation }) => {
                                     onPress={closeModalMail}
                                     disabled={sendLoading}
                                 >
-                                    <Text style={styles.cancelMailButtonText}>İptal</Text>
+                                    <Text style={styles.cancelMailButtonText}>{t('report.cancel')}</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
@@ -1326,12 +1330,12 @@ const ReportsScreen = ({ navigation }) => {
                                     {sendLoading ? (
                                         <View style={styles.sendButtonContent}>
                                             <ActivityIndicator size="small" color="#FFFFFF" />
-                                            <Text style={styles.sendMailButtonText}>Gönderiliyor...</Text>
+                                            <Text style={styles.sendMailButtonText}>{t('report.sending')}</Text>
                                         </View>
                                     ) : (
                                         <View style={styles.sendButtonContent}>
                                             <Text style={styles.sendMailButtonIcon}>📤</Text>
-                                            <Text style={styles.sendMailButtonText}>Gönder</Text>
+                                            <Text style={styles.sendMailButtonText}>{t('report.send')}</Text>
                                         </View>
                                     )}
                                 </TouchableOpacity>

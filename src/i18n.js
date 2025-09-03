@@ -10,7 +10,7 @@ const resources = {
   de: { translation: de },
 };
 
-const deviceLanguage = "de";
+const deviceLanguage = "tr";
 
 i18n
   .use(initReactI18next)

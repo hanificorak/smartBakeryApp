@@ -63,6 +63,15 @@ const HomeScreen = ({ navigation }) => {
       bgColor: '#F3F4F6',
       screen: 'FreezerScreen'
     },
+{
+  id: 20,
+  title: t('menu.custom_order'),
+  subtitle: t('menu.custom_order_msg'),
+  icon: 'assignment', // sipariş/iş emri ikonu
+  color: '#10B981',   // yeşil (tailwind: emerald-500)
+  bgColor: '#ECFDF5', // açık yeşil arka plan
+  screen: 'CustomOrderScreen'
+},
     {
       id: 4,
       title: t('menu.def'),
@@ -71,6 +80,15 @@ const HomeScreen = ({ navigation }) => {
       color: '#F59E0B',
       bgColor: '#FEF3C7',
       screen: 'DefinitionsScreen'
+    },
+    {
+      id: 4,
+      title: t('menu.holiday'),
+      subtitle: t('menu.holiday_msg'),
+      icon: 'event',
+      color: '#3B82F6',
+      bgColor: '#EFF6FF',
+      screen: 'HolidayScreen'
     },
     {
       id: 6,

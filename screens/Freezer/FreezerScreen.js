@@ -23,9 +23,12 @@ import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
 import {   Provider, Button, ActivityIndicator } from 'react-native-paper';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import '../../src/i18n';
 const { height } = Dimensions.get('window');
 
 const FreezerScreen = ({ navigation }) => {
+    const { t } = useTranslation();
     const [modalVisible, setModalVisible] = useState(false);
     const [reportModalVisible, setReportModalVisible] = useState(false);
     const [freezerRecords, setFreezerRecords] = useState([]);
@@ -89,7 +92,7 @@ const FreezerScreen = ({ navigation }) => {
         };
 
         if (param.name == null || param.name == "") {
-            Alert.alert('Uyarı', 'Dolap adı girmelisiniz.');
+            Alert.alert(t('warning'), t('freezer.name_required'));
             return;
         }
 
@@ -101,9 +104,9 @@ const FreezerScreen = ({ navigation }) => {
         if (data && data.status) {
             closeModal();
             loadFreezerRecords();
-            Alert.alert('Bilgi', 'Bilgiler başarıyla kayıt edildi.');
+            Alert.alert(t('info'), t('freezer.save_success'));
         } else {
-            Alert.alert('Uyarı', 'İşlem başarısız.');
+            Alert.alert(t('warning'), t('freezer.operation_failed'));
         }
     };
 
@@ -125,12 +128,12 @@ const FreezerScreen = ({ navigation }) => {
 
     const handleDeleteRecord = (id) => {
         Alert.alert(
-            'Kayıt Sil',
-            'Bu kaydı silmek istediğinizden emin misiniz?',
+            t('freezer.delete_title'),
+            t('freezer.delete_confirm'),
             [
-                { text: 'İptal', style: 'cancel' },
+                { text: t('freezer.cancel'), style: 'cancel' },
                 {
-                    text: 'Sil',
+                    text: t('freezer.delete'),
                     style: 'destructive',
                     onPress: async () => {
                         setLoading(true);
@@ -138,10 +141,10 @@ const FreezerScreen = ({ navigation }) => {
                         setLoading(false);
 
                         if (data && data.status) {
-                            Alert.alert('Bilgi', 'Kayıt başarıyla silindi.');
+                            Alert.alert(t('info'), t('freezer.delete_success'));
                             loadFreezerRecords();
                         } else {
-                            Alert.alert('Uyarı', 'İşlem başarısız.');
+                            Alert.alert(t('warning'), t('freezer.operation_failed'));
                         }
                     }
                 }
@@ -195,17 +198,17 @@ const FreezerScreen = ({ navigation }) => {
     const sendReport = async () => {
         // Validations
         if (!startDate || startDate.length !== 10) {
-            Alert.alert('Uyarı', 'Başlangıç tarihi formatı hatalı. (gg.aa.yyyy)');
+            Alert.alert(t('warning'), t('freezer.start_date_invalid'));
             return;
         }
 
         if (!endDate || endDate.length !== 10) {
-            Alert.alert('Uyarı', 'Bitiş tarihi formatı hatalı. (gg.aa.yyyy)');
+            Alert.alert(t('warning'), t('freezer.end_date_invalid'));
             return;
         }
 
         if (!emailAddress || !validateEmail(emailAddress)) {
-            Alert.alert('Uyarı', 'Geçerli bir e-mail adresi girmelisiniz.');
+            Alert.alert(t('warning'), t('freezer.invalid_email'));
             return;
         }
 
@@ -223,13 +226,13 @@ const FreezerScreen = ({ navigation }) => {
             const { data } = await api.post(Endpoint.FreeReportSend, param);
             console.log(data)
             if (data && data.status) {
-                Alert.alert('Bilgi', 'Rapor başarıyla e-mail adresinize gönderildi.');
+                Alert.alert(t('info'), t('freezer.report_success'));
                 closeReportModal();
             } else {
-                Alert.alert('Uyarı', 'Rapor gönderilirken hata oluştu.');
+                Alert.alert(t('warning'), t('freezer.report_failed'));
             }
         } catch (error) {
-            Alert.alert('Uyarı', 'Rapor gönderilirken hata oluştu.');
+            Alert.alert(t('warning'), t('freezer.report_failed'));
         } finally {
             setReportLoading(false);
         }
@@ -253,12 +256,12 @@ const FreezerScreen = ({ navigation }) => {
             </View>
             <View style={styles.recordContent}>
                 <View style={styles.degreeContainer}>
-                    <Text style={styles.degreeLabel}>Çalışma Derecesi:</Text>
+                    <Text style={styles.degreeLabel}>{t('freezer.working_degree')}</Text>
                     <Text style={styles.degreeValue}>{item.temp}°C</Text>
                 </View>
                 {item.desc ? (
                     <View style={styles.descriptionContainer}>
-                        <Text style={styles.descriptionLabel}>Açıklama:</Text>
+                        <Text style={styles.descriptionLabel}>{t('freezer.description')}</Text>
                         <Text style={styles.descriptionText}>{item.desc}</Text>
                     </View>
                 ) : null}
@@ -268,13 +271,13 @@ const FreezerScreen = ({ navigation }) => {
                     style={styles.editButton}
                     onPress={() => handleEditRecord(item)}
                 >
-                    <Text style={styles.editButtonText}>Düzenle</Text>
+                    <Text style={styles.editButtonText}>{t('freezer.edit')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => handleDeleteRecord(item.id)}
                 >
-                    <Text style={styles.deleteButtonText}>Sil</Text>
+                    <Text style={styles.deleteButtonText}>{t('freezer.delete')}</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -289,14 +292,14 @@ const FreezerScreen = ({ navigation }) => {
                     colors={['#4B6CB7', '#182848']}
                     style={styles.header}
                 >
-                    <Text style={styles.headerTitle}>Buzdolabı Çalışma Saatleri</Text>
+                    <Text style={styles.headerTitle}>{t('freezer.title')}</Text>
                 </LinearGradient>
 
                 <View style={styles.content}>
                  {loading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.loadingText}>Yükleniyor...</Text>
+            <Text style={styles.loadingText}>{t('freezer.loading')}</Text>
           </View>
         )}
                     {/* Filter Section */}
@@ -315,7 +318,7 @@ const FreezerScreen = ({ navigation }) => {
                                         end={{ x: 1, y: 0 }}
                                     >
                                         <Text style={styles.reportButtonIcon}>📊</Text>
-                                        <Text style={styles.reportButtonText}>Rapor Al</Text>
+                                        <Text style={styles.reportButtonText}>{t('freezer.get_report')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                                 <TouchableOpacity
@@ -330,7 +333,7 @@ const FreezerScreen = ({ navigation }) => {
                                         end={{ x: 1, y: 0 }}
                                     >
                                         <Text style={styles.primaryButtonIcon}>+</Text>
-                                        <Text style={styles.primaryButtonText}>Yeni Giriş</Text>
+                                        <Text style={styles.primaryButtonText}>{t('freezer.new_entry')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                             </View>
@@ -341,13 +344,13 @@ const FreezerScreen = ({ navigation }) => {
                                     style={styles.dateButton}
                                     onPress={() => getNowdat()}
                                 >
-                                    <Text style={styles.dateButtonText}>📅 Bugün</Text>
+                                    <Text style={styles.dateButtonText}>📅 {t('freezer.today')}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.clearButton}
                                     onPress={() => allData()}
                                 >
-                                    <Text style={styles.clearButtonText}>🔄 Tümü</Text>
+                                    <Text style={styles.clearButtonText}>🔄 {t('freezer.all')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -357,14 +360,14 @@ const FreezerScreen = ({ navigation }) => {
                     <View style={styles.listContainer}>
                         <View style={styles.listHeader}>
                             <Text style={styles.listTitle}>
-                                Kayıtlar ({freezerRecords.length})
+                                {t('freezer.records_count', { count: freezerRecords.length })}
                             </Text>
                         </View>
 
                         {freezerRecords.length === 0 ? (
                             <View style={styles.emptyContainer}>
                                 <Text style={styles.emptyText}>
-                                    {filterDate ? 'Bu tarih için kayıt bulunamadı' : 'Henüz kayıt yok'}
+                                    {filterDate ? t('freezer.no_records_for_date') : t('freezer.no_records')}
                                 </Text>
                             </View>
                         ) : (
@@ -398,7 +401,7 @@ const FreezerScreen = ({ navigation }) => {
             {/* Header */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {isEditing ? 'Kaydı Düzenle' : 'Yeni Kayıt Ekle'}
+                {isEditing ? t('freezer.edit_record') : t('freezer.add_record')}
               </Text>
               <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
                 <Text style={styles.closeButtonText}>✕</Text>
@@ -417,18 +420,18 @@ const FreezerScreen = ({ navigation }) => {
             >
               <View style={styles.formContainer}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Buzdolabı Adı *</Text>
+                  <Text style={styles.inputLabel}>{t('freezer.name_label')}</Text>
                   <TextInput
                     style={styles.textInput}
                     value={freezerName}
                     onChangeText={setFreezerName}
-                    placeholder="Örn: Mutfak Buzdolabı"
+                    placeholder={t('freezer.name_placeholder')}
                     placeholderTextColor="#999"
                   />
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Çalışma Derecesi (°C) *</Text>
+                  <Text style={styles.inputLabel}>{t('freezer.degree_label')}</Text>
                   <TextInput
                     style={styles.textInput}
                     value={workingDegree}
@@ -437,18 +440,18 @@ const FreezerScreen = ({ navigation }) => {
                       const cleanedText = text.replace(/[^0-9.-]/g, '');
                       setWorkingDegree(cleanedText);
                     }}
-                    placeholder="Örn: -18"
+                    placeholder={t('freezer.degree_placeholder')}
                     placeholderTextColor="#999"
                   />
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Açıklama</Text>
+                  <Text style={styles.inputLabel}>{t('freezer.desc_label')}</Text>
                   <TextInput
                     style={[styles.textInput, styles.textArea]}
                     value={description}
                     onChangeText={setDescription}
-                    placeholder="İsteğe bağlı açıklama..."
+                    placeholder={t('freezer.desc_placeholder')}
                     placeholderTextColor="#999"
                     multiline
                     numberOfLines={4}
@@ -475,7 +478,7 @@ const FreezerScreen = ({ navigation }) => {
                 onPress={closeModal}
                 activeOpacity={0.8}
               >
-                <Text style={styles.cancelButtonText}>İptal</Text>
+                <Text style={styles.cancelButtonText}>{t('freezer.cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -491,7 +494,7 @@ const FreezerScreen = ({ navigation }) => {
                   end={{ x: 1, y: 0 }}
                 >
                   <Text style={styles.saveButtonText}>
-                    {SaveLoading ? 'Kaydediliyor...'  :(isEditing ? '✓ Güncelle' : '✓ Kaydet')}
+                    {SaveLoading ? t('freezer.saving')  :(isEditing ? `✓ ${t('freezer.update')}` : `✓ ${t('freezer.save')}`)}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -518,7 +521,7 @@ const FreezerScreen = ({ navigation }) => {
             <View style={styles.modalHandle} />
 
             <View style={styles.reportModalHeader}>
-              <Text style={styles.reportModalTitle}>Rapor Oluştur</Text>
+              <Text style={styles.reportModalTitle}>{t('freezer.create_report')}</Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={closeReportModal}
@@ -536,17 +539,17 @@ const FreezerScreen = ({ navigation }) => {
               <View style={styles.reportFormContainer}>
                 <View style={styles.dateRangeContainer}>
                   <View style={styles.dateRangeHeader}>
-                    <Text style={styles.dateRangeTitle}>📅 Tarih Aralığı</Text>
+                    <Text style={styles.dateRangeTitle}>📅 {t('freezer.date_range')}</Text>
                   </View>
 
                   <View style={styles.dateRow}>
                     <View style={styles.dateInputContainer}>
-                      <Text style={styles.reportInputLabel}>Başlangıç Tarihi</Text>
+                      <Text style={styles.reportInputLabel}>{t('freezer.start_date')}</Text>
                       <TextInput
                         style={styles.reportDateInput}
                         value={startDate}
                         onChangeText={(text) => setStartDate(formatDate(text))}
-                        placeholder="01.01.2024"
+                        placeholder={t('freezer.start_placeholder')}
                         placeholderTextColor="#999"
                         maxLength={10}
                         keyboardType="numeric"
@@ -554,12 +557,12 @@ const FreezerScreen = ({ navigation }) => {
                     </View>
 
                     <View style={styles.dateInputContainer}>
-                      <Text style={styles.reportInputLabel}>Bitiş Tarihi</Text>
+                      <Text style={styles.reportInputLabel}>{t('freezer.end_date')}</Text>
                       <TextInput
                         style={styles.reportDateInput}
                         value={endDate}
                         onChangeText={(text) => setEndDate(formatDate(text))}
-                        placeholder="31.12.2024"
+                        placeholder={t('freezer.end_placeholder')}
                         placeholderTextColor="#999"
                         maxLength={10}
                         keyboardType="numeric"
@@ -570,13 +573,13 @@ const FreezerScreen = ({ navigation }) => {
 
                 <View style={styles.emailContainer}>
                   <View style={styles.emailHeader}>
-                    <Text style={styles.emailTitle}>✉️ E-mail Adresi</Text>
+                    <Text style={styles.emailTitle}>✉️ {t('freezer.email_address')}</Text>
                   </View>
                   <TextInput
                     style={styles.reportEmailInput}
                     value={emailAddress}
                     onChangeText={setEmailAddress}
-                    placeholder="ornek@email.com"
+                    placeholder={t('freezer.email_placeholder')}
                     placeholderTextColor="#999"
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -592,7 +595,7 @@ const FreezerScreen = ({ navigation }) => {
                 onPress={closeReportModal}
                 activeOpacity={0.8}
               >
-                <Text style={styles.reportCancelButtonText}>İptal</Text>
+                <Text style={styles.reportCancelButtonText}>{t('freezer.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.sendReportButton}
@@ -611,7 +614,7 @@ const FreezerScreen = ({ navigation }) => {
                   ) : (
                     <>
                       <Text style={styles.sendReportButtonIcon}>📧</Text>
-                      <Text style={styles.sendReportButtonText}>Rapor Gönder</Text>
+                      <Text style={styles.sendReportButtonText}>{t('freezer.send_report')}</Text>
                     </>
                   )}
                 </LinearGradient>

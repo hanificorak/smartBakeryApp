@@ -24,6 +24,8 @@ import FreezerScreen from './screens/Freezer/FreezerScreen';
 import AddFreezerScreen from './screens/Freezer/AddFreezerScreen';
 import LastStockScreen from './screens/Stock/LastStockScreen';
 import UserCheckScreen from './screens/Users/UserCheckScreen';
+import HolidayScreen from './screens/Holiday/HolidayScreen';
+import CustomOrderScreen from './screens/CustomOrder/CustomOrderScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -115,6 +117,8 @@ export default function App() {
         <Stack.Screen name="AddFreezerScreen" component={AddFreezerScreen} options={{ headerShown: true, title: 'Dolap Çalışma Kaydı Ekle' }} />
         <Stack.Screen name="LastStockScreen" component={LastStockScreen} options={{ headerShown: true, title: 'Düne Ait Kayıtlar' }} />
         <Stack.Screen name="UserCheckScreen" component={UserCheckScreen} options={{ headerShown: true, title: 'Kullanıcı Onay İşlemleri' }} />
+        <Stack.Screen name="HolidayScreen" component={HolidayScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="CustomOrderScreen" component={CustomOrderScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="UserSelectScreen" options={{ headerShown: true, title: 'Kullanıcı Seçin' }}>
           {(props) => <UserSelectScreen {...props} setToken={setToken} />}
         </Stack.Screen>

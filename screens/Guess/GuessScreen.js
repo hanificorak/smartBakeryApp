@@ -28,10 +28,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
+import { useTranslation } from 'react-i18next';
+import '../../src/i18n';
+import axios from 'axios';
 
 const { height: screenHeight } = Dimensions.get('window');
 
 const GuessScreen = ({ navigation }) => {
+    const { t } = useTranslation();
     const [weatherData, setWeatherData] = useState({
         temperature: 24,
         condition: 'Açık (Clear)',
@@ -71,7 +75,7 @@ const GuessScreen = ({ navigation }) => {
         try {
             let location = await AsyncStorage.getItem('location');
             if (location == null) {
-                Alert.alert('Uyarı', 'Konum izniniz yok lütfen uygulamaya konum izni verin. Konum izni vermez iseniz hava durumunu sizin seçmeniz gerek.')
+                Alert.alert(t('warning'), t('guess.location_permission_warning'))
                 return;
             }
             const loc_data = JSON.parse(location);
@@ -79,6 +83,7 @@ const GuessScreen = ({ navigation }) => {
             const longitude = loc_data.longitude;
 
             const weather_item = await AsyncStorage.getItem("weather_data");
+            
             if (weather_item == null) {
                 getWeatherDataApi(latitude, longitude);
             } else {
@@ -90,9 +95,8 @@ const GuessScreen = ({ navigation }) => {
                 let now = new Date();            // şu anki zaman
                 let diffMs = now - date;
 
-                // milisaniyeyi saate çevir
+                console.log(weather_item_response.weathercode)
                 let diffHours = diffMs / (1000 * 60 * 60);
-
                 if (diffHours >= 2) {
                     getWeatherDataApi(latitude, longitude);
                 } else {
@@ -122,6 +126,7 @@ const GuessScreen = ({ navigation }) => {
                 AsyncStorage.setItem('weather_data', JSON.stringify({ data: response, time: new Date().toISOString() }));
                 const currentWeather = response?.data?.current_weather;
                 setWdata(currentWeather.temperature, currentWeather.weathercode)
+                console.log("apii",currentWeather.weathercode)
                 console.log("currentWeather", currentWeather)
             } else {
                 console.log('Hava Durumu API Hatası');
@@ -176,7 +181,7 @@ const GuessScreen = ({ navigation }) => {
             }));
             hideTemperatureModal();
         } else {
-            Alert.alert('Hata', 'Lütfen -50°C ile 60°C arasında geçerli bir sıcaklık girin.');
+            Alert.alert(t('guess.error'), t('guess.invalid_temp'));
         }
     };
 
@@ -192,10 +197,10 @@ const GuessScreen = ({ navigation }) => {
     const handleProductPress = (product) => {
         Alert.alert(
             product.name,
-            `${(product.short_desc == null ? '' : product.short_desc)}\n\nBu ürün için tahmin hesaplanacak.`,
+            `${(product.short_desc == null ? '' : product.short_desc)}\n\n${t('guess.product_calc_confirm')}`,
             [
-                { text: 'İptal', style: 'cancel' },
-                { text: 'Devam Et', onPress: () => calcDay(product) }
+                { text: t('guess.cancel'), style: 'cancel' },
+                { text: t('guess.continue'), onPress: () => calcDay(product) }
             ]
         );
     };
@@ -205,20 +210,21 @@ const GuessScreen = ({ navigation }) => {
         console.log(data)
         if (data && data.status) {
             setMailModalVisible(false);
-            Alert.alert('Bilgi', 'Mail başarıyla gönderildi');
+            Alert.alert(t('info'), t('guess.mail_success'));
         } else {
-            Alert.alert('Uyarı', 'İşlem başarısız.');
+            Alert.alert(t('warning'), t('guess.operation_failed'));
         }
     };
 
     const calcDay = async (product) => {
+    
         const { data } = await api.post(Endpoint.GuessData, { weather_code: weatherData.conditionId, product_id: product.id });
         console.log(data)
         if (data && data.status) {
-            setDetailText(`Bugün ${data.obj.day}. Hava: ${data.obj.weather}, Geçmişte ortalama ${data.obj.average_produced} adet üretip ${data.obj.average_sold} adet satmışsın.`)
-            setWaitMessage(`Bugün yaklaşık ${data.obj.suggested_production} adet üretmen önerilir.`)
+            setDetailText(t('guess.detail_text', { day: data.obj.day, weather: data.obj.weather, avgProduced: data.obj.average_produced, avgSold: data.obj.average_sold }))
+            setWaitMessage(t('guess.wait_message', { suggested: data.obj.suggested_production }))
         } else {
-            Alert.alert('Uyarı', 'Bugün için geçmiş veri bulunamadı');
+            Alert.alert(t('warning'), t('guess.no_history'));
             return;
         }
         showCalcModal(true)
@@ -254,10 +260,10 @@ const GuessScreen = ({ navigation }) => {
                 <SafeAreaView>
                     <View style={styles.headerContent}>
                         <View style={styles.headerTop}>
-                            <Text style={styles.headerTitle}>Günlük Üretim Tahmini</Text>
+                            <Text style={styles.headerTitle}>{t('guess.title')}</Text>
                         </View>
                         <Text style={styles.headerSubtitle}>
-                            Buradan günlük üretim tahmini alabilirsiniz.
+                            {t('guess.subtitle')}
                         </Text>
                     </View>
                 </SafeAreaView>
@@ -267,14 +273,14 @@ const GuessScreen = ({ navigation }) => {
             <View style={styles.weatherContainer}>
                 <TouchableOpacity style={styles.weatherSection} onPress={showTemperatureModal}>
                     <Text style={styles.temperature}>{weatherData.temperature}°C</Text>
-                    <Text style={styles.tempChangeText}>Sıcaklığı Değiştir</Text>
+                    <Text style={styles.tempChangeText}>{t('guess.change_temp')}</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
 
                 <TouchableOpacity style={styles.weatherSection} onPress={showModal}>
                     <Text style={styles.condition}>{weatherData.condition}</Text>
-                    <Text style={styles.conditionChangeText}>Durumu Değiştir</Text>
+                    <Text style={styles.conditionChangeText}>{t('guess.change_condition')}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -288,15 +294,15 @@ const GuessScreen = ({ navigation }) => {
                     }}
                     onPress={() => setMailModalVisible(true)}  // Modal açılır
                 >
-                    <Text style={{ color: 'white', textAlign: 'center' }}>Mail Gönder</Text>
+                    <Text style={{ color: 'white', textAlign: 'center' }}>{t('guess.send_mail')}</Text>
                 </TouchableOpacity>
             </View>
 
             {/* Ürün Listesi */}
             <View style={styles.productsContainer}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Ürünlerinizi Seçin</Text>
-                    <Text style={styles.sectionSubtitle}>Tahmin almak istediğiniz ürünü seçin</Text>
+                    <Text style={styles.sectionTitle}>{t('guess.select_products')}</Text>
+                    <Text style={styles.sectionSubtitle}>{t('guess.select_product_sub')}</Text>
                 </View>
 
                 <FlatList
@@ -325,7 +331,7 @@ const GuessScreen = ({ navigation }) => {
                     />
                     <View style={styles.modalContainer}>
                         <View style={styles.modalHandle} />
-                        <Text style={styles.modalTitle}>Hava Durumu Seçin</Text>
+                        <Text style={styles.modalTitle}>{t('guess.select_weather')}</Text>
 
                         <FlatList
                             data={weatherOptions}
@@ -363,12 +369,12 @@ const GuessScreen = ({ navigation }) => {
                     style={styles.tempModalOverlay}
                 >
                     <View style={styles.tempModalContainer}>
-                        <Text style={styles.tempModalTitle}>Sıcaklık Ayarla</Text>
+                        <Text style={styles.tempModalTitle}>{t('guess.set_temperature')}</Text>
                         <TextInput
                             style={styles.tempInput}
                             value={tempInput}
                             onChangeText={setTempInput}
-                            placeholder="Sıcaklık"
+                            placeholder={t('guess.temperature_placeholder')}
                             keyboardType="numeric"
                             autoFocus
                             placeholderTextColor="#9ca3af"
@@ -378,13 +384,13 @@ const GuessScreen = ({ navigation }) => {
                                 style={[styles.tempButton, styles.cancelButton]}
                                 onPress={hideTemperatureModal}
                             >
-                                <Text style={styles.cancelButtonText}>İptal</Text>
+                                <Text style={styles.cancelButtonText}>{t('guess.cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.tempButton, styles.confirmButton]}
                                 onPress={updateTemperature}
                             >
-                                <Text style={styles.confirmButtonText}>Tamam</Text>
+                                <Text style={styles.confirmButtonText}>{t('guess.ok')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -409,10 +415,10 @@ const GuessScreen = ({ navigation }) => {
                         {/* <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={10} /> */}
 
                         <Animated.View style={styles.modalContainer}>
-                            {/* Header with icon */}
+                            {/* Header with icon */}    
                             <View style={styles.modalHeader}>
 
-                                <Text style={styles.modalTitle}>Üretim Tahmini</Text>
+                                <Text style={styles.modalTitle}>{t('guess.calc_title')}</Text>
 
 
                             </View>
@@ -426,7 +432,7 @@ const GuessScreen = ({ navigation }) => {
                                 <View style={styles.recommendationCard}>
                                     <View style={styles.recommendationHeader}>
                                         <Text style={styles.recommendationIcon}>🎯</Text>
-                                        <Text style={styles.recommendationTitle}>Günlük Tavsiye</Text>
+                                        <Text style={styles.recommendationTitle}>{t('guess.daily_recommendation')}</Text>
                                     </View>
                                     <Text style={styles.recommendationText}>
                                         {detail_text}
@@ -448,7 +454,7 @@ const GuessScreen = ({ navigation }) => {
                                     style={styles.primaryButton}
                                     onPress={hideCalcModal}
                                 >
-                                    <Text style={styles.primaryButtonText}>Anladım</Text>
+                                    <Text style={styles.primaryButtonText}>{t('guess.got_it')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </Animated.View>
@@ -466,13 +472,13 @@ const GuessScreen = ({ navigation }) => {
                     style={styles.centeredOverlay}
                 >
                     <View style={styles.mailModalContainer}>
-                        <Text style={styles.mailModalTitle}>Mail Adresi Gir</Text>
+                        <Text style={styles.mailModalTitle}>{t('guess.enter_email')}</Text>
 
                         <TextInput
                             style={styles.mailInput}
                             value={email}
                             onChangeText={setEmail}
-                            placeholder="örnek@mail.com"
+                            placeholder={t('guess.email_placeholder')}
                             keyboardType="email-address"
                             autoFocus
                             placeholderTextColor="#9ca3af"
@@ -483,20 +489,20 @@ const GuessScreen = ({ navigation }) => {
                                 style={[styles.mailButton, styles.cancelButton]}
                                 onPress={() => setMailModalVisible(false)}
                             >
-                                <Text style={styles.cancelText}>İptal</Text>
+                                <Text style={styles.cancelText}>{t('guess.cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.mailButton, styles.sendButton]}
                                 onPress={() => {
                                     if (!email.includes('@')) {
-                                        Alert.alert('Hata', 'Geçerli bir mail adresi giriniz');
+                                        Alert.alert(t('guess.error'), t('guess.invalid_email'));
                                         return;
                                     }
                                  
                                     sendMail();
                                 }}
                             >
-                                <Text style={styles.sendText}>Gönder</Text>
+                                <Text style={styles.sendText}>{t('guess.send')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

@@ -38,6 +38,9 @@ const Endpoint = {
   FreeReportSend: `${BASE_URL}/api/freezer/createReport`,
   LastStockData: `${BASE_URL}/api/laststock/getData`,
   LastStockSave: `${BASE_URL}/api/laststock/save`,
+  HolidayData: `${BASE_URL}/api/holidays/getData`,
+  HolidayAdd: `${BASE_URL}/api/holidays/add`,
+  HolidayDelete: `${BASE_URL}/api/holidays/delete`,
 };
 
 export default Endpoint;

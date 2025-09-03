@@ -27,10 +27,13 @@ import {
     Snackbar,
     ActivityIndicator,
 } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
+import '../../src/i18n';
 
 const { width, height } = Dimensions.get('window');
 
 export default function DefinitionsScreen({ navigation, setToken }) {
+    const { t } = useTranslation();
     const [definitions, setDefinitions] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
@@ -38,7 +41,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [selectedDefinition, setSelectedDefinition] = useState(null);
-    const [snackMessage, setSnackMessage] = useState('İşlem başarıyla tamamlandı!');
+    const [snackMessage, setSnackMessage] = useState(t('product.op_success'));
     const [newDefinition, setNewDefinition] = useState({
         id: null,
         productName: '',
@@ -73,10 +76,10 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                     )
                 ).start();
             } else {
-                showSnack('Veriler yüklenirken hata oluştu', 'error');
+                showSnack(t('product.load_error'), 'error');
             }
         } catch (error) {
-            showSnack('Bağlantı hatası', 'error');
+            showSnack(t('product.connection_error'), 'error');
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -157,7 +160,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
 
     const saveDefinition = async () => {
         if (!newDefinition.productName.trim()) {
-            Alert.alert('Hata', 'Ürün adı zorunludur.');
+            Alert.alert(t('product.error'), t('product.name_required'));
             return;
         }
 
@@ -170,12 +173,12 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                 id: newDefinition.id
             });
             if (data && data.status) {
-                showSnack(newDefinition.id ? 'Ürün başarıyla güncellendi' : 'Ürün başarıyla eklendi');
+                showSnack(newDefinition.id ? t('product.update_success') : t('product.add_success'));
                 closeModal();
                 getProducts();
-            } else showSnack('İşlem başarısız', 'error');
+            } else showSnack(t('product.operation_failed'), 'error');
         } catch (error) {
-            showSnack('Bir hata oluştu', 'error');
+            showSnack(t('product.unknown_error'), 'error');
         } finally {
             setLoading(false);
         }
@@ -183,21 +186,21 @@ export default function DefinitionsScreen({ navigation, setToken }) {
 
     const deleteDefinition = (id) => {
         Alert.alert(
-            'Silme Onayı',
-            'Bu tanımı silmek istediğinizden emin misiniz?',
+            t('product.delete_confirm_title'),
+            t('product.delete_confirm_message'),
             [
-                { text: 'İptal', style: 'cancel' },
+                { text: t('product.cancel'), style: 'cancel' },
                 {
-                    text: 'Sil',
+                    text: t('product.delete'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             const { data } = await api.post(Endpoint.ProductDelete, { id: id });
-                            if (data && data.status) showSnack('Tanım silindi', 'success');
-                            else showSnack('İşlem başarısız', 'error');
+                            if (data && data.status) showSnack(t('product.delete_success'), 'success');
+                            else showSnack(t('product.operation_failed'), 'error');
                             getProducts();
                         } catch (error) {
-                            showSnack('Silme işlemi başarısız', 'error');
+                            showSnack(t('product.delete_failed'), 'error');
                         }
                     }
                 }
@@ -228,7 +231,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                                 {item.name}
                             </Text>
                             <View style={styles.statusBadge}>
-                                <Text style={styles.statusText}>Aktif</Text>
+                                <Text style={styles.statusText}>{t('product.active')}</Text>
                             </View>
                         </View>
                         <View style={styles.cardActions}>
@@ -250,13 +253,13 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                         </View>
                     </View>
                     <Text style={styles.shortDesc} numberOfLines={2}>
-                        {item.short_desc || 'Kısa açıklama yok'}
+                        {item.short_desc || t('product.no_short_desc')}
                     </Text>
                     <View style={styles.cardFooter}>
                         <View style={styles.tagContainer}>
                             <Text style={styles.tag}>#{item.id}</Text>
                         </View>
-                        <Text style={styles.dateText}>Güncellendi: Bugün</Text>
+                        <Text style={styles.dateText}>{t('product.updated_today')}</Text>
                     </View>
                 </View>
             </LinearGradient>
@@ -266,15 +269,15 @@ export default function DefinitionsScreen({ navigation, setToken }) {
     const renderEmptyState = () => (
         <View style={styles.emptyStateContainer}>
             <Text style={styles.emptyStateEmoji}>📋</Text>
-            <Text style={styles.emptyStateTitle}>Henüz ürün yok</Text>
+            <Text style={styles.emptyStateTitle}>{t('product.empty_title')}</Text>
             <Text style={styles.emptyStateSubtitle}>
-                İlk ürününüzü ekleyerek başlayın
+                {t('product.empty_subtitle')}
             </Text>
             <TouchableOpacity
                 style={styles.emptyStateButton}
                 onPress={() => openModal()}
             >
-                <Text style={styles.emptyStateButtonText}>+ İlk Ürünü Ekle</Text>
+                <Text style={styles.emptyStateButtonText}>{t('product.add_first')}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -293,9 +296,9 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                 <View style={styles.headerContent}>
                     <View style={styles.headerTop}>
                         <View>
-                            <Text style={styles.title}>Ürün Yönetimi</Text>
+                            <Text style={styles.title}>{t('product.title')}</Text>
                             <Text style={styles.subtitle}>
-                                {definitions.length} ürün • {filteredDefinitions.length} gösteriliyor
+                                {t('product.subtitle', { total: definitions.length, showing: filteredDefinitions.length })}
                             </Text>
                         </View>
                         <TouchableOpacity
@@ -319,7 +322,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                     <View style={styles.searchContainer}>
                         <TextInput
                             style={styles.searchBar}
-                            placeholder="Ürün ara..."
+                            placeholder={t('product.search_placeholder')}
                             onChangeText={setSearchQuery}
                             value={searchQuery}
                             placeholderTextColor="#999"
@@ -333,7 +336,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                 {loading && !refreshing ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#667eea" />
-                        <Text style={styles.loadingText}>Yükleniyor...</Text>
+                        <Text style={styles.loadingText}>{t('product.loading')}</Text>
                     </View>
                 ) : filteredDefinitions.length > 0 ? (
                     <FlatList
@@ -380,7 +383,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                             {/* Header */}
                             <View style={styles.fixedModalHeader}>
                                 <Text style={styles.fixedModalTitle}>
-                                    {newDefinition.id ? 'Ürün Güncelle' : 'Yeni Ürün Ekle'}
+                                    {newDefinition.id ? t('product.update_title') : t('product.add_title')}
                                 </Text>
                                 <TouchableOpacity
                                     style={styles.fixedCloseButton}
@@ -396,10 +399,10 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                                 showsVerticalScrollIndicator={false}
                             >
                                 <View style={styles.fixedInputContainer}>
-                                    <Text style={styles.fixedInputLabel}>Ürün Adı *</Text>
+                                    <Text style={styles.fixedInputLabel}>{t('product.name_label')}</Text>
                                     <TextInput
                                         style={styles.fixedInput}
-                                        placeholder="Ürün adını giriniz"
+                                        placeholder={t('product.name_placeholder')}
                                         value={newDefinition.productName}
                                         onChangeText={text => setNewDefinition({ ...newDefinition, productName: text })}
                                         placeholderTextColor="#999"
@@ -407,10 +410,10 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                                 </View>
 
                                 <View style={styles.fixedInputContainer}>
-                                    <Text style={styles.fixedInputLabel}>Kısa Açıklama</Text>
+                                    <Text style={styles.fixedInputLabel}>{t('product.short_desc_label')}</Text>
                                     <TextInput
                                         style={styles.fixedInput}
-                                        placeholder="Kısa bir açıklama yazın"
+                                        placeholder={t('product.short_desc_placeholder')}
                                         value={newDefinition.shortDescription}
                                         onChangeText={text => setNewDefinition({ ...newDefinition, shortDescription: text })}
                                         placeholderTextColor="#999"
@@ -418,10 +421,10 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                                 </View>
 
                                 <View style={styles.fixedInputContainer}>
-                                    <Text style={styles.fixedInputLabel}>Detaylı Açıklama</Text>
+                                    <Text style={styles.fixedInputLabel}>{t('product.long_desc_label')}</Text>
                                     <TextInput
                                         style={[styles.fixedInput, { height: 100 }]}
-                                        placeholder="Ürün hakkında detaylı bilgi verin"
+                                        placeholder={t('product.long_desc_placeholder')}
                                         value={newDefinition.description}
                                         onChangeText={text => setNewDefinition({ ...newDefinition, description: text })}
                                         multiline
@@ -438,7 +441,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                                     onPress={closeModal}
                                     activeOpacity={0.8}
                                 >
-                                    <Text style={styles.fixedCancelButtonText}>İptal</Text>
+                                    <Text style={styles.fixedCancelButtonText}>{t('product.cancel')}</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
@@ -455,7 +458,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                                             <ActivityIndicator color="white" size="small" />
                                         ) : (
                                             <Text style={styles.fixedSaveButtonText}>
-                                                {newDefinition.id ? 'Güncelle' : 'Kaydet'}
+                                                {newDefinition.id ? t('product.update') : t('product.save')}
                                             </Text>
                                         )}
                                     </LinearGradient>
@@ -473,7 +476,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                 duration={3000}
                 style={styles.modernSnackbar}
                 action={{
-                    label: 'Tamam',
+                    label: t('product.ok'),
                     onPress: () => setSnackVisible(false),
                     labelStyle: { color: '#fff' }
                 }}

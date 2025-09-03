@@ -22,8 +22,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
+import { useTranslation } from 'react-i18next';
+import '../../src/i18n';
 
 const ProfileScreen = ({ navigation }) => {
+    const { t } = useTranslation();
     const [userData, setUserData] = useState({
         firstName: '',
         lastName: '',
@@ -61,7 +64,7 @@ setUserData({
             
             
         } catch (error) {
-            Alert.alert('Hata', 'Profil bilgileri yüklenirken bir hata oluştu.');
+            Alert.alert(t('profile.error'), t('profile.load_error'));
         } finally {
             setLoading(false);
         }
@@ -69,13 +72,13 @@ setUserData({
 
     const handleUpdateProfile = async () => {
         if (!userData.firstName.trim() || !userData.email.trim()) {
-            Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
+            Alert.alert(t('profile.error'), t('profile.fill_all_fields'));
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(userData.email)) {
-            Alert.alert('Hata', 'Geçerli bir e-posta adresi girin.');
+            Alert.alert(t('profile.error'), t('profile.invalid_email'));
             return;
         }
 
@@ -85,25 +88,25 @@ setUserData({
             setIsEditing(false);
 
             if (data && data.status) {
-                Alert.alert('Bilgi', 'Bilgiler başarıyla güncellendi.');
+                Alert.alert(t('profile.info'), t('profile.update_success'));
             } else {
-                Alert.alert('Uyarı','İşlem başarısız.');
+                Alert.alert(t('profile.warning'), t('profile.operation_failed'));
             }
     };
 
     const handleChangePassword = async () => {
         if (!passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword) {
-            Alert.alert('Hata', 'Lütfen tüm şifre alanlarını doldurun.');
+            Alert.alert(t('profile.error'), t('profile.fill_all_password_fields'));
             return;
         }
 
         if (passwords.newPassword !== passwords.confirmPassword) {
-            Alert.alert('Hata', 'Yeni şifre ve onay şifresi eşleşmiyor.');
+            Alert.alert(t('profile.error'), t('profile.password_mismatch'));
             return;
         }
 
         if (passwords.newPassword.length < 6) {
-            Alert.alert('Hata', 'Yeni şifre en az 6 karakter olmalıdır.');
+            Alert.alert(t('profile.error'), t('profile.password_min_length'));
             return;
         }
 
@@ -111,23 +114,22 @@ setUserData({
             setLoading(true);
             const {data} = await api.post(Endpoint.UpdatePassword,{last_pass:passwords.currentPassword,new_pass:passwords.confirmPassword});
             if(data && data.status){
-                Alert.alert('Bilgi','Şifreniz başarıyla güncellenmiştir.');
+                Alert.alert(t('profile.info'), t('profile.password_update_success'));
             }else{
                 if(data.sub_info == "last_error"){
-                    Alert.alert('Uyarı','Mevcut şifrenizi yanlış girdiniz.');
+                    Alert.alert(t('profile.warning'), t('profile.current_password_wrong'));
                     return;
                 }else{
-                    Alert.alert('Uyarı','İşlem başarısız.');
+                    Alert.alert(t('profile.warning'), t('profile.operation_failed'));
                 }
             }
-            Alert.alert('Başarılı', 'Şifreniz başarıyla değiştirildi.');
             setPasswords({
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: '',
             });
         } catch (error) {
-            Alert.alert('Hata', 'Şifre değiştirilirken bir hata oluştu.');
+            Alert.alert(t('profile.error'), t('profile.password_change_error'));
         } finally {
             setLoading(false);
         }
@@ -154,7 +156,7 @@ setUserData({
                 >
                     <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Profil Ayarları</Text>
+                <Text style={styles.headerTitle}>{t('profile.title')}</Text>
                 <TouchableOpacity
                     style={styles.editButton}
                     onPress={() => setIsEditing(!isEditing)}
@@ -177,10 +179,10 @@ setUserData({
                 >
                     {/* Profil Bilgileri Kartı */}
                     <Card style={styles.card}>
-                        <Text style={styles.cardTitle}>Kişisel Bilgiler</Text>
+                        <Text style={styles.cardTitle}>{t('profile.personal_info')}</Text>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Ad Soyad</Text>
+                            <Text style={styles.inputLabel}>{t('profile.full_name')}</Text>
                             <TextInput
                                 mode="outlined"
                                 value={userData.firstName}
@@ -199,7 +201,7 @@ setUserData({
 
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>E-posta</Text>
+                            <Text style={styles.inputLabel}>{t('profile.email')}</Text>
                             <TextInput
                                 mode="outlined"
                                 value={userData.email}
@@ -225,17 +227,17 @@ setUserData({
                                 style={styles.updateButton}
                                 buttonColor="#6366f1"
                             >
-                                Bilgileri Güncelle
+                                {t('profile.update_info')}
                             </Button>
                         )}
                     </Card>
 
                     {/* Şifre Değiştirme Kartı */}
                     <Card style={styles.card}>
-                        <Text style={styles.cardTitle}>Şifre Değiştir</Text>
+                        <Text style={styles.cardTitle}>{t('profile.change_password')}</Text>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Mevcut Şifre</Text>
+                            <Text style={styles.inputLabel}>{t('profile.current_password')}</Text>
                             <TextInput
                                 mode="outlined"
                                 value={passwords.currentPassword}
@@ -257,7 +259,7 @@ setUserData({
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Yeni Şifre</Text>
+                            <Text style={styles.inputLabel}>{t('profile.new_password')}</Text>
                             <TextInput
                                 mode="outlined"
                                 value={passwords.newPassword}
@@ -279,7 +281,7 @@ setUserData({
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Yeni Şifre (Tekrar)</Text>
+                            <Text style={styles.inputLabel}>{t('profile.new_password_confirm')}</Text>
                             <TextInput
                                 mode="outlined"
                                 value={passwords.confirmPassword}
@@ -307,7 +309,7 @@ setUserData({
                             style={styles.updateButton}
                             buttonColor="#dc2626"
                         >
-                            Şifreyi Değiştir
+                            {t('profile.change_password_btn')}
                         </Button>
                     </Card>
 

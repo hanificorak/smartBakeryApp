@@ -21,8 +21,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Bu import'u ekle
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
+import { useTranslation } from 'react-i18next';
+import '../../src/i18n';
 
 const CompanyScreen = ({ navigation }) => {
+    const { t } = useTranslation();
     const insets = useSafeAreaInsets(); // Safe area insets'i al
     
     const [formData, setFormData] = useState({
@@ -61,11 +64,11 @@ const CompanyScreen = ({ navigation }) => {
         const newErrors = {};
 
         if (!formData.name.trim()) {
-            newErrors.name = 'İşletme adı gereklidir';
+            newErrors.name = t('company.name_required');
         }
 
         if (!formData.address.trim()) {
-            newErrors.address = 'İşletme adresi gereklidir';
+            newErrors.address = t('company.address_required');
         }
 
         setErrors(newErrors);
@@ -74,7 +77,7 @@ const CompanyScreen = ({ navigation }) => {
 
     const handleSave = async () => {
         if (!validateForm()) {
-            Alert.alert('Hata', 'Lütfen tüm alanları doğru şekilde doldurunuz');
+            Alert.alert(t('company.error'), t('company.fill_fields'));
             return;
         }
 
@@ -88,14 +91,14 @@ const CompanyScreen = ({ navigation }) => {
             });
             console.log(data)
             if (data && data.status) {
-                Alert.alert('Bilgi', 'Bilgiler başarıyla kayıt edildi.');
+                Alert.alert(t('info'), t('company.save_success'));
             } else {
-                Alert.alert('Uyarı', 'İşlem başarısız.')
+                Alert.alert(t('warning'), t('company.operation_failed'))
             }
 
         } catch (error) {
             console.error('Kaydetme hatası:', error);
-            Alert.alert('Hata', 'Bilgiler kaydedilirken bir hata oluştu');
+            Alert.alert(t('company.error'), t('company.save_error'));
         } finally {
             setSaving(false);
         }
@@ -143,7 +146,7 @@ const CompanyScreen = ({ navigation }) => {
                 >
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#ffffff" />
-                        <Text style={styles.loadingText}>Yükleniyor...</Text>
+                        <Text style={styles.loadingText}>{t('company.loading')}</Text>
                     </View>
                 </LinearGradient>
             </SafeAreaView>
@@ -159,7 +162,7 @@ const CompanyScreen = ({ navigation }) => {
                 style={styles.header}
             >
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerTitle}>İşletme Ayarları</Text>
+                    <Text style={styles.headerTitle}>{t('company.title')}</Text>
                     <View style={styles.placeholder} />
                 </View>
             </LinearGradient>
@@ -177,23 +180,23 @@ const CompanyScreen = ({ navigation }) => {
                     <View style={styles.formContainer}>
                         <View style={styles.formHeader}>
                             <Ionicons name="business" size={24} color="#6366f1" />
-                            <Text style={styles.formTitle}>İşletme Bilgileri</Text>
+                            <Text style={styles.formTitle}>{t('company.form_title')}</Text>
                         </View>
 
                         <View style={styles.formContent}>
                             {renderInput(
                                 'name',
-                                'İşletme Adı',
+                                t('company.name_label'),
                                 'business-outline',
-                                'İşletme adınızı giriniz',
+                                t('company.name_placeholder'),
                                 { autoCapitalize: 'words' }
                             )}
 
                             {renderInput(
                                 'address',
-                                'İşletme Adresi',
+                                t('company.address_label'),
                                 'location-outline',
-                                'İşletme adresinizi giriniz',
+                                t('company.address_placeholder'),
                                 {
                                     multiline: true,
                                     numberOfLines: 3,
@@ -203,9 +206,9 @@ const CompanyScreen = ({ navigation }) => {
 
                             {renderInput(
                                 'phone',
-                                'İşletme Telefonu',
+                                t('company.phone_label'),
                                 'call-outline',
-                                'Telefon numaranızı giriniz',
+                                t('company.phone_placeholder'),
                                 { keyboardType: 'phone-pad' }
                             )}
                         </View>
@@ -228,7 +231,7 @@ const CompanyScreen = ({ navigation }) => {
                             ) : (
                                 <>
                                     <Ionicons name="checkmark" size={20} color="#ffffff" />
-                                    <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
+                                    <Text style={styles.saveButtonText}>{t('company.save_changes')}</Text>
                                 </>
                             )}
                         </LinearGradient>

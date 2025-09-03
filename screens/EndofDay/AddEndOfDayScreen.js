@@ -265,7 +265,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                 />
 
                 <View style={styles.switchContainer}>
-                    <Text style={styles.switchLabel}>Kalanı Ertesi güne aktar</Text>
+                    <Text style={styles.switchLabel}>{t('endof.ert_text_sw')}</Text>
                     <Switch
                         style={{ marginTop: 6 }}
                         value={product.ert_status} // her ürün için state’de tut
@@ -273,7 +273,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                     />
                 </View>
                 <View style={styles.switchContainer}>
-                    <Text style={styles.switchLabel}>Üretim Tarihi</Text>
+                    <Text style={styles.switchLabel}>{t('endof.urt_date')}</Text>
                     <Text> {product.parentdate}</Text>
                 </View>
             </View>
@@ -293,7 +293,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                     <SafeAreaView>
                         <View style={styles.headerContent}>
                             <View style={styles.headerTop}>
-                                <Text style={styles.headerTitle}>Gün Sonu </Text>
+                                <Text style={styles.headerTitle}>{t('endof.add_title')} </Text>
                                 <TouchableOpacity
                                     style={styles.saveButton}
                                     disabled={saveLoading}
@@ -306,7 +306,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 1, y: 0 }}
                                     >
-                                        <Text style={styles.saveButtonText}>{(saveLoading ? 'Kayıt ediliyor...' : 'Kaydet')}</Text>
+                                        <Text style={styles.saveButtonText}>{(saveLoading ? t('saving') : t('save'))}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                             </View>
@@ -358,8 +358,8 @@ const AddEndOfDayScreen = ({ navigation }) => {
                                 <View style={styles.loadingContainer}>
                                     <View style={styles.loadingCard}>
                                         <ActivityIndicator size="large" color="#667eea" />
-                                        <Text style={styles.loadingText}>Yükleniyor...</Text>
-                                        <Text style={styles.loadingSubtext}>Kayıtlar yükleniyor</Text>
+                                        <Text style={styles.loadingText}>{t('loading')}</Text>
+                                        <Text style={styles.loadingSubtext}>{t('loading')}</Text>
                                     </View>
                                 </View> : (products.length > 0 ? products.map(product => renderProductItem(product)) :
 
@@ -367,9 +367,8 @@ const AddEndOfDayScreen = ({ navigation }) => {
                                     <View style={styles.emptyState}>
                                         <View style={styles.emptyStateCard}>
                                             <Text style={styles.emptyIcon}>📦</Text>
-                                            <Text style={styles.emptyTitle}>Henüz kayıt yok</Text>
-                                            <Text style={styles.emptySubtitle}>
-                                                Bugüne ait stok girişi yok.                                          </Text>
+                                            <Text style={styles.emptyTitle}>{t('no_record')}</Text>
+                                            <Text style={styles.emptySubtitle}>{t('no_record')}</Text>
                                         </View>
                                     </View>
                                 ))}
@@ -391,14 +390,14 @@ const AddEndOfDayScreen = ({ navigation }) => {
                     >
                         <View>
                             <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Hava Durumu</Text>
+                                <Text style={styles.inputLabel}>{t('endof.weather')}</Text>
                                 <TouchableOpacity
                                     style={[styles.dropdownButton, selectedWeathers && styles.dropdownButtonSelected]}
                                     onPress={() => setShowWeatherDropdown(!showWeatherDropdown)}
                                     activeOpacity={0.8}
                                 >
                                     <Text style={[styles.dropdownButtonText, !selectedWeathers && styles.placeholder]}>
-                                        {selectedWeathers.description || 'Hava durumu seçiniz'}
+                                        {selectedWeathers.description || t('endof.weather_select')}
                                     </Text>
                                     <Text style={[styles.dropdownArrow, showWeatherDropdown && styles.dropdownArrowUp]}>
                                         ▼
@@ -416,19 +415,18 @@ const AddEndOfDayScreen = ({ navigation }) => {
                                 )}
                             </View>
                             <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Sıcaklık (°C)</Text>
+                                <Text style={styles.inputLabel}>{t('endof.temp')} (°C)</Text>
                                 <TextInput
                                     style={[styles.textInput, temp && styles.textInputFilled]}
                                     value={temp?.toString() || ""}
                                     onChangeText={setTemp}
-                                    placeholder="Derece"
                                     keyboardType="numeric"
                                     placeholderTextColor="#9CA3AF"
                                 />
                             </View>
                         </View>
                         <Button mode="contained" onPress={() => setWeatherModalVisible(false)}>
-                            Kapat
+                            {t('close')}
                         </Button>
                     </Modal>
                 </Portal>

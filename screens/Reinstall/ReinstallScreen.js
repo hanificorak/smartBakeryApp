@@ -26,10 +26,13 @@ import api from '../../tools/api';
 import { ActivityIndicator, Button } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useColorScheme } from 'react-native';
-
+import { useTranslation } from 'react-i18next';
+import '../../src/i18n';
 const { width, height } = Dimensions.get('window');
 
 export default function ReinstallScreen({ navigation, setToken }) {
+        const { t } = useTranslation();
+    
     const [isProcessing, setIsProcessing] = useState(false);
     const [processStep, setProcessStep] = useState(0);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -80,12 +83,12 @@ export default function ReinstallScreen({ navigation, setToken }) {
     }, []);
 
     const processSteps = [
-        'Kullanıcı verileri temizleniyor...',
-        'Cache dosyaları siliniyor...',
-        'Uygulama ayarları sıfırlanıyor...',
-        'Sistem dosyaları onarılıyor...',
-        'Yeniden başlatılıyor...',
-        'Tamamlandı!'
+        t('reinstall.clear_data'),
+        t('reinstall.clear_cache'),
+        t('reinstall.reset_settings'),
+        t('reinstall.repair_system'),
+        t('reinstall.restarting'),
+        t('reinstall.finished')
     ];
 
     const handleReinstall = async () => {
@@ -110,7 +113,7 @@ export default function ReinstallScreen({ navigation, setToken }) {
             const {data} = await api.post(Endpoint.ReinstallStart);
             if(data && data.status == false){
                 
-                Alert.alert('Uyarı','İşlem başarısız. Lütfen uygulamayı kapatıp açın.');
+                Alert.alert(t('warning'), t('reinstall.error_warning'));
                 return;
             }
             // Gerçek temizleme işlemleri
@@ -125,11 +128,11 @@ export default function ReinstallScreen({ navigation, setToken }) {
             // İşlem tamamlandı
             setTimeout(() => {
                 Alert.alert(
-                    'Başarılı!',
-                    'Uygulama başarıyla yeniden yüklendi. Giriş ekranına yönlendiriliyorsunuz.',
+                    t('info'),
+                    t('reinstall.success'),
                     [
                         {
-                            text: 'Tamam',
+                            text: t('ok'),
                             onPress: () => {
                                 navigation.reset({
                                     index: 0,
@@ -143,7 +146,7 @@ export default function ReinstallScreen({ navigation, setToken }) {
         } catch (error) {
             console.error('Yeniden yükleme hatası:', error);
             setIsProcessing(false);
-            Alert.alert('Hata', 'Yeniden yükleme işlemi sırasında bir hata oluştu.');
+            Alert.alert(t('error'), t('reinstall.error'));
         }
     };
 
@@ -195,21 +198,21 @@ export default function ReinstallScreen({ navigation, setToken }) {
 
                             {/* Başlık */}
                             <Text style={[styles.title, isDark && styles.titleDark]}>
-                                Uygulama Yeniden Yükle
+                                {t('reinstall.title')}
                             </Text>
 
                             {/* Açıklama */}
                             <Text style={[styles.description, isDark && styles.descriptionDark]}>
-                                Bu işlem uygulamayı tamamen tamir edecek ve bugüne ait tüm verilerinizi temizleyecektir.
+                                {t('reinstall.description')}
                             </Text>
 
                             {/* Uyarı Kutusu */}
                             <View style={[styles.warningBox, isDark && styles.warningBoxDark]}>
                                 <Text style={styles.warningIcon}>⚠️</Text>
                                 <Text style={[styles.warningText, isDark && styles.warningTextDark]}>
-                                    • Tüm yerel veriler silinecek{'\n'}
-                                    • Uygulama ayarları sıfırlanacak{'\n'}
-                                    • Yeniden giriş yapmanız gerekecek
+                                    • {t('reinstall.clear_data')}{'\n'}
+                                    • {t('reinstall.reset_settings')}{'\n'}
+                                    • {t('reinstall.restart')}
                                 </Text>
                             </View>
 
@@ -223,7 +226,7 @@ export default function ReinstallScreen({ navigation, setToken }) {
                                     colors={['#ff6b6b', '#ee5a24']}
                                     style={styles.startButtonGradient}
                                 >
-                                    <Text style={styles.startButtonText}>İşlemi Başlat</Text>
+                                    <Text style={styles.startButtonText}>{t('reinstall.start')}</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
 
@@ -234,7 +237,7 @@ export default function ReinstallScreen({ navigation, setToken }) {
                                 activeOpacity={0.7}
                             >
                                 <Text style={[styles.backButtonText, isDark && styles.backButtonTextDark]}>
-                                    İptal Et
+                                    {t('reinstall.cancel')}
                                 </Text>
                             </TouchableOpacity>
                         </>
@@ -250,7 +253,7 @@ export default function ReinstallScreen({ navigation, setToken }) {
                                 </View>
 
                                 <Text style={[styles.processingTitle, isDark && styles.processingTitleDark]}>
-                                    Uygulama Yeniden Yükleniyor
+                                    {t('reinstall.reinstalling')}
                                 </Text>
 
                                 <Text style={[styles.processingStep, isDark && styles.processingStepDark]}>
@@ -273,7 +276,7 @@ export default function ReinstallScreen({ navigation, setToken }) {
                                 </View>
 
                                 <Text style={[styles.processingWarning, isDark && styles.processingWarningDark]}>
-                                    Lütfen uygulamayı kapatmayınız
+                                    {t('reinstall.restart_warning')}
                                 </Text>
                             </View>
                         </>
@@ -292,7 +295,7 @@ export default function ReinstallScreen({ navigation, setToken }) {
                     <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
                         <Text style={styles.modalIcon}>🔄</Text>
                         <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>
-                            Emin misiniz?
+                            {t('reinstall.confirm_title')}
                         </Text>
                         <Text style={[styles.modalDescription, isDark && styles.modalDescriptionDark]}>
                             Bu işlem geri alınamaz. Tüm verileriniz silinecek ve uygulamadan çıkış yapılacaktır.
@@ -303,14 +306,14 @@ export default function ReinstallScreen({ navigation, setToken }) {
                                 style={[styles.modalButton, styles.cancelButton]}
                                 onPress={() => setShowConfirmModal(false)}
                             >
-                                <Text style={styles.cancelButtonText}>İptal</Text>
+                                <Text style={styles.cancelButtonText}>{t('reinstall.cancel')}</Text>
                             </TouchableOpacity>
                             
                             <TouchableOpacity 
                                 style={[styles.modalButton, styles.confirmButton]}
                                 onPress={confirmReinstall}
                             >
-                                <Text style={styles.confirmButtonText}>Devam Et</Text>
+                                <Text style={styles.confirmButtonText}>{t('reinstall.continue')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
