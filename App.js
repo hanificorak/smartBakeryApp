@@ -26,6 +26,7 @@ import LastStockScreen from './screens/Stock/LastStockScreen';
 import UserCheckScreen from './screens/Users/UserCheckScreen';
 import HolidayScreen from './screens/Holiday/HolidayScreen';
 import CustomOrderScreen from './screens/CustomOrder/CustomOrderScreen';
+import CustomOrderReportScreen from './screens/CustomOrderReport/CustomOrderReportScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -103,23 +104,24 @@ export default function App() {
         <Stack.Screen name="Home" options={{ title: 'Ana Sayfa' }}>
           {(props) => <HomeScreen {...props} location={location} />}
         </Stack.Screen>
-        <Stack.Screen name="StockScreen" component={StockScreen} options={{ headerShown: true, title: 'Stok Girişi' }} />
-        <Stack.Screen name="DefinitionsScreen" component={DefinitionsScreen} options={{ headerShown: true, title: 'Tanımlar' }} />
-        <Stack.Screen name="EndofDayScreen" component={EndofDayScreen} options={{ headerShown: true, title: 'Gün Sonu İşlemleri' }} />
-        <Stack.Screen name="AddEndOfDayScreen" component={AddEndOfDayScreen} options={{ headerShown: true, title: 'Gün Sonu Ekle' }} />
-        <Stack.Screen name="ReportsScreen" component={ReportsScreen} options={{ headerShown: true, title: 'Raporlar' }} />
-        <Stack.Screen name="GuessScreen" component={GuessScreen} options={{ headerShown: true, title: 'Günlük Üretim Tahmini' }} />
-        <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: true, title: 'Profilim' }} />
-        <Stack.Screen name="UsersScreen" component={UsersScreen} options={{ headerShown: true, title: 'Kullanıcılar' }} />
-        <Stack.Screen name="CompanyScreen" component={CompanyScreen} options={{ headerShown: true, title: 'İşletme Ayarları' }} />
-        <Stack.Screen name="ReinstallScreen" component={ReinstallScreen} options={{ headerShown: true, title: 'Re-Install' }} />
-        <Stack.Screen name="FreezerScreen" component={FreezerScreen} options={{ headerShown: true, title: 'Dolap Çalışma Takibi' }} />
-        <Stack.Screen name="AddFreezerScreen" component={AddFreezerScreen} options={{ headerShown: true, title: 'Dolap Çalışma Kaydı Ekle' }} />
-        <Stack.Screen name="LastStockScreen" component={LastStockScreen} options={{ headerShown: true, title: 'Düne Ait Kayıtlar' }} />
-        <Stack.Screen name="UserCheckScreen" component={UserCheckScreen} options={{ headerShown: true, title: 'Kullanıcı Onay İşlemleri' }} />
+        <Stack.Screen name="StockScreen" component={StockScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="DefinitionsScreen" component={DefinitionsScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="EndofDayScreen" component={EndofDayScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="AddEndOfDayScreen" component={AddEndOfDayScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="ReportsScreen" component={ReportsScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="GuessScreen" component={GuessScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="UsersScreen" component={UsersScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="CompanyScreen" component={CompanyScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="ReinstallScreen" component={ReinstallScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="FreezerScreen" component={FreezerScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="AddFreezerScreen" component={AddFreezerScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="LastStockScreen" component={LastStockScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="UserCheckScreen" component={UserCheckScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="HolidayScreen" component={HolidayScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="CustomOrderScreen" component={CustomOrderScreen} options={{ headerShown: true, title: '' }} />
-        <Stack.Screen name="UserSelectScreen" options={{ headerShown: true, title: 'Kullanıcı Seçin' }}>
+        <Stack.Screen name="CustomOrderReportScreen" component={CustomOrderReportScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="UserSelectScreen" options={{ headerShown: true, title: '' }}>
           {(props) => <UserSelectScreen {...props} setToken={setToken} />}
         </Stack.Screen>
 

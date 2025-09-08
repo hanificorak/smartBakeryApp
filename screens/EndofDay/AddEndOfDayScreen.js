@@ -126,7 +126,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
 
     const getWeatherCodeItem = async (code) => {
         try {
-            const { data } = await api.post(Endpoint.WeatherItem, { code: code });
+            const { data } = await api.post(Endpoint.WeatherItem, { code: code,lang:i18n.language });
             if (data && data.status) {
                 setSelectedWeathers(data.obj)
             }
@@ -203,21 +203,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                 Alert.alert('Uyarı', 'İşlem başarısız');
             }
 
-            // const dataToSave = {
-            //     date: new Date().toISOString(),
-            //     products: products.map(product => ({
-            //         ...product,
-            //         inputValue: inputValues[product.id] || '0'
-            //     }))
-            // };
-
-            // await AsyncStorage.setItem('endOfDayData', JSON.stringify(dataToSave));
-
-            // Alert.alert(
-            //     'Başarılı',
-            //     'Gün sonu verileri başarıyla kaydedildi.',
-            //     [{ text: 'Tamam', onPress: () => navigation.goBack() }]
-            // );
+ 
         } catch (error) {
             console.log(error.message)
             Alert.alert('Hata', 'Veriler kaydedilirken bir hata oluştu.');
@@ -339,7 +325,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                             fontWeight: '600',
                             color: '#0033cc'
                         }}>
-                            Hava Durumu: {temp}°C
+                            {t('endof.weather')}: {temp}°C
                         </Text>
                         <Text style={{
                             textAlign: 'center',

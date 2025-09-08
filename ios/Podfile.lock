@@ -73,6 +73,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - ExpoPrint (14.1.4):
+    - ExpoModulesCore
   - ExpoSharing (13.1.5):
     - ExpoModulesCore
   - fast_float (6.1.4)
@@ -2217,6 +2219,7 @@ DEPENDENCIES:
   - ExpoLocalization (from `../node_modules/expo-localization/ios`)
   - ExpoLocation (from `../node_modules/expo-location/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
+  - ExpoPrint (from `../node_modules/expo-print/ios`)
   - ExpoSharing (from `../node_modules/expo-sharing/ios`)
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
@@ -2335,6 +2338,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-location/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
+  ExpoPrint:
+    :path: "../node_modules/expo-print/ios"
   ExpoSharing:
     :path: "../node_modules/expo-sharing/ios"
   fast_float:
@@ -2516,6 +2521,7 @@ SPEC CHECKSUMS:
   ExpoLocalization: 999a1ff61a7f5917d65c2bd9234883009019ca9f
   ExpoLocation: a43df2ff15f2fae9504b23a77060e7cd16b3e326
   ExpoModulesCore: 00a1b5c73248465bd0b93f59f8538c4573dac579
+  ExpoPrint: b278f5d9ac844f4b1f65dd06183970602e09bc8b
   ExpoSharing: b0377be82430d07398c6a4cd60b5a15696accbd3
   fast_float: 06eeec4fe712a76acc9376682e4808b05ce978b6
   FBLazyVector: d2a9cd223302b6c9aa4aa34c1a775e9db609eb52

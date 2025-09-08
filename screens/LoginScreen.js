@@ -12,7 +12,7 @@ import {
     Platform,
     ScrollView,
     Alert,
-    Button,
+    Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,12 +29,20 @@ export default function LoginScreen({ navigation, setToken }) {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-
+    const [languageModalVisible, setLanguageModalVisible] = useState(false);
+    const [currentLanguage, setCurrentLanguage] = useState('tr');
 
     // Animasyon değerleri
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(50)).current;
     const buttonScale = useRef(new Animated.Value(1)).current;
+
+    // Dil seçenekleri
+    const languages = [
+        { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+        { code: 'en', name: 'English', flag: '🇺🇸' },
+        { code: 'de', name: 'Deutsch', flag: '🇩🇪' }
+    ];
 
     useEffect(() => {
         // Sayfa yüklenme animasyonu
@@ -51,12 +59,26 @@ export default function LoginScreen({ navigation, setToken }) {
             }),
         ]).start();
         clearData();
+        loadCurrentLanguage();
     }, []);
 
+    const loadCurrentLanguage = async () => {
+        const lang = await AsyncStorage.getItem('user-language');
+        if (lang != null) {
+            setCurrentLanguage(lang);
+        }
+    };
 
     const changeLanguage = async (lang) => {
         await i18n.changeLanguage(lang);
-        await AsyncStorage.setItem("user-language", lang); // kaydet
+        await AsyncStorage.setItem("user-language", lang);
+        setCurrentLanguage(lang);
+        setLanguageModalVisible(false);
+    };
+
+    const getCurrentLanguageFlag = () => {
+        const currentLang = languages.find(lang => lang.code === currentLanguage);
+        return currentLang ? currentLang.flag : '🇹🇷';
     };
 
     const handleLogin = async () => {
@@ -76,7 +98,6 @@ export default function LoginScreen({ navigation, setToken }) {
                     useNativeDriver: true,
                 }),
             ]).start();
-
 
             const { data } = await axios.post(Endpoint.Login, { email: email, password: password });
             setIsLoading(false);
@@ -140,6 +161,17 @@ export default function LoginScreen({ navigation, setToken }) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
             >
+
+                {/* Dil Seçici Butonu */}
+                <TouchableOpacity 
+                    style={styles.languageButton}
+                    onPress={() => setLanguageModalVisible(true)}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.languageFlagContainer}>
+                        <Text style={styles.languageFlag}>{getCurrentLanguageFlag()}</Text>
+                    </View>
+                </TouchableOpacity>
 
                 {/* Dekoratif Circles */}
                 <View style={[styles.circle, styles.circle1]} />
@@ -211,7 +243,6 @@ export default function LoginScreen({ navigation, setToken }) {
                                 </TouchableOpacity>
                             </View>
 
-
                             {/* Login Button */}
                             <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
                                 <TouchableOpacity
@@ -241,7 +272,6 @@ export default function LoginScreen({ navigation, setToken }) {
                                 </TouchableOpacity>
                             </Animated.View>
 
-
                             {/* Sign Up Link */}
                             <View style={styles.signupContainer}>
                                 <Text style={styles.signupText}>{t('login.register_msg')} </Text>
@@ -252,13 +282,55 @@ export default function LoginScreen({ navigation, setToken }) {
 
                         </View>
                     </Animated.View>
-
-
-
-                    <Button title="Türkçe" onPress={() => changeLanguage("tr")} />
-                    <Button title="Deutsch" onPress={() => changeLanguage("de")} />
-
                 </ScrollView>
+
+                {/* Dil Seçim Modal */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={languageModalVisible}
+                    onRequestClose={() => setLanguageModalVisible(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContainer}>
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Dil Seçin / Choose Language</Text>
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={() => setLanguageModalVisible(false)}
+                                >
+                                    <Text style={styles.closeButtonText}>✕</Text>
+                                </TouchableOpacity>
+                            </View>
+                            
+                            <View style={styles.languageList}>
+                                {languages.map((language) => (
+                                    <TouchableOpacity
+                                        key={language.code}
+                                        style={[
+                                            styles.languageOption,
+                                            currentLanguage === language.code && styles.selectedLanguageOption
+                                        ]}
+                                        onPress={() => changeLanguage(language.code)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={styles.languageOptionFlag}>{language.flag}</Text>
+                                        <Text style={[
+                                            styles.languageOptionText,
+                                            currentLanguage === language.code && styles.selectedLanguageText
+                                        ]}>
+                                            {language.name}
+                                        </Text>
+                                        {currentLanguage === language.code && (
+                                            <Text style={styles.checkmark}>✓</Text>
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+
             </LinearGradient>
         </KeyboardAvoidingView>
     );
@@ -270,6 +342,32 @@ const styles = StyleSheet.create({
     },
     gradient: {
         flex: 1,
+    },
+    languageButton: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 50 : 30,
+        right: 20,
+        zIndex: 1000,
+    },
+    languageFlagContainer: {
+        width: 70,
+        marginTop:10,
+        height: 70,
+        borderRadius: 22.5,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    languageFlag: {
+        fontSize: 45,
     },
     circle: {
         position: 'absolute',
@@ -371,15 +469,6 @@ const styles = StyleSheet.create({
     eyeIcon: {
         fontSize: 18,
     },
-    forgotPasswordContainer: {
-        alignSelf: 'flex-end',
-        marginBottom: 30,
-    },
-    forgotPasswordText: {
-        color: '#667eea',
-        fontSize: 14,
-        fontWeight: '500',
-    },
     loginButton: {
         borderRadius: 15,
         overflow: 'hidden',
@@ -407,47 +496,6 @@ const styles = StyleSheet.create({
         borderColor: 'white',
         borderTopColor: 'transparent',
         marginRight: 10,
-        // Note: Gerçek uygulamada ActivityIndicator kullanın
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 20,
-    },
-    dividerLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: '#E9ECEF',
-    },
-    dividerText: {
-        marginHorizontal: 15,
-        color: '#6C757D',
-        fontSize: 14,
-    },
-    socialContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 25,
-    },
-    socialButton: {
-        flex: 0.48,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#F8F9FA',
-        borderRadius: 12,
-        paddingVertical: 15,
-        borderWidth: 1,
-        borderColor: '#E9ECEF',
-    },
-    socialIcon: {
-        fontSize: 20,
-        marginRight: 8,
-    },
-    socialText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#333',
     },
     signupContainer: {
         flexDirection: 'row',
@@ -461,6 +509,91 @@ const styles = StyleSheet.create({
     signupLink: {
         color: '#667eea',
         fontSize: 14,
+        fontWeight: 'bold',
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 20,
+        margin: 20,
+        minWidth: 300,
+        maxWidth: width * 0.9,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E9ECEF',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    closeButton: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: '#F8F9FA',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        fontSize: 16,
+        color: '#6C757D',
+        fontWeight: 'bold',
+    },
+    languageList: {
+        gap: 10,
+    },
+    languageOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 15,
+        borderRadius: 12,
+        backgroundColor: '#F8F9FA',
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    selectedLanguageOption: {
+        backgroundColor: '#667eea',
+        borderColor: '#5a67d8',
+    },
+    languageOptionFlag: {
+        fontSize: 24,
+        marginRight: 15,
+    },
+    languageOptionText: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#333',
+    },
+    selectedLanguageText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    checkmark: {
+        fontSize: 18,
+        color: 'white',
         fontWeight: 'bold',
     },
 });

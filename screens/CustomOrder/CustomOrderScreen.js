@@ -13,9 +13,10 @@ import {
     TextInput,
     Platform,
     Animated,
-
     KeyboardAvoidingView,
-    FlatList
+    FlatList,
+    Keyboard,
+    Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -24,6 +25,8 @@ import Endpoint from '../../tools/endpoint';
 import api from '../../tools/api';
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
+
+const { width } = Dimensions.get('window');
 
 const CustomOrderScreen = ({ navigation }) => {
     const { t, i18n } = useTranslation();
@@ -35,25 +38,18 @@ const CustomOrderScreen = ({ navigation }) => {
     const [orders, setOrders] = useState([]);
     const [showProductDropdown, setShowProductDropdown] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState('');
-const [products, setProducts] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [loading,setLoading] = useState(false)
 
     // Modal form state'leri
     const [formData, setFormData] = useState({
-        adSoyad: '',
-        telefon: '',
-        urun: '',
-        adet: '',
+        name_surname: '',
+        phone: '',
+        product: '',
+        amount: '',
+        id: null
     });
 
-    // Ürün listesi (örnek veriler)
-    const urunListesi = [
-        { label: 'Ürün Seçiniz', value: '' },
-        { label: 'Laptop', value: 'laptop' },
-        { label: 'Telefon', value: 'telefon' },
-        { label: 'Tablet', value: 'tablet' },
-        { label: 'Kulaklık', value: 'kulaklik' },
-        { label: 'Mouse', value: 'mouse' },
-    ];
 
     useEffect(() => {
         loadOrders();
@@ -63,19 +59,17 @@ const [products, setProducts] = useState([]);
     // AsyncStorage'dan siparişleri yükleme
     const loadOrders = async () => {
         try {
-            const dateKey = selectedDate.toISOString().split('T')[0];
-            const savedOrders = await AsyncStorage.getItem(`orders_${dateKey}`);
-            if (savedOrders) {
-                setOrders(JSON.parse(savedOrders));
-            } else {
-                setOrders([]);
+            const { data } = await api.post(Endpoint.CustomOrderData, {date:selectedDate});
+            console.log(data);
+            if (data && data.status) {
+                setOrders(data.obj);
             }
         } catch (error) {
             console.error('Siparişler yüklenirken hata:', error);
         }
     };
 
-        const getParam = async () => {
+    const getParam = async () => {
         try {
             const { data } = await api.post(Endpoint.StockParams);
             setProducts(data.obj.products);
@@ -85,15 +79,6 @@ const [products, setProducts] = useState([]);
     };
 
 
-    // Siparişleri kaydetme
-    const saveOrders = async (newOrders) => {
-        try {
-            const dateKey = selectedDate.toISOString().split('T')[0];
-            await AsyncStorage.setItem(`orders_${dateKey}`, JSON.stringify(newOrders));
-        } catch (error) {
-            console.error('Siparişler kaydedilirken hata:', error);
-        }
-    };
 
     // Tarih değişikliği
     const onDateChange = (event, date) => {
@@ -112,46 +97,40 @@ const [products, setProducts] = useState([]);
     };
 
     // Yeni sipariş ekleme
-    const handleAddOrder = () => {
-        // Form validasyonu
-
-        if (!formData.telefon.trim()) {
-            Alert.alert('Hata', 'Telefon alanı boş olamaz');
-            return;
-        }
-        if (!formData.urun) {
+    const handleAddOrder = async () => {
+        if (!formData.product) {
             Alert.alert('Hata', 'Lütfen bir ürün seçiniz');
             return;
         }
-        if (!formData.adet.trim() || parseInt(formData.adet) <= 0) {
-            Alert.alert('Hata', 'Geçerli bir adet giriniz');
+        if (!formData.amount.trim() || parseInt(formData.amount) <= 0) {
+            Alert.alert('Hata', 'Geçerli bir amount giriniz');
             return;
         }
 
-        // Yeni sipariş oluşturma
-        const newOrder = {
-            id: Date.now().toString(),
-            adSoyad: formData.adSoyad,
-            telefon: formData.telefon,
-            urun: urunListesi.find(u => u.value === formData.urun)?.label || formData.urun,
-            adet: parseInt(formData.adet),
-            tarih: selectedDate.toISOString().split('T')[0],
-        };
+        setLoading(true)
 
-        const updatedOrders = [...orders, newOrder];
-        setOrders(updatedOrders);
-        saveOrders(updatedOrders);
-
-        // Form ve modal'ı temizleme
-        setFormData({
-            adSoyad: '',
-            telefon: '',
-            urun: '',
-            adet: '',
+        const { data } = await api.post(Endpoint.CustomOrderAdd, {
+            name_surname: formData.name_surname,
+            phone: formData.phone,
+            product_id: formData.product,
+            amount: formData.amount,
+            id:formData.id
         });
-        setIsModalVisible(false);
-
-        Alert.alert('Başarılı', 'Sipariş başarıyla eklendi');
+        setLoading(false)
+        if (data && data.status) {
+            setFormData({
+                name_surname: '',
+                phone: '',
+                product: '',
+                amount: '',
+                id: null
+            });
+            setIsModalVisible(false);
+            Alert.alert('Başarılı', 'Sipariş başarıyla eklendi');
+            loadOrders(); // Listeyi yenile
+        } else {
+            Alert.alert('Hata', 'Sipariş eklenirken bir hata oluştu');
+        }
     };
 
     // Sipariş silme
@@ -164,10 +143,14 @@ const [products, setProducts] = useState([]);
                 {
                     text: 'Sil',
                     style: 'destructive',
-                    onPress: () => {
-                        const updatedOrders = orders.filter(order => order.id !== orderId);
-                        setOrders(updatedOrders);
-                        saveOrders(updatedOrders);
+                    onPress: async () => {
+                        const {data} = await api.post(Endpoint.CustomOrderDelete, {id: orderId});
+                        if(data && data.status){    
+                            Alert.alert('Başarılı', 'Sipariş başarıyla silindi');
+                            loadOrders(); // Listeyi yenile
+                        }else{
+                            Alert.alert('Hata', 'Sipariş silinirken bir hata oluştu');
+                        }
                     }
                 }
             ]
@@ -183,10 +166,27 @@ const [products, setProducts] = useState([]);
         });
     };
 
+    const editOrder = (item) => {
+        console.log("item_id,", item.id)
+        setFormData({
+            name_surname: item.name_surname,
+            phone: item.phone,
+            product: item.product.id,
+            amount: item.amount.toString(),
+            id: item.id
+        });
+
+        setSelectedProduct(item.product)
+        setIsModalVisible(true);
+
+    };
+
     const renderProductItem = ({ item }) => (
         <TouchableOpacity
             style={styles.dropdownItem}
             onPress={() => {
+                setSelectedProduct(item);
+                setFormData(prev => ({ ...prev, product: item.id }));
                 setShowProductDropdown(false);
                 Keyboard.dismiss();
             }}
@@ -204,13 +204,97 @@ const [products, setProducts] = useState([]);
         </TouchableOpacity>
     );
 
+    // Modern Order Item Component
+    const renderOrderItem = ({ item, index }) => (
+        <View style={[styles.modernOrderItem, {
+            transform: [{ scale: 1 }],
+            opacity: 1
+        }]}>
+            <LinearGradient
+                colors={['#FFFFFF', '#F8FAFC']}
+                style={styles.orderItemGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+            >
+                {/* Customer Info */}
+                <View style={styles.customerSection}>
+                    <View style={styles.customerAvatar}>
+                        <Text style={styles.avatarText}>
+                            {item.name_surname ? item.name_surname.charAt(0).toUpperCase() : 'U'}
+                        </Text>
+                    </View>
+                    <View style={styles.customerInfo}>
+                        <Text style={styles.customerName}>{item.name_surname || 'İsim belirtilmemiş'}</Text>
+                        <Text style={styles.customerPhone}>{item.phone || 'Telefon belirtilmemiş'}</Text>
+                    </View>
+                </View>
+                {/* Product Info */}
+                <View style={styles.productSection}>
+                    <View style={styles.productIcon}>
+                        <Text style={styles.productEmoji}>📦</Text>
+                    </View>
+                    <View style={styles.productDetails}>
+                        <Text style={styles.productName}>{item.product?.name || 'Ürün belirtilmemiş'}</Text>
+                        <View style={styles.quantityContainer}>
+                            <Text style={styles.quantityLabel}>Adet:</Text>
+                            <View style={styles.quantityBadge}>
+                                <Text style={styles.quantityText}>{item.amount}</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            editOrder(item)
+                        }}
+                        style={styles.editButton}
+                        activeOpacity={0.7}
+                    >
+                        <LinearGradient
+                            colors={['#667EEA', '#764BA2']}
+                            style={styles.editButtonGradient}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                        >
+                            <Text style={styles.editButtonText}>✏️</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDeleteOrder(item.id)}
+                        activeOpacity={0.7}
+                    >
+                        <LinearGradient
+                            colors={['#FF6B6B', '#EE5A5A']}
+                            style={styles.deleteButtonGradient}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                        >
+                            <Text style={styles.deleteButtonText}>🗑️</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Decorative Elements */}
+                <View style={styles.decorativeCircle} />
+                <View style={styles.decorativeLine} />
+            </LinearGradient>
+        </View>
+    );
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#4A90E2" />
 
             {/* Header */}
             <LinearGradient colors={['#4B6CB7', '#182848']} style={styles.header}>
+                  <Text style={{ fontSize:20,marginBottom:20,color:'white',fontWeight:'bold' }}>Özel Sipariş Yönetimi</Text>
                 <View style={styles.headerContent}>
+                  
                     {/* Tarih Seçimi */}
                     <TouchableOpacity
                         style={styles.dateSelector}
@@ -225,7 +309,7 @@ const [products, setProducts] = useState([]);
                         onPress={() => setIsModalVisible(true)}
                     >
                         <LinearGradient
-                            colors={['#FF6A00', '#FF8E53']} // turuncu → şeftali
+                            colors={['#FF6A00', '#FF8E53']}
                             style={styles.saveButtonGradient}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
@@ -233,13 +317,6 @@ const [products, setProducts] = useState([]);
                             <Text style={styles.saveButtonText}>Yeni Ekle</Text>
                         </LinearGradient>
                     </TouchableOpacity>
-                    {/* Yeni Ekle Butonu */}
-                    {/* <TouchableOpacity 
-            style={styles.addButton} 
-            onPress={() => setIsModalVisible(true)}
-          >
-            <Text style={styles.addButtonText}>+ Yeni Ekle</Text>
-          </TouchableOpacity> */}
                 </View>
             </LinearGradient>
 
@@ -254,32 +331,40 @@ const [products, setProducts] = useState([]);
                 />
             )}
 
-            {/* Sipariş Listesi */}
-            <ScrollView style={styles.listContainer}>
+            {/* Modern Sipariş Listesi */}
+            <View style={styles.listContainer}>
                 {orders.length === 0 ? (
                     <View style={styles.emptyContainer}>
+                        <View style={styles.emptyIcon}>
+                            <Text style={styles.emptyIconText}>📋</Text>
+                        </View>
+                        <Text style={styles.emptyTitle}>Henüz sipariş yok</Text>
                         <Text style={styles.emptyText}>Bu tarih için henüz sipariş bulunmuyor</Text>
+                        <TouchableOpacity
+                            style={styles.emptyActionButton}
+                            onPress={() => setIsModalVisible(true)}
+                        >
+                            <LinearGradient
+                                colors={['#667EEA', '#764BA2']}
+                                style={styles.emptyActionGradient}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                            >
+                                <Text style={styles.emptyActionText}>İlk Siparişi Ekle</Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
                     </View>
                 ) : (
-                    orders.map((order) => (
-                        <View key={order.id} style={styles.orderItem}>
-                            <View style={styles.orderInfo}>
-                                <Text style={styles.orderName}>{order.adSoyad}</Text>
-                                <Text style={styles.orderPhone}>📞 {order.telefon}</Text>
-                                <Text style={styles.orderProduct}>🛍️ {order.urun} (x{order.adet})</Text>
-                            </View>
-                            <TouchableOpacity
-                                style={styles.deleteButton}
-                                onPress={() => handleDeleteOrder(order.id)}
-                            >
-                                <Text style={styles.deleteButtonText}>🗑️</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ))
+                    <FlatList
+                        data={orders}
+                        renderItem={renderOrderItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.flatListContent}
+                    />
                 )}
-            </ScrollView>
+            </View>
 
-            {/* Modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -310,20 +395,20 @@ const [products, setProducts] = useState([]);
                                     <TextInput
                                         style={styles.textInput}
                                         placeholder="Ad soyad giriniz"
-                                        value={formData.adSoyad}
-                                        onChangeText={(text) => updateFormData('adSoyad', text)}
+                                        value={formData.name_surname}
+                                        onChangeText={(text) => updateFormData('name_surname', text)}
                                     />
                                 </View>
 
-                                {/* Telefon */}
+                                {/* phone */}
                                 <View style={styles.inputGroup}>
                                     <Text style={styles.inputLabel}>Telefon Numarası</Text>
                                     <TextInput
                                         style={styles.textInput}
                                         placeholder="Telefon numarası giriniz"
                                         keyboardType="phone-pad"
-                                        value={formData.telefon}
-                                        onChangeText={(text) => updateFormData('telefon', text)}
+                                        value={formData.phone}
+                                        onChangeText={(text) => updateFormData('phone', text)}
                                     />
                                 </View>
 
@@ -361,7 +446,6 @@ const [products, setProducts] = useState([]);
                                         </View>
                                     </TouchableOpacity>
 
-
                                     {showProductDropdown && (
                                         <Animated.View style={styles.modernDropdownList}>
                                             <FlatList
@@ -373,33 +457,17 @@ const [products, setProducts] = useState([]);
                                             />
                                         </Animated.View>
                                     )}
-                                    {/* <Text style={styles.inputLabel}>Ürün Seçimi *</Text>
-                                    <View style={styles.pickerContainer}>
-                                        <Picker
-                                            selectedValue={formData.urun}
-                                            style={styles.picker}
-                                            onValueChange={(itemValue) => updateFormData('urun', itemValue)}
-                                        >
-                                            {urunListesi.map((urun, index) => (
-                                                <Picker.Item
-                                                    key={index}
-                                                    label={urun.label}
-                                                    value={urun.value}
-                                                />
-                                            ))}
-                                        </Picker>
-                                    </View> */}
                                 </View>
 
-                                {/* Adet */}
+                                {/* amount */}
                                 <View style={styles.inputGroup}>
                                     <Text style={styles.inputLabel}>Ürün Adedi *</Text>
                                     <TextInput
                                         style={styles.textInput}
                                         placeholder="Adet giriniz"
                                         keyboardType="numeric"
-                                        value={formData.adet}
-                                        onChangeText={(text) => updateFormData('adet', text)}
+                                        value={formData.amount}
+                                        onChangeText={(text) => updateFormData('amount', text)}
                                     />
                                 </View>
 
@@ -414,23 +482,18 @@ const [products, setProducts] = useState([]);
                                     <TouchableOpacity
                                         style={styles.saveButtonModal}
                                         activeOpacity={0.8}
+                                        disabled={loading}
                                         onPress={() => handleAddOrder()}
                                     >
                                         <LinearGradient
-                                            colors={['#FF6A00', '#FF8E53']} // turuncu → şeftali
+                                            colors={['#FF6A00', '#FF8E53']}
                                             style={styles.saveButtonGradientModal}
                                             start={{ x: 0, y: 0 }}
                                             end={{ x: 1, y: 0 }}
                                         >
-                                            <Text style={styles.saveButtonTextModal}>Kaydet</Text>
+                                            <Text style={styles.saveButtonTextModal}>{(loading ? 'Kayıt ediliyor...' : 'Kaydet')}</Text>
                                         </LinearGradient>
                                     </TouchableOpacity>
-                                    {/* <TouchableOpacity 
-                  style={styles.saveButton}
-                  onPress={handleAddOrder}
-                >
-                  <Text style={styles.saveButtonText}>Kaydet</Text>
-                </TouchableOpacity> */}
                                 </View>
                             </ScrollView>
                         </View>
@@ -442,11 +505,10 @@ const [products, setProducts] = useState([]);
 };
 
 export default CustomOrderScreen;
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#F1F5F9',
     },
     header: {
         paddingVertical: 20,
@@ -470,81 +532,301 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '500',
     },
-    addButton: {
-        backgroundColor: '#FF6B6B',
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 8,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+    saveButton: {
+        borderRadius: 12,
+        overflow: 'hidden',
+        elevation: 4,
+        shadowOpacity: 0.25,
+        width: 150,
         shadowRadius: 4,
     },
-    addButtonText: {
-        color: 'white',
+    saveButtonGradient: {
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+    },
+    saveButtonText: {
+        color: '#ffffff',
+        fontWeight: '600',
+        textAlign: 'center',
         fontSize: 16,
-        fontWeight: 'bold',
+        letterSpacing: 0.3,
     },
     listContainer: {
         flex: 1,
-        padding: 15,
+        paddingHorizontal: 16,
     },
+    flatListContent: {
+        paddingTop: 16,
+        paddingBottom: 100,
+    },
+
+    // Modern Empty State
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 100,
+        paddingHorizontal: 40,
+    },
+    emptyIcon: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#E2E8F0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    emptyIconText: {
+        fontSize: 48,
+        opacity: 0.6,
+    },
+    emptyTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#1E293B',
+        marginBottom: 8,
+        textAlign: 'center',
     },
     emptyText: {
         fontSize: 16,
-        color: '#666',
+        color: '#64748B',
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: 32,
+    },
+    emptyActionButton: {
+        borderRadius: 16,
+        overflow: 'hidden',
+        elevation: 8,
+        shadowColor: '#667EEA',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    emptyActionGradient: {
+        paddingHorizontal: 32,
+        paddingVertical: 16,
+    },
+    emptyActionText: {
+        color: '#ffffff',
+        fontWeight: '600',
+        fontSize: 16,
         textAlign: 'center',
     },
-    orderItem: {
-        backgroundColor: 'white',
-        padding: 15,
-        marginBottom: 10,
-        borderRadius: 12,
+
+    // Modern Order Item
+    modernOrderItem: {
+        marginBottom: 16,
+        borderRadius: 20,
+        overflow: 'hidden',
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+    },
+    orderItemGradient: {
+        padding: 20,
+        position: 'relative',
+    },
+
+    // Order Header
+    orderHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    orderBadge: {
+        backgroundColor: '#667EEA',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    orderBadgeText: {
+        color: '#ffffff',
+        fontSize: 12,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+    },
+    orderStatus: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    statusDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#10B981',
+    },
+    statusText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#10B981',
+    },
+
+    // Customer Section
+    customerSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        gap: 12,
+    },
+    customerAvatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#667EEA',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarText: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    customerInfo: {
+        flex: 1,
+    },
+    customerName: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1E293B',
+        marginBottom: 4,
+    },
+    customerPhone: {
+        fontSize: 14,
+        color: '#64748B',
+        fontWeight: '500',
+    },
+
+    // Product Section
+    productSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F8FAFC',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 16,
+        gap: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    productIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#ffffff',
+        justifyContent: 'center',
+        alignItems: 'center',
         elevation: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
     },
-    orderInfo: {
+    productEmoji: {
+        fontSize: 20,
+    },
+    productDetails: {
         flex: 1,
     },
-    orderName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 5,
+    productName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1E293B',
+        marginBottom: 6,
     },
-    orderPhone: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 3,
+    quantityContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
-    orderProduct: {
+    quantityLabel: {
         fontSize: 14,
-        color: '#4A90E2',
+        color: '#64748B',
         fontWeight: '500',
     },
+    quantityBadge: {
+        backgroundColor: '#667EEA',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        minWidth: 32,
+        alignItems: 'center',
+    },
+    quantityText: {
+        color: '#ffffff',
+        fontSize: 12,
+        fontWeight: '700',
+    },
+
+    // Action Buttons
+    actionButtons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        gap: 12,
+    },
+    editButton: {
+        borderRadius: 12,
+        overflow: 'hidden',
+        elevation: 4,
+        shadowColor: '#667EEA',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+    },
+    editButtonGradient: {
+        width: 44,
+        height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    editButtonText: {
+        fontSize: 16,
+    },
     deleteButton: {
-        backgroundColor: '#FF6B6B',
-        width: 35,
-        height: 35,
-        borderRadius: 17.5,
+        borderRadius: 12,
+        overflow: 'hidden',
+        elevation: 4,
+        shadowColor: '#FF6B6B',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+    },
+    deleteButtonGradient: {
+        width: 44,
+        height: 44,
         justifyContent: 'center',
         alignItems: 'center',
     },
     deleteButtonText: {
         fontSize: 16,
     },
+
+    // Decorative Elements
+    decorativeCircle: {
+        position: 'absolute',
+        top: -20,
+        right: -20,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#F1F5F9',
+        opacity: 0.3,
+    },
+    decorativeLine: {
+        position: 'absolute',
+        bottom: 0,
+        left: 20,
+        right: 20,
+        height: 2,
+        backgroundColor: '#667EEA',
+        opacity: 0.1,
+    },
+
+    // Modal Styles
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -596,6 +878,9 @@ const styles = StyleSheet.create({
         color: '#333',
         marginBottom: 8,
     },
+    labelIcon: {
+        fontSize: 16,
+    },
     textInput: {
         borderWidth: 1,
         borderColor: '#ddd',
@@ -603,16 +888,6 @@ const styles = StyleSheet.create({
         padding: 12,
         fontSize: 16,
         backgroundColor: '#fafafa',
-    },
-    pickerContainer: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        backgroundColor: '#fafafa',
-        overflow: 'hidden',
-    },
-    picker: {
-        height: 150,
     },
     modalButtons: {
         flexDirection: 'row',
@@ -633,35 +908,17 @@ const styles = StyleSheet.create({
         color: '#666',
         fontWeight: '500',
     },
-    saveButton: {
-        borderRadius: 12,
-        overflow: 'hidden',
-        elevation: 4,
-        shadowOpacity: 0.25,
-        width: 150,
-        shadowRadius: 4,
-    },
-    saveButtonGradient: {
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-    },
-    saveButtonText: {
-        color: '#ffffff',
-        fontWeight: '600',
-        textAlign: 'center',
-        fontSize: 16,
-        letterSpacing: 0.3,
-    },
     saveButtonModal: {
+        flex: 1,
         borderRadius: 8,
         overflow: 'hidden',
         elevation: 4,
         shadowOpacity: 0.25,
-        width: 150,
+        shadowRadius: 4,
     },
     saveButtonGradientModal: {
         paddingHorizontal: 20,
-        paddingVertical: 12,
+        paddingVertical: 15,
     },
     saveButtonTextModal: {
         color: '#ffffff',
@@ -671,58 +928,7 @@ const styles = StyleSheet.create({
         letterSpacing: 0.3,
     },
 
-
-    dropdownItem: {
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
-    },
-    dropdownItemContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    dropdownItemIcon: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#F3F4F6',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    dropdownItemText: {
-        flex: 1,
-    },
-    dropdownItemName: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1F2937',
-    },
-    dropdownItemId: {
-        fontSize: 12,
-        color: '#9CA3AF',
-        fontWeight: '500',
-        marginTop: 2,
-    },
-
-    modernDropdownList: {
-        marginTop: 8,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        maxHeight: 200,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-        elevation: 12,
-    },
-    dropdownScrollView: {
-        maxHeight: 200,
-    },
-
+    // Dropdown Styles
     modernDropdown: {
         borderWidth: 2,
         borderColor: '#E5E7EB',

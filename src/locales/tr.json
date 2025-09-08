@@ -14,6 +14,10 @@
     "close":"Kapat",
     "ok":"Tamam",
     "error":"Hata",
+        "print":"Yazdır",
+        "print_loading":"Yazdırılıyor...",
+
+
     "login": {
         "welcome": "Hoş Geldiniz",
         "sub_message": "Hesabınıza giriş yapın",
@@ -50,6 +54,8 @@
         "holiday_msg":"Tatil günlerinizi belirleyin",
         "custom_order":"Özel Sipariş",
         "custom_order_msg":"Özel siparişlerinizi yönetin",
+        "custom_order_report":"Özel Sipariş Raporu",
+        "custom_order_report_msg":"Özel sipariş raporlarını görüntüleyin"
 
     },
     "home": {
@@ -115,6 +121,8 @@
         "send_report":"Rapor Gönder",
         "empty_title":"Henüz kayıt yok",
         "empty_subtitle":"Rapor verisi mevcut değil",
+        "view_status_changed":"Rapor görünüm durumu değiştirildi",
+
         "loading":"Yükleniyor...",
         "loading_records":"Kayıtlar yükleniyor",
         "eod_date":"Gün Sonu Tarihi:",

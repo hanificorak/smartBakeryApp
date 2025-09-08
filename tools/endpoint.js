@@ -1,5 +1,6 @@
 const BASE_URL = "http://127.0.0.1:8000";
 // const BASE_URL = "https://smartbakery.nubifysoftware.com";
+// const BASE_URL = "https://smartbakerytest.nubifysoftware.com";
 
 const Endpoint = {
   Login: `${BASE_URL}/api/auth/login`,
@@ -41,6 +42,12 @@ const Endpoint = {
   HolidayData: `${BASE_URL}/api/holidays/getData`,
   HolidayAdd: `${BASE_URL}/api/holidays/add`,
   HolidayDelete: `${BASE_URL}/api/holidays/delete`,
+  CustomOrderData: `${BASE_URL}/api/customorders/getCustomOrders`,
+  CustomOrderAdd: `${BASE_URL}/api/customorders/add`,
+  CustomOrderDelete: `${BASE_URL}/api/customorders/delete`,
+  CustomOrderReportData: `${BASE_URL}/api/customordersReport/getReportData`,
+  CustomOrderReportSend: `${BASE_URL}/api/customordersReport/createReportMail`,
+  ReportViewChange: `${BASE_URL}/api/reports/reportViewChange`,
 };
 
 export default Endpoint;

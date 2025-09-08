@@ -16,6 +16,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     useColorScheme,
+    Switch,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -31,9 +32,10 @@ import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
 import { Dropdown, MultiSelect } from "react-native-element-dropdown";
 import AntDesign from '@expo/vector-icons/AntDesign';
-import * as FileSystem from "expo-file-system";
-import * as Sharing from "expo-sharing";
 import { WebView } from "react-native-webview";
+
+import * as Print from "expo-print";
+import * as FileSystem from "expo-file-system";
 
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
@@ -86,7 +88,6 @@ const ReportsScreen = ({ navigation }) => {
 
 
     const dateRanges = [
-        { label: t('report.date_all'), value: 'all' },
         { label: t('report.date_now'), value: 'today' },
         { label: t('report.date_week'), value: 'week' },
         { label: t('report.date_month'), value: 'month' },
@@ -226,7 +227,7 @@ const ReportsScreen = ({ navigation }) => {
     };
 
     const getParam = async () => {
-        const { data } = await api.post(Endpoint.StockParams);
+        const { data } = await api.post(Endpoint.StockParams, { lang: i18n.language });
         if (data && data.status) {
             setProducts(data.obj.products)
             setWeatherOptions(data.obj.weather)
@@ -245,9 +246,18 @@ const ReportsScreen = ({ navigation }) => {
             }
 
             // Add custom date range if selected
-            if (dateRange === 'custom' && hasCustomDateRange) {
-                params.startDate = startDate.toISOString().split('T')[0];
-                params.endDate = endDate.toISOString().split('T')[0];
+if (dateRange === 'custom' && hasCustomDateRange) {
+
+                  const formatLocalISODate = (date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, bu yüzden +1
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+
+             params.startDate = formatLocalISODate(startDate);
+    params.endDate = formatLocalISODate(endDate);
             }
 
             if (clear) {
@@ -261,9 +271,14 @@ const ReportsScreen = ({ navigation }) => {
             }
 
             const { data } = await api.post(Endpoint.ReportData, params);
+            console.log(params)
             setLoading(false)
             if (data && data.status) {
-                setReportData(data.obj)
+                const updatedReportData = data.obj.map(item => ({
+                    ...item,
+                    is_view: item.report_view == 1 ? true : false // Convert to boolean
+                }));
+                setReportData(updatedReportData);
             }
         } catch (error) {
             console.log(error.message)
@@ -383,14 +398,14 @@ const ReportsScreen = ({ navigation }) => {
 
     const getSelectedWeatherLabel = () => {
         if (selectedWeather == null) {
-            return t('report.select_weather')
+            return t('report.all')
         }
 
         const weather = weatherOptions.find(w => w.id === selectedWeather.id);
-        return weather ? weather.description : t('report.select_weather');
+        return weather ? weather.description : t('report.all');
     };
 
-    const sendReportMail = async (type = "mail") => {
+    const sendReportMail = async (type = "mail", print = false) => {
         try {
 
             if (reportMail == null) {
@@ -418,20 +433,35 @@ const ReportsScreen = ({ navigation }) => {
 
             // Add custom date range if selected
             if (dateRange === 'custom' && hasCustomDateRange) {
-                params.startDate = startDate.toISOString().split('T')[0];
-                params.endDate = endDate.toISOString().split('T')[0];
+               
+                  const formatLocalISODate = (date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, bu yüzden +1
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+
+             params.startDate = formatLocalISODate(startDate);
+    params.endDate = formatLocalISODate(endDate);
             }
 
             const { data } = await api.post(Endpoint.ReportSend, params);
-            console.log(data)
             setSendLoading(false);
-
+            console.log(data)
             if (data && data.status) {
                 if (type == "mail") {
                     Alert.alert(t('info'), t('report.mail_success', { email: reportMail }));
                     setMailModal(false);
                     setReportMail('');
+
                 } else {
+                    if (print) {
+                        setMailModal(false);
+                        printReportData(data.obj);
+
+                        return;
+                    }
                     setpdfPath(data.sub_info)
                     // console.log(data.sub_info)
                     setMailModal(false);
@@ -447,13 +477,16 @@ const ReportsScreen = ({ navigation }) => {
         }
     };
 
-    async function openPdf(pdfUrl) {
+    async function printReportData(pdfUrl) {
         try {
-            const fileUri = FileSystem.documentDirectory + "report.pdf";
-            // PDF indir
-            const { uri } = await FileSystem.downloadAsync(pdfUrl, fileUri);
-            // Cihazda aç
-            await Sharing.shareAsync(uri);
+            const localPath = FileSystem.documentDirectory + "temp.pdf";
+            const downloadResumable = FileSystem.createDownloadResumable(
+                pdfUrl,
+                localPath
+            );
+
+            const { uri } = await downloadResumable.downloadAsync();
+            await Print.printAsync({ uri });
         } catch (error) {
             console.error("PDF açılırken hata:", error);
         }
@@ -523,6 +556,30 @@ const ReportsScreen = ({ navigation }) => {
             setStartDateError('');
             setEndDateError('');
         }
+    };
+
+    const toggleSwitch = async (itemId) => {
+        setReportData(prevReportData =>
+            prevReportData.map(item =>
+                item.id === itemId ? { ...item, is_view: !item.is_view } : item
+            )
+
+
+        );
+
+        try {
+            const { data } = await api.post(Endpoint.ReportViewChange, { id: itemId });
+            console.log(data)
+            if (data && data.status) {
+                Alert.alert(t('info'), t('report.view_status_changed'));
+            }
+        } catch (error) {
+            console.log(error)
+        }
+
+
+
+
     };
 
     // Modern Card Component for each report item
@@ -609,11 +666,24 @@ const ReportsScreen = ({ navigation }) => {
                                 <Text style={styles.statValue}>{item.ert_count || 0}</Text>
                             </View>
                         </View>
+
                     </View>
                     {item.parentdate != null ? <View style={{ padding: 10, backgroundColor: '#f1f5f9', borderRadius: 10, marginTop: 10 }}>
                         <Text>{t('report.first_production_date')} {item.parentdate}</Text>
                         <Text>{t('report.parent_info')} </Text>
                     </View> : <View></View>}
+
+                    <View style={{ marginTop: 20 }}>
+                        <Text>Raporda Gizle/Göster</Text>
+                        <Switch
+                            trackColor={{ false: "#767577", true: "#81b0ff" }}
+                            thumbColor={item.is_view ? "#f5dd4b" : "#f4f3f4"}
+                            ios_backgroundColor="#3e3e3e"
+                            onValueChange={() => toggleSwitch(item.id)} // <<-- BURADA DEĞİŞİKLİK YAPILMALI
+                            value={item.is_view}
+                        />
+                    </View>
+
                 </View>
             </LinearGradient>
         </View>
@@ -665,6 +735,9 @@ const ReportsScreen = ({ navigation }) => {
 
     const reportPreview = () => {
         sendReportMail("link")
+    };
+    const print_report = () => {
+        sendReportMail("link", true)
     };
 
     return (
@@ -805,6 +878,7 @@ const ReportsScreen = ({ navigation }) => {
                                 <Text style={styles.closeButtonText}>✕</Text>
                             </TouchableOpacity>
                         </View>
+
 
                         {/* Body */}
                         <View style={styles.modalBody}>
@@ -1299,16 +1373,28 @@ const ReportsScreen = ({ navigation }) => {
                                 )}
 
 
+                                <View style={{ flexDirection: 'row' }}>
+                                    <TouchableOpacity
+                                        onPress={reportPreview}
+                                        style={[styles.sendMailButton, sendLoading && styles.sendMailButtonDisabled]}
+                                    >
+                                        <View style={styles.sendButtonContent}>
+                                            <Text style={styles.sendMailButtonIcon}></Text>
+                                            <Text style={styles.sendMailButtonText}>{t('report.preview')}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={print_report}
+                                        style={[styles.sendMailButton, sendLoading && styles.sendMailButtonDisabled]}
+                                    >
+                                        <View style={styles.sendButtonContent}>
+                                            <Text style={styles.sendMailButtonIcon}></Text>
+                                            <Text style={styles.sendMailButtonText}>{t('print')}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
 
-                                <TouchableOpacity
-                                    onPress={reportPreview}
-                                    style={[styles.sendMailButton, sendLoading && styles.sendMailButtonDisabled]}
-                                >
-                                    <View style={styles.sendButtonContent}>
-                                        <Text style={styles.sendMailButtonIcon}></Text>
-                                        <Text style={styles.sendMailButtonText}>{t('report.preview')}</Text>
-                                    </View>
-                                </TouchableOpacity>
+
 
                             </ScrollView>
 
@@ -1975,8 +2061,8 @@ const styles = StyleSheet.create({
         borderColor: '#E5E7EB',
         borderRadius: 12,
         backgroundColor: '#F9FAFB',
-        paddingHorizontal: 16,
-        paddingVertical: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
     },
     emailIconContainer: {
         width: 24,
@@ -1997,7 +2083,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#374151',
         backgroundColor: 'transparent',
-        paddingHorizontal: 0,
     },
     infoCard: {
         flexDirection: 'row',
@@ -2088,6 +2173,9 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         borderRadius: 12,
         justifyContent: 'center',
+        marginBottom: 10,
+
+        marginRight: 5,
         alignItems: 'center',
         backgroundColor: '#4B6CB7',
         shadowColor: '#4B6CB7',
@@ -2158,7 +2246,7 @@ const styles = StyleSheet.create({
     dateModalButton: {
         flex: 1,
         paddingVertical: 16,
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
         borderRadius: 16,
         alignItems: 'center',
         backgroundColor: '#F3F4F6',

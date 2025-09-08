@@ -32,6 +32,9 @@ import { useTranslation } from 'react-i18next';
 import '../../src/i18n';
 import axios from 'axios';
 
+import * as Print from "expo-print";
+import * as FileSystem from "expo-file-system";
+
 const { height: screenHeight } = Dimensions.get('window');
 
 const GuessScreen = ({ navigation }) => {
@@ -52,7 +55,8 @@ const GuessScreen = ({ navigation }) => {
     const [detail_text, setDetailText] = useState('')
     const [mailModalVisible, setMailModalVisible] = useState(false);
     const [email, setEmail] = useState('');
-
+    const [printLoading, setPrintLoading] = useState(false);
+    
     useEffect(() => {
         getWeatherInfo();
         getProducts();
@@ -83,7 +87,7 @@ const GuessScreen = ({ navigation }) => {
             const longitude = loc_data.longitude;
 
             const weather_item = await AsyncStorage.getItem("weather_data");
-            
+
             if (weather_item == null) {
                 getWeatherDataApi(latitude, longitude);
             } else {
@@ -126,7 +130,7 @@ const GuessScreen = ({ navigation }) => {
                 AsyncStorage.setItem('weather_data', JSON.stringify({ data: response, time: new Date().toISOString() }));
                 const currentWeather = response?.data?.current_weather;
                 setWdata(currentWeather.temperature, currentWeather.weathercode)
-                console.log("apii",currentWeather.weathercode)
+                console.log("apii", currentWeather.weathercode)
                 console.log("currentWeather", currentWeather)
             } else {
                 console.log('Hava Durumu API Hatası');
@@ -205,10 +209,14 @@ const GuessScreen = ({ navigation }) => {
         );
     };
 
-    const sendMail = async () => {
-        const { data } = await api.post(Endpoint.GuessMail, { weather: weatherData.conditionId, email: email });
-        console.log(data)
+    const sendMail = async (print = false) => {
+        const { data } = await api.post(Endpoint.GuessMail, { weather: weatherData.conditionId, email: email, print: (print ? 1 : 0) });
         if (data && data.status) {
+            if (print) {
+                printReportData(data.obj)
+                setPrintLoading(false)
+                return;
+            }
             setMailModalVisible(false);
             Alert.alert(t('info'), t('guess.mail_success'));
         } else {
@@ -217,9 +225,7 @@ const GuessScreen = ({ navigation }) => {
     };
 
     const calcDay = async (product) => {
-    
         const { data } = await api.post(Endpoint.GuessData, { weather_code: weatherData.conditionId, product_id: product.id });
-        console.log(data)
         if (data && data.status) {
             setDetailText(t('guess.detail_text', { day: data.obj.day, weather: data.obj.weather, avgProduced: data.obj.average_produced, avgSold: data.obj.average_sold }))
             setWaitMessage(t('guess.wait_message', { suggested: data.obj.suggested_production }))
@@ -228,9 +234,29 @@ const GuessScreen = ({ navigation }) => {
             return;
         }
         showCalcModal(true)
-
-
     };
+
+    const print = async () => {
+        setPrintLoading(true)
+        sendMail(true);
+    };
+    async function printReportData(pdfUrl) {
+        try {
+            const localPath = FileSystem.documentDirectory + "temp.pdf";
+            const downloadResumable = FileSystem.createDownloadResumable(
+                pdfUrl,
+                localPath
+            );
+
+            const { uri } = await downloadResumable.downloadAsync();
+            await Print.printAsync({ uri });
+
+            setPrintLoading(false);
+        } catch (error) {
+            console.error("PDF açılırken hata:", error);
+        }
+    }
+
 
     const renderProductItem = ({ item, index }) => (
         <TouchableOpacity
@@ -295,6 +321,17 @@ const GuessScreen = ({ navigation }) => {
                     onPress={() => setMailModalVisible(true)}  // Modal açılır
                 >
                     <Text style={{ color: 'white', textAlign: 'center' }}>{t('guess.send_mail')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={{
+                        padding: 10,
+                        backgroundColor: '#667eea',
+                        borderRadius: 10,
+                        marginTop: 10,
+                    }}
+                    onPress={() => print()}  // Modal açılır
+                >
+                    <Text style={{ color: 'white', textAlign: 'center' }}>{(printLoading ? t('print_loading'): t('print'))}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -415,7 +452,7 @@ const GuessScreen = ({ navigation }) => {
                         {/* <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={10} /> */}
 
                         <Animated.View style={styles.modalContainer}>
-                            {/* Header with icon */}    
+                            {/* Header with icon */}
                             <View style={styles.modalHeader}>
 
                                 <Text style={styles.modalTitle}>{t('guess.calc_title')}</Text>
@@ -498,12 +535,13 @@ const GuessScreen = ({ navigation }) => {
                                         Alert.alert(t('guess.error'), t('guess.invalid_email'));
                                         return;
                                     }
-                                 
+
                                     sendMail();
                                 }}
                             >
                                 <Text style={styles.sendText}>{t('guess.send')}</Text>
                             </TouchableOpacity>
+
                         </View>
                     </View>
                 </KeyboardAvoidingView>
@@ -820,7 +858,7 @@ const styles = StyleSheet.create({
     productsContainer: {
         marginHorizontal: 20,
         marginTop: 20,
-        marginBottom: 20,
+        marginBottom: 70,
     },
     sectionHeader: {
         marginBottom: 16,
