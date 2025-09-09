@@ -27,6 +27,7 @@ import UserCheckScreen from './screens/Users/UserCheckScreen';
 import HolidayScreen from './screens/Holiday/HolidayScreen';
 import CustomOrderScreen from './screens/CustomOrder/CustomOrderScreen';
 import CustomOrderReportScreen from './screens/CustomOrderReport/CustomOrderReportScreen';
+import FreezerDefScreen from './screens/Definitions/FreezerDefScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -75,7 +76,7 @@ export default function App() {
   const getUserType = async () => {
     // is_admin
     const is_admin = await AsyncStorage.getItem('is_admin');
-    setScreen((is_admin == 'admin' ? 'Home' : 'UserSelectScreen'))
+    setScreen((is_admin == 'admin' ? 'Home' : 'Home'))
   };
 
   useEffect(() => {
@@ -96,7 +97,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={token ? screen : 'Login'}>
+      <Stack.Navigator initialRouteName={token ? 'Home' : 'Login'}>
         <Stack.Screen name="Login" options={{ headerShown: false }}>
           {(props) => <LoginScreen {...props} setToken={setToken} />}
         </Stack.Screen>
@@ -121,6 +122,7 @@ export default function App() {
         <Stack.Screen name="HolidayScreen" component={HolidayScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="CustomOrderScreen" component={CustomOrderScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="CustomOrderReportScreen" component={CustomOrderReportScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="FreezerDefScreen" component={FreezerDefScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="UserSelectScreen" options={{ headerShown: true, title: '' }}>
           {(props) => <UserSelectScreen {...props} setToken={setToken} />}
         </Stack.Screen>

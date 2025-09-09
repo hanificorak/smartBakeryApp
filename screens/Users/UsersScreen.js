@@ -56,6 +56,7 @@ export default function UsersScreen({ navigation, setToken }) {
         password: '',
         id: null,
     });
+
     const [formErrors, setFormErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const [userStatus, setUserStatus] = useState("1");
@@ -120,6 +121,10 @@ export default function UsersScreen({ navigation, setToken }) {
         if (!formData.lastName.trim()) {
             errors.lastName = t('users.last_name_required');
         }
+
+        if (!formData.password.trim()) {
+            errors.lastName = t('users.password_required');
+        }
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -138,7 +143,8 @@ export default function UsersScreen({ navigation, setToken }) {
                     firm_id: 1,
                     id: formData.id,
                     perm: value,
-                    status:userStatus
+                    status: userStatus,
+                    password: formData.password
                 });
                 console.log(data)
                 if (data && data.status) {
@@ -312,6 +318,23 @@ export default function UsersScreen({ navigation, setToken }) {
                                         <Text style={styles.errorText}>{formErrors.email}</Text>
                                     )}
                                 </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>{t('users.password')}</Text>
+                                    <TextInput
+                                        style={[styles.input, formErrors.password && styles.inputError]}
+                                        value={formData.password}
+                                        onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+                                        placeholder={t('users.password')}
+                                        placeholderTextColor="#999"
+                                        keyboardType="visible-password"
+                                        secureTextEntry={true}
+                                        autoCapitalize="none"
+                                    />
+                                    {formErrors.password && (
+                                        <Text style={styles.errorText}>{formErrors.password}</Text>
+                                    )}
+                                </View>
                                 <View style={{ marginTop: 0 }}>
                                     <Text>{t('users.status')}</Text>
 
@@ -339,21 +362,6 @@ export default function UsersScreen({ navigation, setToken }) {
                                         onChange={item => setValue(item.value)}
                                     />
                                 </View> : <View></View>}
-
-                                {/* <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Şifre</Text>
-                                    <TextInput
-                                        style={[styles.input, formErrors.password && styles.inputError]}
-                                        value={formData.password}
-                                        onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
-                                        placeholder="En az 6 karakter"
-                                        placeholderTextColor="#999"
-                                        secureTextEntry
-                                    />
-                                    {formErrors.password && (
-                                        <Text style={styles.errorText}>{formErrors.password}</Text>
-                                    )}
-                                </View> */}
 
                                 <TouchableOpacity
                                     style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
@@ -393,7 +401,7 @@ export default function UsersScreen({ navigation, setToken }) {
             </LinearGradient>
             {admin == "admin" ? <View style={{ margin: 10 }}>
                 <TouchableOpacity style={[styles.userActionButton, {}]} onPress={() => userCheckOpen()}>
-                    <Text style={[styles.actionButtonText, { textAlign: 'center', fontSize: 15 }]}>Kullanıcı Onay İşlemleri</Text>
+                    <Text style={[styles.actionButtonText, { textAlign: 'center', fontSize: 15 }]}>{t('users.approv')}</Text>
                 </TouchableOpacity>
             </View> : <View></View>}
 

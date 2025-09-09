@@ -65,6 +65,9 @@ const FreezerScreen = ({ navigation }) => {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [pdfView, setPdfView] = useState(false);
   const [pdfPath, setpdfPath] = useState('');
+  const [statusMenuVisible, setStatusMenuVisible] = useState(false);
+  const [selectedFreezer, setselectedFreezer] = useState(null);
+  const [freezers, setFreezers] = useState([]);
 
 
 
@@ -87,12 +90,13 @@ const FreezerScreen = ({ navigation }) => {
     if (first) {
       await setFilterDate(getCurrentDate());
     }
-    console.log((all ? null : filterDate))
     const { data } = await api.post(Endpoint.FreezerList, { date: (all ? null : filterDate) });
+    console.log('dd', data)
     setLoading(false);
-
     if (data && data.status) {
-      setFreezerRecords(data.obj);
+      setFreezerRecords(data.obj.data);
+      setFreezers(data.obj.freezers);
+
     } else {
 
     }
@@ -106,7 +110,7 @@ const FreezerScreen = ({ navigation }) => {
   };
 
   const openPdfView = async () => {
-    sendReport(false,true)
+    sendReport(false, true)
   };
 
   const closepdfModal = () => {
@@ -117,17 +121,17 @@ const FreezerScreen = ({ navigation }) => {
 
 
   const saveFreezerRecords = async () => {
+    if (selectedFreezer == null) {
+      Alert.alert(t('warning'), t('freezer.name_required_select'));
+      return
+    }
     const param = {
-      name: freezerName,
+      fr_id: selectedFreezer.id,
       temp: workingDegree,
       desc: description,
       id: editingId
     };
 
-    if (param.name == null || param.name == "") {
-      Alert.alert(t('warning'), t('freezer.name_required'));
-      return;
-    }
 
     setSaveLoading(true)
 
@@ -144,7 +148,7 @@ const FreezerScreen = ({ navigation }) => {
   };
 
   const handleEditRecord = (record) => {
-    setFreezerName(record.name);
+    setselectedFreezer({ id: record.fr_id, name: record.fr_name });
     setWorkingDegree(record.temp);
     setDescription(record.desc);
     setIsEditing(true);
@@ -221,43 +225,57 @@ const FreezerScreen = ({ navigation }) => {
     return emailRegex.test(email);
   };
 
-  const sendReport = async (print = false, prew = false) => {
+  const sendReport = async (print = false, prew = false, mail = true) => {
+    let sendMail = true;
+    if (print == true || prew == true) {
+      sendMail = false;
+    }
 
-    if (!print && !prew) {
+    if (sendMail) {
       if (!emailAddress || !validateEmail(emailAddress)) {
         Alert.alert(t('warning'), t('freezer.invalid_email'));
         return;
       }
     }
-
     setReportLoading(true);
 
     try {
-      // API call for report
       const param = {
         startDate: startDate,
         endDate: endDate,
         email: emailAddress,
         print: (print ? 1 : 0),
-        prew: (prew ? 1 : 0)
+        prew: (prew ? 1 : 0),
+        mail: (sendMail ? 1 : 0)
       };
 
+      const formatLocalISODate = (date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, bu yüzden +1
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      param.startDate = formatLocalISODate(startDate);
+      param.endDate = formatLocalISODate(endDate);
       // Replace with your report endpoint
       const { data } = await api.post(Endpoint.FreeReportSend, param);
-          setReportLoading(false);
+      console.log(data, emailAddress)
+      setReportLoading(false);
 
       if (data && data.status) {
-        if (print) {
+        if (print && !sendMail) {
           printReportData(data.obj)
           return;
         }
 
-        if (prew) {
+        if (prew && !sendMail) {
           setReportModalVisible(false);
           setPdfView(true);
           setpdfPath(data.obj)
           return;
         }
+
         Alert.alert(t('info'), t('freezer.report_success'));
         closeReportModal();
       } else {
@@ -291,6 +309,11 @@ const FreezerScreen = ({ navigation }) => {
     }
   }
 
+  const getselectedFreezerName = () => {
+    if (!selectedFreezer) return t('freezer.select_freezer');
+    return selectedFreezer.name;
+  };
+
   const getCurrentDate = () => {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
@@ -302,7 +325,7 @@ const FreezerScreen = ({ navigation }) => {
   const renderRecordItem = ({ item }) => (
     <View style={styles.recordCard}>
       <View style={styles.recordHeader}>
-        <Text style={styles.freezerNameText}>{item.name}</Text>
+        <Text style={styles.freezerNameText}>{item.fr_name}</Text>
         <Text style={styles.dateText}>
           {new Date(item.created_at).toLocaleDateString("tr-TR")}
         </Text>
@@ -474,13 +497,44 @@ const FreezerScreen = ({ navigation }) => {
                   <View style={styles.formContainer}>
                     <View style={styles.inputContainer}>
                       <Text style={styles.inputLabel}>{t('freezer.name_label')}</Text>
-                      <TextInput
+                      {/* <TextInput
                         style={styles.textInput}
                         value={freezerName}
                         onChangeText={setFreezerName}
                         placeholder={t('freezer.name_placeholder')}
                         placeholderTextColor="#999"
-                      />
+                      /> */}
+
+                      <TouchableOpacity
+                        style={styles.dropdownButton}
+                        onPress={() => setStatusMenuVisible(!statusMenuVisible)}
+                      >
+                        <Text style={styles.dropdownButtonText}>
+                          {getselectedFreezerName()}
+                        </Text>
+                        <Text style={[styles.dropdownArrow, statusMenuVisible && styles.dropdownArrowUp]}>
+                          ▼
+                        </Text>
+                      </TouchableOpacity>
+
+                      {statusMenuVisible && (
+                        <View style={styles.dropdownList}>
+                          {freezers.map((fr) => (
+                            <TouchableOpacity
+                              key={fr.id}
+                              style={styles.dropdownItem}
+                              onPress={() => {
+                                setselectedFreezer(fr);
+                                setStatusMenuVisible(false);
+                              }}
+                            >
+                              <Text style={selectedFreezer?.id === fr.id ? styles.selectedDropdownText : styles.dropdownText}>
+                                {fr.name}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
                     </View>
 
                     <View style={styles.inputContainer}>
@@ -974,6 +1028,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+    marginBottom:20
   },
   listHeader: {
     backgroundColor: '#f8f9fa',
@@ -1694,5 +1749,58 @@ const styles = StyleSheet.create({
   },
   clearButtonPrew: {
     flex: 1,
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+  },
+  dropdownButtonText: {
+    fontSize: 16,
+    color: '#374151',
+    flex: 1,
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginLeft: 8,
+    transform: [{ rotate: '0deg' }],
+  },
+  dropdownArrowUp: {
+    transform: [{ rotate: '180deg' }],
+  },
+  dropdownList: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    backgroundColor: '#ffffff',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#374151',
+  },
+  selectedDropdownText: {
+    fontSize: 16,
+    color: '#4B6CB7',
+    fontWeight: '600',
   },
 });

@@ -48,6 +48,9 @@ const Endpoint = {
   CustomOrderReportData: `${BASE_URL}/api/customordersReport/getReportData`,
   CustomOrderReportSend: `${BASE_URL}/api/customordersReport/createReportMail`,
   ReportViewChange: `${BASE_URL}/api/reports/reportViewChange`,
+  FreezerDefList: `${BASE_URL}/api/freezerdef/getData`,
+  FreezerDefSave: `${BASE_URL}/api/freezerdef/save`,
+  FreezerDefDelete: `${BASE_URL}/api/freezerdef/delete`,
 };
 
 export default Endpoint;

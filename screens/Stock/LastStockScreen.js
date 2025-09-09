@@ -213,6 +213,8 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 16,
         paddingTop: 16,
+        marginBottom:40
+
     },
     weatherCard: {
         backgroundColor: '#e8f0ff',

@@ -68,7 +68,7 @@ const ReportsScreen = ({ navigation }) => {
 
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedWeather, setSelectedWeather] = useState(null);
-    const [dateRange, setDateRange] = useState('today');
+    const [dateRange, setDateRange] = useState('heute');
     const [products, setProducts] = useState([]);
     const [weatherOptions, setWeatherOptions] = useState([]);
     const [reportData, setReportData] = useState([]);
@@ -88,6 +88,7 @@ const ReportsScreen = ({ navigation }) => {
 
 
     const dateRanges = [
+        { label: t('report.date_now_heute'), value: 'heute' },
         { label: t('report.date_now'), value: 'today' },
         { label: t('report.date_week'), value: 'week' },
         { label: t('report.date_month'), value: 'month' },
@@ -246,18 +247,18 @@ const ReportsScreen = ({ navigation }) => {
             }
 
             // Add custom date range if selected
-if (dateRange === 'custom' && hasCustomDateRange) {
+            if (dateRange === 'custom' && hasCustomDateRange) {
 
-                  const formatLocalISODate = (date) => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, bu yüzden +1
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
+                const formatLocalISODate = (date) => {
+                    const year = date.getFullYear();
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, bu yüzden +1
+                    const day = date.getDate().toString().padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
 
 
-             params.startDate = formatLocalISODate(startDate);
-    params.endDate = formatLocalISODate(endDate);
+                params.startDate = formatLocalISODate(startDate);
+                params.endDate = formatLocalISODate(endDate);
             }
 
             if (clear) {
@@ -390,7 +391,6 @@ if (dateRange === 'custom' && hasCustomDateRange) {
     };
 
     const getSelectedProductLabel = () => {
-
         if (!selectedProduct) return t('report.select_product');
         if (selectedProduct == "all") return t('report.all');
         return selectedProduct.name;
@@ -433,17 +433,17 @@ if (dateRange === 'custom' && hasCustomDateRange) {
 
             // Add custom date range if selected
             if (dateRange === 'custom' && hasCustomDateRange) {
-               
-                  const formatLocalISODate = (date) => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, bu yüzden +1
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
+
+                const formatLocalISODate = (date) => {
+                    const year = date.getFullYear();
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, bu yüzden +1
+                    const day = date.getDate().toString().padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
 
 
-             params.startDate = formatLocalISODate(startDate);
-    params.endDate = formatLocalISODate(endDate);
+                params.startDate = formatLocalISODate(startDate);
+                params.endDate = formatLocalISODate(endDate);
             }
 
             const { data } = await api.post(Endpoint.ReportSend, params);

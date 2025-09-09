@@ -27,13 +27,14 @@ import { ActivityIndicator, Button } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useColorScheme } from 'react-native';
 import { useTranslation } from "react-i18next";
-import "../../src/i18n"; 
+import "../../src/i18n";
+import { Image } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
 export default function StockScreen({ navigation, setToken }) {
-      const { t, i18n } = useTranslation();
-    
+    const { t, i18n } = useTranslation();
+
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [stockEntries, setStockEntries] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
@@ -50,7 +51,7 @@ export default function StockScreen({ navigation, setToken }) {
     const [tempDate, setTempDate] = useState(new Date());
     const [loading, setLoading] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
-    const colorScheme = useColorScheme(); 
+    const colorScheme = useColorScheme();
 
 
 
@@ -138,6 +139,7 @@ export default function StockScreen({ navigation, setToken }) {
             amount: quantity,
             desc: description,
         });
+        console.log(data)
         setSaveLoading(false);
 
         if (data && data.status) {
@@ -145,7 +147,11 @@ export default function StockScreen({ navigation, setToken }) {
             getStockData();
             closeModal();
         } else {
-            Alert.alert(t('warning'),t('app_error'));
+            if (data.sub_info == "rec_mev") {
+                Alert.alert(t('warning'), t('stock_message'));
+                return;
+            }
+            Alert.alert(t('warning'), t('app_error'));
         }
     };
 
@@ -338,7 +344,7 @@ export default function StockScreen({ navigation, setToken }) {
                         >
                             <View style={styles.headerTop}>
                                 <View>
-                                    <Text style={styles.headerTitle}>{t('stock.title')}</Text>
+                                    <Text style={styles.headerTitle}>{t('stock.title_detail')}</Text>
                                     <Text style={styles.headerSubtitle}>
                                         {formatDate(selectedDate)}
                                     </Text>
@@ -410,7 +416,10 @@ export default function StockScreen({ navigation, setToken }) {
                 ) : stockEntries.length === 0 ? (
                     <View style={styles.emptyState}>
                         <View style={styles.emptyStateCard}>
-                            <Text style={styles.emptyIcon}>📦</Text>
+                            <Text style={styles.emptyIcon}>
+                                <Image source={require('./../../assets/not_data.png')} style={{ width: 120, height: 120 }} />
+
+                            </Text>
                             <Text style={styles.emptyTitle}>{t('no_record')}</Text>
                             <Text style={styles.emptySubtitle}>
                                 {t('stock.add_msg')}
@@ -489,7 +498,7 @@ export default function StockScreen({ navigation, setToken }) {
                                                     styles.dropdownText,
                                                     !selectedProduct && styles.placeholderText
                                                 ]}>
-                                                    {selectedProduct.name ||t('stock.product_sel')}
+                                                    {selectedProduct.name || t('stock.product_sel')}
                                                 </Text>
                                                 <Animated.View
                                                     style={[

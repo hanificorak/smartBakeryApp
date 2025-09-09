@@ -30,6 +30,7 @@ import {
     ActivityIndicator,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from "react-i18next";
 
 const { width, height } = Dimensions.get('window');
 
@@ -40,7 +41,7 @@ export default function UserCheckScreen({ navigation }) {
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const insets = useSafeAreaInsets();
-
+    const { t } = useTranslation();
 
     useEffect(() => {
         loadUsers();
@@ -58,8 +59,8 @@ export default function UserCheckScreen({ navigation }) {
             }
 
         } catch (error) {
-            console.error('Kullanıcılar yüklenirken hata:', error);
-            showSnackbar('Kullanıcılar yüklenirken bir hata oluştu');
+            console.error(t('user_app.error_loading_users'), error);
+            showSnackbar(t('user_app.error_loading_users_msg'));
             setLoading(false);
         }
     };
@@ -72,15 +73,15 @@ export default function UserCheckScreen({ navigation }) {
 
     const handleApprove = async (userId) => {
         Alert.alert(
-            'Kullanıcıyı Onayla',
-            'Bu kullanıcıyı onaylamak istediğinizden emin misiniz?',
+            t('user_app.approve_user'),
+            t('user_app.confirm_approve_user'),
             [
                 {
-                    text: 'İptal',
+                    text: t('user_app.cancel'),
                     style: 'cancel',
                 },
                 {
-                    text: 'Onayla',
+                    text: t('user_app.approve'),
                     onPress: () => approveUser(userId),
                     style: 'default',
                 },
@@ -95,27 +96,15 @@ export default function UserCheckScreen({ navigation }) {
             const { data } = await api.post(Endpoint.ApproveUser, { id: userId });
             if (data && data.status) {
                 loadUsers();
-                showSnackbar('Kullanıcı başarıyla onaylandı');
+                showSnackbar(t('user_app.user_approved_success'));
 
             } else {
-                showSnackbar('İşlem başarısız');
-
+                showSnackbar(t('user_app.operation_failed'));
             }
-            // // Gerçek API çağrısı burada yapılacak
-            // // await api.post(`${Endpoint.APPROVE_USER}/${userId}`);
-
-            // // Şimdilik local state'i güncelliyoruz
-            // setUsers(prevUsers =>
-            //     prevUsers.map(user =>
-            //         user.id === userId
-            //             ? { ...user, approved: true }
-            //             : user
-            //     )
-            // );
-
+          
         } catch (error) {
-            console.error('Kullanıcı onaylanırken hata:', error);
-            showSnackbar('Kullanıcı onaylanırken bir hata oluştu');
+            console.error(t('user_app.error_approving_user'), error);
+            showSnackbar(t('user_app.error_approving_user_msg'));
         } finally {
             setLoading(false);
         }
@@ -148,7 +137,7 @@ export default function UserCheckScreen({ navigation }) {
                     styles.approveButtonText,
                     item.approved && styles.approvedButtonText
                 ]}>
-                    {item.approved ? 'Onaylandı' : 'Onayla'}
+                    {item.approved ? t('user_app.approved') : t('user_app.approve')}
                 </Text>
             </TouchableOpacity>
         </View>
@@ -163,7 +152,7 @@ export default function UserCheckScreen({ navigation }) {
                 >
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#fff" />
-                        <Text style={styles.loadingText}>Kullanıcılar yükleniyor...</Text>
+                        <Text style={styles.loadingText}>{t('user_app.loading_users')}</Text>
                     </View>
                 </LinearGradient>
             </SafeAreaView>
@@ -178,9 +167,9 @@ export default function UserCheckScreen({ navigation }) {
                 style={styles.gradient}
             >
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Kullanıcı Onayları</Text>
+                    <Text style={styles.headerTitle}>{t('user_app.user_approvals')}</Text>
                     <Text style={styles.headerSubtitle}>
-                        Bekleyen onaylar: {users.filter(u => !u.approved).length}
+                        {t('user_app.pending_approvals')}: {users.filter(u => !u.approved).length}
                     </Text>
                 </View>
 
@@ -203,7 +192,7 @@ export default function UserCheckScreen({ navigation }) {
                         ListEmptyComponent={() => (
                             <View style={styles.emptyContainer}>
                                 <Text style={styles.emptyText}>
-                                    Henüz kullanıcı bulunmuyor
+                                    {t('user_app.no_users')}
                                 </Text>
                             </View>
                         )}

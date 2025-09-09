@@ -15,7 +15,8 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
     FlatList,
-    Switch
+    Switch,
+    Image
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../tools/api';
@@ -26,8 +27,8 @@ import { useTranslation } from "react-i18next";
 import "../../src/i18n";
 
 const AddEndOfDayScreen = ({ navigation }) => {
-      const { t, i18n } = useTranslation();
-    
+    const { t, i18n } = useTranslation();
+
     const [products, setProducts] = useState([]);
     const [inputValues, setInputValues] = useState({});
     const [temp, setTemp] = useState('');
@@ -126,7 +127,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
 
     const getWeatherCodeItem = async (code) => {
         try {
-            const { data } = await api.post(Endpoint.WeatherItem, { code: code,lang:i18n.language });
+            const { data } = await api.post(Endpoint.WeatherItem, { code: code, lang: i18n.language });
             if (data && data.status) {
                 setSelectedWeathers(data.obj)
             }
@@ -203,7 +204,7 @@ const AddEndOfDayScreen = ({ navigation }) => {
                 Alert.alert('Uyarı', 'İşlem başarısız');
             }
 
- 
+
         } catch (error) {
             console.log(error.message)
             Alert.alert('Hata', 'Veriler kaydedilirken bir hata oluştu.');
@@ -352,7 +353,10 @@ const AddEndOfDayScreen = ({ navigation }) => {
 
                                     <View style={styles.emptyState}>
                                         <View style={styles.emptyStateCard}>
-                                            <Text style={styles.emptyIcon}>📦</Text>
+                                            <Text style={styles.emptyIcon}>
+                                                <Image source={require('./../../assets/not_data.png')} style={{ width: 120, height: 120 }} />
+
+                                            </Text>
                                             <Text style={styles.emptyTitle}>{t('no_record')}</Text>
                                             <Text style={styles.emptySubtitle}>{t('no_record')}</Text>
                                         </View>

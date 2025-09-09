@@ -301,6 +301,7 @@ export default function DefinitionsScreen({ navigation, setToken }) {
                                 {t('product.subtitle', { total: definitions.length, showing: filteredDefinitions.length })}
                             </Text>
                         </View>
+              
                         <TouchableOpacity
                             style={styles.modernAddButton}
                             onPress={() => {
