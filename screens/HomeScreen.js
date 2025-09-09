@@ -9,14 +9,40 @@ import {
   StatusBar,
   StyleSheet,
   Image,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons'; // veya başka bir icon kütüphanesi
 import { useTranslation } from "react-i18next";
 import "../src/i18n"; // sadece import etmen yeterli
+import api from '../tools/api';
+import Endpoint from '../tools/endpoint';
+
+const { width, height } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const [admin, setAdmin] = useState(null);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const { t, i18n } = useTranslation();
+
+  // Dil seçenekleri
+  const languages = [
+    {
+      code: 'tr',
+      name: 'Türkçe',
+      flag: '🇹🇷'
+    },
+    {
+      code: 'de',
+      name: 'Deutsch',
+      flag: '🇩🇪'
+    },
+    {
+      code: 'en',
+      name: 'English',
+      flag: '🇺🇸'
+    }
+  ];
 
   const menuItems = [
     {
@@ -40,8 +66,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'EndofDayScreen',
       is_user: true,
       image: require('../assets/menu/abs.png')
-
-
     },
     {
       id: 3,
@@ -53,8 +77,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'ReportsScreen',
       is_user: false,
       image: require('../assets/menu/pro.png')
-
-
     },
     {
       id: 4,
@@ -66,8 +88,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'GuessScreen',
       is_user: true,
       image: require('../assets/menu/prn.png')
-
-
     },
     {
       id: 5,
@@ -79,8 +99,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'FreezerScreen',
       is_user: true,
       image: require('../assets/menu/temp.png')
-
-
     },
     {
       id: 6,
@@ -92,8 +110,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'CustomOrderScreen',
       is_user: true,
       image: require('../assets/menu/custor.png')
-
-
     },
     {
       id: 7,
@@ -104,9 +120,7 @@ const HomeScreen = ({ navigation }) => {
       bgColor: '#EFF6FF',
       screen: 'CustomOrderReportScreen',
       is_user: true
-
     },
-
     {
       id: 8,
       title: t('menu.def'),
@@ -117,8 +131,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'DefinitionsScreen',
       is_user: true,
       image: require('../assets/menu/datenbank.png')
-
-
     },
     {
       id: 9,
@@ -129,9 +141,7 @@ const HomeScreen = ({ navigation }) => {
       bgColor: '#E0F2FE', // açık mavi arka plan
       screen: 'FreezerDefScreen',
       is_user: true
-
     },
-
     {
       id: 10,
       title: t('menu.holiday'),
@@ -142,7 +152,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'HolidayScreen',
       is_user: true,
       image: require('../assets/menu/feir.png')
-
     },
     {
       id: 11,
@@ -154,8 +163,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'UsersScreen',
       is_user: false,
       image: require('../assets/menu/benutzer.png')
-
-
     },
     {
       id: 12,
@@ -178,8 +185,6 @@ const HomeScreen = ({ navigation }) => {
       screen: 'CompanyScreen',
       is_user: false,
       image: require('../assets/menu/comp.png')
-
-
     },
     {
       id: 14,
@@ -191,21 +196,26 @@ const HomeScreen = ({ navigation }) => {
       screen: 'ReinstallScreen',
       is_user: true,
       image: require('../assets/menu/reins.png')
-
-
     }
   ];
 
   useEffect(() => {
-
     checkAdmin();
+    setNotToken();
   }, []);
-
 
   const checkAdmin = async () => {
     const admin = await AsyncStorage.getItem('is_admin');
     setAdmin(admin);
     console.log("asd", admin);
+  };
+
+  const setNotToken = async () => {
+    const token = await AsyncStorage.getItem('not_token');
+    let n_tk = token.split('[')[1].split(']')[0];
+
+    const {data} = await api.post(Endpoint.AddToken,{token:n_tk});
+    console.log("token", n_tk)
   };
 
   const handleMenuPress = async (item) => {
@@ -219,6 +229,24 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
+  // Dil değiştirme fonksiyonu
+  const changeLanguage = async (languageCode) => {
+    try {
+      await i18n.changeLanguage(languageCode);
+      await AsyncStorage.setItem('selected_lang',languageCode);
+      setLanguageModalVisible(false);
+      // AsyncStorage kaydetme işlemi i18n konfigürasyonunda otomatik yapılıyor
+    } catch (error) {
+      console.log('Dil değiştirme hatası:', error);
+    }
+  };
+
+  // Aktif dilin bayrağını getir
+  const getCurrentLanguageFlag = () => {
+    const currentLang = languages.find(lang => lang.code === i18n.language);
+    return currentLang ? currentLang.flag : '🌐';
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -230,21 +258,80 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.headerSubtitle}>{t('welcome')}</Text>
         </View>
 
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={styles.logoutButton}
-        >
-          <Icon name="logout" size={20} color="#EF4444" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          {/* Dil Değiştirme Butonu */}
+          <TouchableOpacity
+            onPress={() => setLanguageModalVisible(true)}
+            style={styles.languageButton}
+          >
+            <Text style={styles.flagText}>{getCurrentLanguageFlag()}</Text>
+            <Icon name="keyboard-arrow-down" size={16} color="#6B7280" />
+          </TouchableOpacity>
+
+          {/* Logout Butonu */}
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={styles.logoutButton}
+          >
+            <Icon name="logout" size={20} color="#EF4444" />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Dil Seçimi Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={languageModalVisible}
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>{t('selectLanguage', 'Dil Seçin')}</Text>
+              
+              {languages.map((language) => (
+                <TouchableOpacity
+                  key={language.code}
+                  style={[
+                    styles.languageOption,
+                    (i18n && i18n.language === language.code) && styles.selectedLanguage
+                  ]}
+                  onPress={() => changeLanguage(language.code)}
+                >
+                  <Text style={styles.flagEmoji}>{language.flag}</Text>
+                  <Text style={[
+                    styles.languageName,
+                    (i18n && i18n.language === language.code) && styles.selectedLanguageName
+                  ]}>
+                    {language.name}
+                  </Text>
+                  {(i18n && i18n.language === language.code) && (
+                    <Icon name="check" size={20} color="#10B981" />
+                  )}
+                </TouchableOpacity>
+              ))}
+              
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setLanguageModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>{t('cancel', 'İptal')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hoş Geldin Kartı */}
-
         <View style={styles.menuContainer}>
           {menuItems
             .filter(item => admin === "admin" ? true : item.is_user)
@@ -271,8 +358,6 @@ const HomeScreen = ({ navigation }) => {
               </TouchableOpacity>
             ))}
         </View>
-
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -306,6 +391,25 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  languageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  flagText: {
+    fontSize: 18,
+    marginRight: 4,
+  },
   logoutButton: {
     padding: 8,
     borderRadius: 8,
@@ -316,28 +420,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-  },
-  welcomeCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  welcomeTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  welcomeSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
   },
   menuContainer: {
     flexDirection: 'row',
@@ -375,18 +457,72 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     lineHeight: 16,
   },
-  footer: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
+  // Modal Stilleri
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: width * 0.8,
+    maxWidth: 300,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    textAlign: 'center',
     marginBottom: 20,
   },
-  footerText: {
-    fontSize: 12,
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  selectedLanguage: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#10B981',
+  },
+  flagEmoji: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  languageName: {
+    fontSize: 16,
+    color: '#374151',
+    flex: 1,
+  },
+  selectedLanguageName: {
+    color: '#10B981',
+    fontWeight: '600',
+  },
+  closeButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 16,
     color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 18,
+    fontWeight: '500',
   },
 });
 

@@ -31,6 +31,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Print from "expo-print";
 import * as FileSystem from "expo-file-system";
 import WebView from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FreezerScreen = ({ navigation }) => {
   const { t } = useTranslation();
@@ -240,13 +241,16 @@ const FreezerScreen = ({ navigation }) => {
     setReportLoading(true);
 
     try {
+        const lang = await AsyncStorage.getItem('selected_lang');
+
       const param = {
         startDate: startDate,
         endDate: endDate,
         email: emailAddress,
         print: (print ? 1 : 0),
         prew: (prew ? 1 : 0),
-        mail: (sendMail ? 1 : 0)
+        mail: (sendMail ? 1 : 0),
+        lang:lang
       };
 
       const formatLocalISODate = (date) => {
@@ -260,7 +264,7 @@ const FreezerScreen = ({ navigation }) => {
       param.endDate = formatLocalISODate(endDate);
       // Replace with your report endpoint
       const { data } = await api.post(Endpoint.FreeReportSend, param);
-      console.log(data, emailAddress)
+      console.log("data",data)
       setReportLoading(false);
 
       if (data && data.status) {
@@ -282,6 +286,7 @@ const FreezerScreen = ({ navigation }) => {
         Alert.alert(t('warning'), t('freezer.report_failed'));
       }
     } catch (error) {
+      console.log(error)
       Alert.alert(t('warning'), t('freezer.report_failed'));
     } finally {
       setReportLoading(false);

@@ -99,11 +99,11 @@ const CustomOrderScreen = ({ navigation }) => {
     // Yeni sipariş ekleme
     const handleAddOrder = async () => {
         if (!formData.product) {
-            Alert.alert('Hata', 'Lütfen bir ürün seçiniz');
+            Alert.alert(t('customord.error'), t('customord.select_product'));
             return;
         }
         if (!formData.amount.trim() || parseInt(formData.amount) <= 0) {
-            Alert.alert('Hata', 'Geçerli bir amount giriniz');
+            Alert.alert(t('customord.error'), t('customord.enter_valid_amount'));
             return;
         }
 
@@ -126,30 +126,30 @@ const CustomOrderScreen = ({ navigation }) => {
                 id: null
             });
             setIsModalVisible(false);
-            Alert.alert('Başarılı', 'Sipariş başarıyla eklendi');
+            Alert.alert(t('customord.success'), t('customord.order_added_success'));
             loadOrders(); // Listeyi yenile
         } else {
-            Alert.alert('Hata', 'Sipariş eklenirken bir hata oluştu');
+            Alert.alert(t('customord.error'), t('customord.order_add_error'));
         }
     };
 
     // Sipariş silme
     const handleDeleteOrder = (orderId) => {
         Alert.alert(
-            'Sipariş Sil',
-            'Bu siparişi silmek istediğinizden emin misiniz?',
+            t('customord.delete_order'),
+            t('customord.delete_order_confirm'),
             [
-                { text: 'İptal', style: 'cancel' },
+                { text: t('customord.cancel'), style: 'cancel' },
                 {
-                    text: 'Sil',
+                    text: t('customord.delete'),
                     style: 'destructive',
                     onPress: async () => {
                         const {data} = await api.post(Endpoint.CustomOrderDelete, {id: orderId});
                         if(data && data.status){    
-                            Alert.alert('Başarılı', 'Sipariş başarıyla silindi');
+                            Alert.alert(t('customord.success'), t('customord.order_deleted_success'));
                             loadOrders(); // Listeyi yenile
                         }else{
-                            Alert.alert('Hata', 'Sipariş silinirken bir hata oluştu');
+                            Alert.alert(t('customord.error'), t('customord.order_delete_error'));
                         }
                     }
                 }
@@ -224,8 +224,8 @@ const CustomOrderScreen = ({ navigation }) => {
                         </Text>
                     </View>
                     <View style={styles.customerInfo}>
-                        <Text style={styles.customerName}>{item.name_surname || 'İsim belirtilmemiş'}</Text>
-                        <Text style={styles.customerPhone}>{item.phone || 'Telefon belirtilmemiş'}</Text>
+                        <Text style={styles.customerName}>{item.name_surname || t('customord.name_not_specified')}</Text>
+                        <Text style={styles.customerPhone}>{item.phone || t('customord.phone_not_specified')}</Text>
                     </View>
                 </View>
                 {/* Product Info */}
@@ -234,9 +234,9 @@ const CustomOrderScreen = ({ navigation }) => {
                         <Text style={styles.productEmoji}>📦</Text>
                     </View>
                     <View style={styles.productDetails}>
-                        <Text style={styles.productName}>{item.product?.name || 'Ürün belirtilmemiş'}</Text>
+                        <Text style={styles.productName}>{item.product?.name || t('customord.product_not_specified')}</Text>
                         <View style={styles.quantityContainer}>
-                            <Text style={styles.quantityLabel}>Adet:</Text>
+                            <Text style={styles.quantityLabel}>{t('customord.quantity')}:</Text>
                             <View style={styles.quantityBadge}>
                                 <Text style={styles.quantityText}>{item.amount}</Text>
                             </View>
@@ -292,7 +292,7 @@ const CustomOrderScreen = ({ navigation }) => {
 
             {/* Header */}
             <LinearGradient colors={['#4B6CB7', '#182848']} style={styles.header}>
-                  <Text style={{ fontSize:20,marginBottom:20,color:'white',fontWeight:'bold' }}>Özel Sipariş Yönetimi</Text>
+                  <Text style={{ fontSize:20,marginBottom:20,color:'white',fontWeight:'bold' }}>{t('customord.title')}</Text>
                 <View style={styles.headerContent}>
                   
                     {/* Tarih Seçimi */}
@@ -314,7 +314,7 @@ const CustomOrderScreen = ({ navigation }) => {
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                         >
-                            <Text style={styles.saveButtonText}>Yeni Ekle</Text>
+                            <Text style={styles.saveButtonText}>{t('customord.add_new')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -338,8 +338,8 @@ const CustomOrderScreen = ({ navigation }) => {
                         <View style={styles.emptyIcon}>
                             <Text style={styles.emptyIconText}>📋</Text>
                         </View>
-                        <Text style={styles.emptyTitle}>Henüz sipariş yok</Text>
-                        <Text style={styles.emptyText}>Bu tarih için henüz sipariş bulunmuyor</Text>
+                        <Text style={styles.emptyTitle}>{t('customord.no_orders_yet')}</Text>
+                        <Text style={styles.emptyText}>{t('customord.no_orders_for_date')}</Text>
                         <TouchableOpacity
                             style={styles.emptyActionButton}
                             onPress={() => setIsModalVisible(true)}
@@ -350,7 +350,7 @@ const CustomOrderScreen = ({ navigation }) => {
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                             >
-                                <Text style={styles.emptyActionText}>İlk Siparişi Ekle</Text>
+                                <Text style={styles.emptyActionText}>{t('customord.add_first_order')}</Text>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
@@ -379,7 +379,7 @@ const CustomOrderScreen = ({ navigation }) => {
                         <View style={styles.modalContent}>
                             {/* Modal Header */}
                             <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Yeni Sipariş Ekle</Text>
+                                <Text style={styles.modalTitle}>{t('customord.add_new_order')}</Text>
                                 <TouchableOpacity
                                     style={styles.closeButton}
                                     onPress={() => setIsModalVisible(false)}
@@ -391,10 +391,10 @@ const CustomOrderScreen = ({ navigation }) => {
                             <ScrollView style={styles.modalForm}>
                                 {/* Ad Soyad */}
                                 <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Ad Soyad *</Text>
+                                    <Text style={styles.inputLabel}>{t('customord.full_name')} *</Text>
                                     <TextInput
                                         style={styles.textInput}
-                                        placeholder="Ad soyad giriniz"
+                                        placeholder={t('customord.enter_full_name')}
                                         value={formData.name_surname}
                                         onChangeText={(text) => updateFormData('name_surname', text)}
                                     />
@@ -402,10 +402,10 @@ const CustomOrderScreen = ({ navigation }) => {
 
                                 {/* phone */}
                                 <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Telefon Numarası</Text>
+                                    <Text style={styles.inputLabel}>{t('customord.phone_number')}</Text>
                                     <TextInput
                                         style={styles.textInput}
-                                        placeholder="Telefon numarası giriniz"
+                                        placeholder={t('customord.enter_phone_number')}
                                         keyboardType="phone-pad"
                                         value={formData.phone}
                                         onChangeText={(text) => updateFormData('phone', text)}
@@ -461,10 +461,10 @@ const CustomOrderScreen = ({ navigation }) => {
 
                                 {/* amount */}
                                 <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Ürün Adedi *</Text>
+                                    <Text style={styles.inputLabel}>{t('customord.product_quantity')} *</Text>
                                     <TextInput
                                         style={styles.textInput}
-                                        placeholder="Adet giriniz"
+                                        placeholder={t('customord.enter_quantity')}
                                         keyboardType="numeric"
                                         value={formData.amount}
                                         onChangeText={(text) => updateFormData('amount', text)}
@@ -477,7 +477,7 @@ const CustomOrderScreen = ({ navigation }) => {
                                         style={styles.cancelButton}
                                         onPress={() => setIsModalVisible(false)}
                                     >
-                                        <Text style={styles.cancelButtonText}>İptal</Text>
+                                        <Text style={styles.cancelButtonText}>{t('customord.cancel')}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.saveButtonModal}
@@ -491,7 +491,7 @@ const CustomOrderScreen = ({ navigation }) => {
                                             start={{ x: 0, y: 0 }}
                                             end={{ x: 1, y: 0 }}
                                         >
-                                            <Text style={styles.saveButtonTextModal}>{(loading ? 'Kayıt ediliyor...' : 'Kaydet')}</Text>
+                                            <Text style={styles.saveButtonTextModal}>{loading ? t('customord.saving') : t('customord.save')}</Text>
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
@@ -505,6 +505,7 @@ const CustomOrderScreen = ({ navigation }) => {
 };
 
 export default CustomOrderScreen;
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,

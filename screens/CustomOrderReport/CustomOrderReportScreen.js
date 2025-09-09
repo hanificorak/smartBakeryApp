@@ -13,7 +13,6 @@ import {
     ScrollView,
     FlatList,
     Animated,
-
     Keyboard,
     Alert,
 } from 'react-native';
@@ -23,10 +22,11 @@ import { Picker } from '@react-native-picker/picker';
 import Endpoint from '../../tools/endpoint';
 
 import { useTranslation } from "react-i18next";
-import "../../src/i18n";
+import "../../src/i18n"; // i18n dosyasının yolu doğru olduğundan emin olun
 import api from '../../tools/api';
 import * as Print from "expo-print";
 import * as FileSystem from "expo-file-system";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const CustomOrderReportScreen = () => {
@@ -44,19 +44,20 @@ const CustomOrderReportScreen = () => {
     const [showStartPicker, setShowStartPicker] = useState(false);
     const [showEndPicker, setShowEndPicker] = useState(false);
     const [products, setProducts] = useState([]);
-    const [selectedProduct, setSelectedProduct] = useState({ id: '', name: 'Tümü' });
+    const [selectedProduct, setSelectedProduct] = useState({ id: '', name: t('common.all') });
     const [showProductDropdown, setShowProductDropdown] = useState(false);
     const [data, setData] = useState([]);
     const [sendLoading, setSendLoading] = useState(false);
+    const [printLoading, setPrintLoading] = useState(false); // print loading state'i eklendi
 
     // rapor gönder state
     const [email, setEmail] = useState('');
 
 
     const formatDate = (date) => {
-        const day = date.getDate().toString().padStart(2, '0');   // Gün
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Ay (0-11 olduğu için +1)
-        const year = date.getFullYear();  // Yıl
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
         return `${day}.${month}.${year}`;
     };
 
@@ -69,13 +70,13 @@ const CustomOrderReportScreen = () => {
         try {
             const { data } = await api.post(Endpoint.StockParams);
             if (data && data.status) {
-                prd = data.obj.products;
-                prd.unshift({ id: '', name: 'Tümü' });
+                let prd = data.obj.products; // 'prd' yeniden tanımlandı
+                prd.unshift({ id: '', name: t('common.all') });
 
                 setProducts(data.obj.products);
             }
         } catch (error) {
-            console.error('Veriler yüklenirken hata:', error);
+            console.error(t('error'), error);
         }
     };
 
@@ -89,7 +90,6 @@ const CustomOrderReportScreen = () => {
                 setData(data.obj);
             }
         } catch (error) {
-            console.error('Veriler yüklenirken hata:', error);
         }
     };
 
@@ -97,14 +97,16 @@ const CustomOrderReportScreen = () => {
         try {
             if (!print) {
                 if (email == null || email == "") {
-                    Alert.alert('Hata', 'Lütfen geçerli bir mail adresi giriniz.');
+                    Alert.alert(t('common.error'), t('report_order.mail_validation_error'));
                     return;
                 }
             }
 
 
             setSendLoading(true);
-            const { data } = await api.post(Endpoint.CustomOrderReportSend, { print: (print ? 1 : 0), mail: email, name_surname: customerName, start_date: startDate, end_date: endDate, product_id: selectedProduct.id || '' });
+            const lang = await AsyncStorage.getItem('selected_lang');
+
+            const { data } = await api.post(Endpoint.CustomOrderReportSend, { lang: lang, print: (print ? 1 : 0), mail: email, name_surname: customerName, start_date: startDate, end_date: endDate, product_id: selectedProduct.id || '' });
             setSendLoading(false);
             if (data && data.status) {
                 if (print) {
@@ -112,39 +114,39 @@ const CustomOrderReportScreen = () => {
                     return;
                 }
                 setReportModalVisible(false);
-                Alert.alert('Başarılı', 'Rapor mail olarak gönderildi.');
+                Alert.alert(t('common.success'), t('report_order.report_sent_success'));
             } else {
-                Alert.alert('Hata', 'Rapor gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
+                Alert.alert(t('common.error'), t('report_order.report_sent_error'));
             }
         } catch (error) {
             setSendLoading(false);
-            console.error('Veriler yüklenirken hata:', error);
         }
     };
 
-      async function printReportData(pdfUrl) {
+    async function printReportData(pdfUrl) {
         try {
-          const localPath = FileSystem.documentDirectory + "temp.pdf";
-          const downloadResumable = FileSystem.createDownloadResumable(
-            pdfUrl,
-            localPath
-          );
-    
-          const { uri } = await downloadResumable.downloadAsync();
-          await Print.printAsync({ uri });
-    
-          setPrintLoading(false);
+            setPrintLoading(true); // Baskı başlarken loading'i aç
+            const localPath = FileSystem.documentDirectory + "temp.pdf";
+            const downloadResumable = FileSystem.createDownloadResumable(
+                pdfUrl,
+                localPath
+            );
+
+            const { uri } = await downloadResumable.downloadAsync();
+            await Print.printAsync({ uri });
+
+            setPrintLoading(false); // Baskı biterken loading'i kapat
         } catch (error) {
-          console.error("PDF açılırken hata:", error);
+            setPrintLoading(false); // Hata durumunda da loading'i kapat
         }
-      }
+    }
 
     const print = async () => {
         sendReport(true)
     };
 
     const formatDateShort = (date) => {
-        return date.toLocaleDateString('tr-TR', {
+        return date.toLocaleDateString(i18n.language, { // i18n.language kullanıldı
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
@@ -187,7 +189,7 @@ const CustomOrderReportScreen = () => {
             >
                 <SafeAreaView>
                     <View style={styles.headerContent}>
-                        <Text style={styles.headerTitle}>Özel Sipariş Raporu</Text>
+                        <Text style={styles.headerTitle}>{t('custom_order.report_title')}</Text>
 
                         <View style={styles.headerTop}>
 
@@ -204,7 +206,7 @@ const CustomOrderReportScreen = () => {
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 1, y: 0 }}
                                     >
-                                        <Text style={styles.saveButtonText}>Filtreler</Text>
+                                        <Text style={styles.saveButtonText}>{t('common.filters')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
 
@@ -220,7 +222,7 @@ const CustomOrderReportScreen = () => {
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 1, y: 0 }}
                                     >
-                                        <Text style={styles.saveButtonText}>Rapor Gönder</Text>
+                                        <Text style={styles.saveButtonText}>{t('report_order.send_report')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                             </View>
@@ -260,7 +262,7 @@ const CustomOrderReportScreen = () => {
                                             <Text style={styles.dateIconText}>📅</Text>
                                         </View>
                                         <Text style={styles.dateText}>
-                                            {new Date(item.created_at).toLocaleDateString("tr-TR")}
+                                            {new Date(item.created_at).toLocaleDateString(i18n.language)}
                                         </Text>
                                     </View>
                                 </View>
@@ -279,7 +281,7 @@ const CustomOrderReportScreen = () => {
                                 </LinearGradient>
                                 <View style={styles.productInfo}>
                                     <Text style={styles.productName}>{item.product.name}</Text>
-                                    <Text style={styles.productCategory}>Kategori: Gıda</Text>
+                                    <Text style={styles.productCategory}>{t('custom_order.category')}: {t('custom_order.food')}</Text>
                                 </View>
                             </View>
 
@@ -288,7 +290,7 @@ const CustomOrderReportScreen = () => {
                                 <View style={styles.quantitySection}>
                                     <View style={styles.quantityBadge}>
                                         <Text style={styles.quantityIcon}>🔢</Text>
-                                        <Text style={styles.quantityText}>Miktar: {item.amount}</Text>
+                                        <Text style={styles.quantityText}>{t('custom_order.amount')}: {item.amount}</Text>
                                     </View>
                                 </View>
 
@@ -299,7 +301,7 @@ const CustomOrderReportScreen = () => {
                     )}
                 /> :
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 16, color: '#666' }}>Kayıt mevcut değil.</Text>
+                    <Text style={{ fontSize: 16, color: '#666' }}>{t('common.no_record')}</Text>
                 </View>
             }
 
@@ -331,13 +333,13 @@ const CustomOrderReportScreen = () => {
                             </TouchableOpacity>
 
                             <ScrollView contentContainerStyle={styles.modalContent}>
-                                <Text style={styles.modalTitle}>🔍  Filtreler</Text>
+                                <Text style={styles.modalTitle}>🔍  {t('common.filters')}</Text>
 
                                 <View>
-                                    <Text style={{ marginBottom: 8, marginLeft: 4 }}>Müşteri Adı</Text>
+                                    <Text style={{ marginBottom: 8, marginLeft: 4 }}>{t('custom_order.customer_name')}</Text>
                                     <TextInput
                                         style={styles.input}
-                                        placeholder="Müşteri Adı"
+                                        placeholder={t('custom_order.customer_name_placeholder')}
                                         value={customerName}
                                         onChangeText={setCustomerName}
                                     />
@@ -345,7 +347,7 @@ const CustomOrderReportScreen = () => {
 
                                 {/* Başlangıç Tarihi */}
                                 <View>
-                                    <Text style={{ marginBottom: 8, marginLeft: 4 }}>Başlangıç Tarihi</Text>
+                                    <Text style={{ marginBottom: 8, marginLeft: 4 }}>{t('common.start_date')}</Text>
 
                                     <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.dateInput}>
                                         <Text style={styles.dateText}>{formatDate(startDate)}</Text>
@@ -365,7 +367,7 @@ const CustomOrderReportScreen = () => {
 
                                 {/* Bitiş Tarihi */}
                                 <View>
-                                    <Text style={{ marginBottom: 8, marginLeft: 4 }}>Bitiş Tarihi</Text>
+                                    <Text style={{ marginBottom: 8, marginLeft: 4 }}>{t('common.end_date')}</Text>
                                     <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.dateInput}>
                                         <Text style={styles.dateText}>{formatDate(endDate)}</Text>
                                     </TouchableOpacity>
@@ -384,7 +386,7 @@ const CustomOrderReportScreen = () => {
 
                                 {/* Ürün Seçimi */}
                                 <View style={styles.inputGroup}>
-                                    <Text style={{ marginBottom: 8, marginLeft: 4 }}>Ürün </Text>
+                                    <Text style={{ marginBottom: 8, marginLeft: 4 }}>{t('custom_order.product')}</Text>
 
                                     <TouchableOpacity
                                         style={[
@@ -397,7 +399,7 @@ const CustomOrderReportScreen = () => {
                                                 styles.dropdownText,
                                                 !selectedProduct && styles.placeholderText
                                             ]}>
-                                                {selectedProduct.name || t('stock.product_sel')}
+                                                {selectedProduct.name || t('custom_order.select_product')}
                                             </Text>
                                             <Animated.View
                                                 style={[
@@ -433,7 +435,7 @@ const CustomOrderReportScreen = () => {
                                     onPress={() => getReportData()}
                                 >
                                     <LinearGradient colors={['#4B6CB7', '#4B6CB7']} style={styles.gradientButton}>
-                                        <Text style={styles.buttonText}>Uygula</Text>
+                                        <Text style={styles.buttonText}>{t('common.apply')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                             </ScrollView>
@@ -470,11 +472,11 @@ const CustomOrderReportScreen = () => {
                             </TouchableOpacity>
 
                             <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>📧 Rapor Gönder</Text>
+                                <Text style={styles.modalTitle}>📧 {t('report_order.send_report')}</Text>
 
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Mail adresi giriniz"
+                                    placeholder={t('report_order.mail_placeholder')}
                                     value={email}
                                     onChangeText={setEmail}
                                     keyboardType="email-address"
@@ -483,19 +485,19 @@ const CustomOrderReportScreen = () => {
                                 <TouchableOpacity
                                     style={[styles.actionButton, { marginTop: 20 }]}
                                     onPress={() => print()}
-                                    disabled={sendLoading}
+                                    disabled={sendLoading || printLoading} // Hem sendLoading hem de printLoading kontrolü
                                 >
                                     <LinearGradient colors={['#4B6CB7', '#4B6CB7']} style={styles.gradientButton}>
-                                        <Text style={styles.buttonText}>{(sendLoading ? t('print_loading') : t('print'))}</Text>
+                                        <Text style={styles.buttonText}>{(printLoading ? t('common.printing') : t('common.print'))}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[styles.actionButton, { marginTop: 20 }]}
                                     onPress={() => sendReport()}
-                                    disabled={sendLoading}
+                                    disabled={sendLoading || printLoading} // Hem sendLoading hem de printLoading kontrolü
                                 >
                                     <LinearGradient colors={['#4B6CB7', '#4B6CB7']} style={styles.gradientButton}>
-                                        <Text style={styles.buttonText}>{(sendLoading ? 'Gönderiliyor...' : 'Gönder')}</Text>
+                                        <Text style={styles.buttonText}>{(sendLoading ? t('common.sending') : t('common.send'))}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                             </View>

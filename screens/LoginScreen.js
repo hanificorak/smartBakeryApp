@@ -72,6 +72,8 @@ export default function LoginScreen({ navigation, setToken }) {
     const changeLanguage = async (lang) => {
         await i18n.changeLanguage(lang);
         await AsyncStorage.setItem("user-language", lang);
+        await AsyncStorage.setItem('selected_lang', lang);
+
         setCurrentLanguage(lang);
         setLanguageModalVisible(false);
     };
@@ -132,7 +134,7 @@ export default function LoginScreen({ navigation, setToken }) {
 
     const clearData = async () => {
         const lang = await AsyncStorage.getItem('user-language');
-        if(lang != null){
+        if (lang != null) {
             changeLanguage(lang)
         }
 
@@ -163,7 +165,7 @@ export default function LoginScreen({ navigation, setToken }) {
             >
 
                 {/* Dil Seçici Butonu */}
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.languageButton}
                     onPress={() => setLanguageModalVisible(true)}
                     activeOpacity={0.8}
@@ -302,7 +304,7 @@ export default function LoginScreen({ navigation, setToken }) {
                                     <Text style={styles.closeButtonText}>✕</Text>
                                 </TouchableOpacity>
                             </View>
-                            
+
                             <View style={styles.languageList}>
                                 {languages.map((language) => (
                                     <TouchableOpacity
@@ -351,7 +353,7 @@ const styles = StyleSheet.create({
     },
     languageFlagContainer: {
         width: 70,
-        marginTop:10,
+        marginTop: 10,
         height: 70,
         borderRadius: 22.5,
         backgroundColor: 'rgba(255, 255, 255, 0.2)',

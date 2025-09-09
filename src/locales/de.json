@@ -16,7 +16,7 @@
     "error": "Fehler",
     "print": "Drucken",
     "print_loading": "Wird gedruckt...",
-        "stock_message": "Dieses Produkt wurde bisher bereits hinzugefügt.",
+    "stock_message": "Dieses Produkt wurde bisher bereits hinzugefügt.",
 
     "login": {
         "welcome": "Willkommen",
@@ -105,7 +105,7 @@
         "temp": "Temperatur",
         "weather": "Wetter",
         "current_amount": "Aktueller Bestand",
-        "new_amount_input": "Neue Menge eingeben: (Verkauft)",
+        "new_amount_input": "Neuen Betrag eingeben: (Abfallmenge)",
         "ert_text_sw": "Rest auf den nächsten Tag übertragen",
         "urt_date": "Produktionsdatum",
         "add_title": "Tagesende",
@@ -114,7 +114,7 @@
     "report": {
         "date_all": "Alle",
         "date_now": "Gestern",
-        "date_now_heute":"Heute",
+        "date_now_heute": "Heute",
 
         "date_week": "Letzte Woche",
         "date_month": "Letzte Monat",
@@ -306,22 +306,22 @@
         "def_title": "Gefrierschrankdefinitionen"
     },
     "user_app": {
-    "error_loading_users": "Fehler beim Laden der Benutzer:",
-    "error_loading_users_msg": "Beim Laden der Benutzer ist ein Fehler aufgetreten",
-    "approve_user": "Benutzer bestätigen",
-    "confirm_approve_user": "Sind Sie sicher, dass Sie diesen Benutzer bestätigen möchten?",
-    "cancel": "Abbrechen",
-    "approve": "Bestätigen",
-    "user_approved_success": "Benutzer wurde erfolgreich bestätigt",
-    "operation_failed": "Vorgang fehlgeschlagen",
-    "error_approving_user": "Fehler beim Bestätigen des Benutzers:",
-    "error_approving_user_msg": "Beim Bestätigen des Benutzers ist ein Fehler aufgetreten",
-    "approved": "Bestätigt",
-    "loading_users": "Benutzer werden geladen...",
-    "user_approvals": "Benutzerbestätigungen",
-    "pending_approvals": "Ausstehende Bestätigungen",
-    "no_users": "Es sind noch keine Benutzer vorhanden"
-},
+        "error_loading_users": "Fehler beim Laden der Benutzer:",
+        "error_loading_users_msg": "Beim Laden der Benutzer ist ein Fehler aufgetreten",
+        "approve_user": "Benutzer bestätigen",
+        "confirm_approve_user": "Sind Sie sicher, dass Sie diesen Benutzer bestätigen möchten?",
+        "cancel": "Abbrechen",
+        "approve": "Bestätigen",
+        "user_approved_success": "Benutzer wurde erfolgreich bestätigt",
+        "operation_failed": "Vorgang fehlgeschlagen",
+        "error_approving_user": "Fehler beim Bestätigen des Benutzers:",
+        "error_approving_user_msg": "Beim Bestätigen des Benutzers ist ein Fehler aufgetreten",
+        "approved": "Bestätigt",
+        "loading_users": "Benutzer werden geladen...",
+        "user_approvals": "Benutzerbestätigungen",
+        "pending_approvals": "Ausstehende Bestätigungen",
+        "no_users": "Es sind noch keine Benutzer vorhanden"
+    },
     "users": {
         "load_error": "Fehler beim Laden der Benutzer",
         "first_name_required": "Vorname erforderlich",
@@ -329,7 +329,7 @@
         "password_required": "Passwort erforderlich",
         "add_success": "Benutzer erfolgreich hinzugefügt.",
         "operation_failed": "Vorgang fehlgeschlagen.",
-                "approv": "Benutzergenehmigungsverfahren",
+        "approv": "Benutzergenehmigungsverfahren",
 
         "add_error": "Fehler beim Hinzufügen des Benutzers",
         "cancel": "Abbrechen",
@@ -420,5 +420,70 @@
         "restarting": "Wird neu gestartet...",
         "finished": "Abgeschlossen!",
         "error_warning": "Vorgang fehlgeschlagen. Bitte schließen Sie die App und öffnen Sie sie erneut."
-    }
+    },
+    "common": {
+        "all": "Alle",
+        "error": "Fehler",
+        "success": "Erfolgreich",
+        "filters": "Filter",
+        "apply": "Anwenden",
+        "start_date": "Anfangsdatum",
+        "end_date": "Enddatum",
+        "no_record": "Kein Eintrag vorhanden.",
+        "print": "Drucken",
+        "printing": "Wird gedruckt...",
+        "send": "Senden",
+        "sending": "Wird gesendet..."
+    },
+    "custom_order": {
+        "report_title": "Sonderbestellungsbericht",
+        "customer_name": "Kundenname",
+        "customer_name_placeholder": "Kundenname",
+        "category": "Kategorie",
+        "food": "Lebensmittel",
+        "amount": "Menge",
+        "product": "Produkt",
+        "select_product": "Produkt auswählen"
+    },
+    "report_order": {
+        "send_report": "Bericht senden",
+        "mail_validation_error": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        "report_sent_success": "Der Bericht wurde per E-Mail gesendet.",
+        "report_sent_error": "Beim Senden des Berichts ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+        "mail_placeholder": "E-Mail-Adresse eingeben"
+    },
+    "customord": {
+  "title": "Sonderbestellungsverwaltung",
+  "error": "Fehler",
+  "success": "Erfolgreich",
+  "cancel": "Abbrechen",
+  "delete": "Löschen",
+  "save": "Speichern",
+  "saving": "Wird gespeichert...",
+  "add_new": "Neu hinzufügen",
+  "add_new_order": "Neue Bestellung hinzufügen",
+  "add_first_order": "Erste Bestellung hinzufügen",
+  "select_product": "Bitte ein Produkt auswählen",
+  "enter_valid_amount": "Bitte eine gültige Menge eingeben",
+  "order_added_success": "Bestellung erfolgreich hinzugefügt",
+  "order_add_error": "Beim Hinzufügen der Bestellung ist ein Fehler aufgetreten",
+  "delete_order": "Bestellung löschen",
+  "delete_order_confirm": "Sind Sie sicher, dass Sie diese Bestellung löschen möchten?",
+  "order_deleted_success": "Bestellung erfolgreich gelöscht",
+  "order_delete_error": "Beim Löschen der Bestellung ist ein Fehler aufgetreten",
+  "name_not_specified": "Name nicht angegeben",
+  "phone_not_specified": "Telefonnummer nicht angegeben",
+  "product_not_specified": "Produkt nicht angegeben",
+  "quantity": "Menge",
+  "no_orders_yet": "Noch keine Bestellungen",
+  "no_orders_for_date": "Für dieses Datum gibt es noch keine Bestellungen",
+  "full_name": "Vollständiger Name",
+  "enter_full_name": "Bitte vollständigen Namen eingeben",
+  "phone_number": "Telefonnummer",
+  "enter_phone_number": "Bitte Telefonnummer eingeben",
+  "product_quantity": "Produktmenge",
+  "enter_quantity": "Bitte Menge eingeben"
+}
+
+
 }

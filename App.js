@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View, Platform } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, View, Platform, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import * as Location from 'expo-location'; // Expo Location paketi
+import * as Location from 'expo-location';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
@@ -28,40 +30,53 @@ import HolidayScreen from './screens/Holiday/HolidayScreen';
 import CustomOrderScreen from './screens/CustomOrder/CustomOrderScreen';
 import CustomOrderReportScreen from './screens/CustomOrderReport/CustomOrderReportScreen';
 import FreezerDefScreen from './screens/Definitions/FreezerDefScreen';
+import i18n from './src/i18n';
 
 const Stack = createNativeStackNavigator();
+
+// Bildirim geldiğinde foregroundda nasıl görüneceğini ayarla
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const [location, setLocation] = useState(null);
   const [screen, setScreen] = useState(null);
+  const [expoPushToken, setExpoPushToken] = useState('');
+  const notificationListener = useRef();
+  const responseListener = useRef();
 
+  // Token kontrolü ve konum
   useEffect(() => {
     const checkToken = async () => {
       try {
         const savedToken = await AsyncStorage.getItem('token');
         setToken(savedToken);
       } catch (err) {
-        console.log(err);
       } finally {
         setLoading(false);
       }
+
+      const lang = await AsyncStorage.getItem('selected_lang');
+      i18n.changeLanguage(lang)
     };
     checkToken();
   }, []);
 
-  // Konumu alma fonksiyonu (expo-location ile)
   const getLocation = async () => {
     try {
-      // İzin isteme
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Uyarı', 'Konum izni reddedildi');
         return;
       }
 
-      // Konumu alma
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Highest,
       });
@@ -73,19 +88,36 @@ export default function App() {
       Alert.alert('Hata', 'Konum alınamadı');
     }
   };
+
   const getUserType = async () => {
-    // is_admin
     const is_admin = await AsyncStorage.getItem('is_admin');
-    setScreen((is_admin == 'admin' ? 'Home' : 'Home'))
+    setScreen(is_admin === 'admin' ? 'Home' : 'Home');
   };
 
   useEffect(() => {
     if (!loading && token) {
       getLocation();
     }
-
     getUserType();
   }, [loading, token]);
+
+  // Push notification setup
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Bildirim geldi:', notification);
+    });
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Bildirime tıklandı:', response);
+    });
+
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -126,8 +158,42 @@ export default function App() {
         <Stack.Screen name="UserSelectScreen" options={{ headerShown: true, title: '' }}>
           {(props) => <UserSelectScreen {...props} setToken={setToken} />}
         </Stack.Screen>
-
       </Stack.Navigator>
+
+
     </NavigationContainer>
   );
+}
+
+// Push token almak için fonksiyon
+async function registerForPushNotificationsAsync() {
+  let token;
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      alert('Bildirim izni verilmedi!');
+      return;
+    }
+    token = (await Notifications.getExpoPushTokenAsync()).data;
+    await AsyncStorage.setItem('not_token', token);
+    console.log('Expo Push Token:', token);
+  } else {
+    
+  }
+
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  return token;
 }

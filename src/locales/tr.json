@@ -103,7 +103,7 @@
         "temp": "Sıcaklık",
         "weather": "Hava Durumu",
         "current_amount": "Mevcut Stok",
-        "new_amount_input": "Yeni Miktar Girin: (Satılan)",
+        "new_amount_input": "Yeni Miktar Girin: (Atık Sayısı)",
         "ert_text_sw": "Kalanı Ertesi güne aktar",
         "urt_date": "Üretim Tarihi",
         "add_title": "Gün Sonu",
@@ -417,6 +417,71 @@
         "restarting": "Yeniden başlatılıyor...",
         "finished": "Tamamlandı!",
         "error_warning": "İşlem başarısız. Lütfen uygulamayı kapatıp açın."
-    }
+    },
+
+    "common": {
+        "all": "Tümü",
+        "error": "Hata",
+        "success": "Başarılı",
+        "filters": "Filtreler",
+        "apply": "Uygula",
+        "start_date": "Başlangıç Tarihi",
+        "end_date": "Bitiş Tarihi",
+        "no_record": "Kayıt mevcut değil.",
+        "print": "Yazdır",
+        "printing": "Yazdırılıyor...",
+        "send": "Gönder",
+        "sending": "Gönderiliyor..."
+    },
+    "custom_order": {
+        "report_title": "Özel Sipariş Raporu",
+        "customer_name": "Müşteri Adı",
+        "customer_name_placeholder": "Müşteri Adı",
+        "category": "Kategori",
+        "food": "Gıda",
+        "amount": "Miktar",
+        "product": "Ürün",
+        "select_product": "Ürün Seçiniz"
+    },
+    "report_order": {
+        "send_report": "Rapor Gönder",
+        "mail_validation_error": "Lütfen geçerli bir mail adresi giriniz.",
+        "report_sent_success": "Rapor mail olarak gönderildi.",
+        "report_sent_error": "Rapor gönderilirken bir hata oluştu. Lütfen tekrar deneyin.",
+        "mail_placeholder": "Mail adresi giriniz"
+    },
+     "customord": {
+    "title": "Özel Sipariş Yönetimi",
+    "error": "Hata",
+    "success": "Başarılı",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "save": "Kaydet",
+    "saving": "Kayıt ediliyor...",
+    "add_new": "Yeni Ekle",
+    "add_new_order": "Yeni Sipariş Ekle",
+    "add_first_order": "İlk Siparişi Ekle",
+    "select_product": "Lütfen bir ürün seçiniz",
+    "enter_valid_amount": "Geçerli bir miktar giriniz",
+    "order_added_success": "Sipariş başarıyla eklendi",
+    "order_add_error": "Sipariş eklenirken bir hata oluştu",
+    "delete_order": "Sipariş Sil",
+    "delete_order_confirm": "Bu siparişi silmek istediğinizden emin misiniz?",
+    "order_deleted_success": "Sipariş başarıyla silindi",
+    "order_delete_error": "Sipariş silinirken bir hata oluştu",
+    "name_not_specified": "İsim belirtilmemiş",
+    "phone_not_specified": "Telefon belirtilmemiş",
+    "product_not_specified": "Ürün belirtilmemiş",
+    "quantity": "Adet",
+    "no_orders_yet": "Henüz sipariş yok",
+    "no_orders_for_date": "Bu tarih için henüz sipariş bulunmuyor",
+    "full_name": "Ad Soyad",
+    "enter_full_name": "Ad soyad giriniz",
+    "phone_number": "Telefon Numarası",
+    "enter_phone_number": "Telefon numarası giriniz",
+    "product_quantity": "Ürün Adedi",
+    "enter_quantity": "Adet giriniz"
+  }
+
 
 }

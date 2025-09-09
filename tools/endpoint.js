@@ -5,6 +5,7 @@ const BASE_URL = "http://127.0.0.1:8000";
 const Endpoint = {
   Login: `${BASE_URL}/api/auth/login`,
   Register: `${BASE_URL}/api/auth/register`,
+  AddToken: `${BASE_URL}/api/addToken`,
   ProductList: `${BASE_URL}/api/products/getData`,
   AddProduct: `${BASE_URL}/api/products/addProduct`,
   ProductDelete: `${BASE_URL}/api/products/productDelete`,

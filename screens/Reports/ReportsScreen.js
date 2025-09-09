@@ -237,15 +237,18 @@ const ReportsScreen = ({ navigation }) => {
 
     const getReportData = async (clear = false) => {
         try {
-            setLoading(true);
+            // setLoading(true);
+           
             let params = {
                 product: (selectedProduct == "all" ? null : (selectedProduct == null ? null : selectedProduct.id)),
                 weather: (selectedWeather == null ? null : selectedWeather.id),
                 date: dateRange,
                 startDate: startDate,
-                endDate: endDate
+                endDate: endDate,
             }
 
+       
+           
             // Add custom date range if selected
             if (dateRange === 'custom' && hasCustomDateRange) {
 
@@ -272,7 +275,6 @@ const ReportsScreen = ({ navigation }) => {
             }
 
             const { data } = await api.post(Endpoint.ReportData, params);
-            console.log(params)
             setLoading(false)
             if (data && data.status) {
                 const updatedReportData = data.obj.map(item => ({
@@ -407,7 +409,6 @@ const ReportsScreen = ({ navigation }) => {
 
     const sendReportMail = async (type = "mail", print = false) => {
         try {
-
             if (reportMail == null) {
                 Alert.alert(t('warning'), t('report.enter_email'));
                 return;
@@ -417,6 +418,10 @@ const ReportsScreen = ({ navigation }) => {
                 Alert.alert(t('warning'), t('report.invalid_email'));
                 return;
             }
+
+            const lang = await AsyncStorage.getItem('selected_lang');
+
+
             setSendLoading(true);
             let params = {
                 product: (selectedProduct == null ? null : selectedProduct.id),
@@ -428,7 +433,8 @@ const ReportsScreen = ({ navigation }) => {
                 endDate: endDate,
                 hiddenProd: selectedProd,
                 weatherView: WeatherView,
-                type_dt: type
+                type_dt: type,
+                lang_code:lang
             }
 
             // Add custom date range if selected

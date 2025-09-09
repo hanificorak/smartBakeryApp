@@ -242,6 +242,7 @@ const EndofDayScreen = ({ navigation }) => {
                 <View style={styles.emptyStateCard}>
                   <Text style={styles.emptyIcon}>
                     <Image source={require('./../../assets/not_data.png')} style={{ width: 120, height: 120 }} />
+
                   </Text>
                   <Text style={styles.emptyTitle}>{t('no_record')}</Text>
                   <Text style={styles.emptySubtitle}>

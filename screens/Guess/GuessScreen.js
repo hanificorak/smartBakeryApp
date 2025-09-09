@@ -210,7 +210,9 @@ const GuessScreen = ({ navigation }) => {
     };
 
     const sendMail = async (print = false) => {
-        const { data } = await api.post(Endpoint.GuessMail, { weather: weatherData.conditionId, email: email, print: (print ? 1 : 0) });
+        const lang = await AsyncStorage.getItem('selected_lang');
+        const { data } = await api.post(Endpoint.GuessMail, {lang:lang, weather: weatherData.conditionId, email: email, print: (print ? 1 : 0) });
+        console.log(data)
         if (data && data.status) {
             if (print) {
                 printReportData(data.obj)
