@@ -132,16 +132,7 @@ const HomeScreen = ({ navigation }) => {
       is_user: true,
       image: require('../assets/menu/datenbank.png')
     },
-    {
-      id: 9,
-      title: t('menu.def_freezer'),
-      subtitle: t('menu.def_freezer_msg'),
-      icon: 'ac-unit', // kar tanesi ikonu (soğutmayı temsil eder)
-      color: '#0EA5E9', // mavi ton (soğuk, güven verici)
-      bgColor: '#E0F2FE', // açık mavi arka plan
-      screen: 'FreezerDefScreen',
-      is_user: true
-    },
+  
     {
       id: 10,
       title: t('menu.holiday'),

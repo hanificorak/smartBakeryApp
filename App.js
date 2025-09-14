@@ -155,9 +155,7 @@ export default function App() {
         <Stack.Screen name="CustomOrderScreen" component={CustomOrderScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="CustomOrderReportScreen" component={CustomOrderReportScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="FreezerDefScreen" component={FreezerDefScreen} options={{ headerShown: true, title: '' }} />
-        <Stack.Screen name="UserSelectScreen" options={{ headerShown: true, title: '' }}>
-          {(props) => <UserSelectScreen {...props} setToken={setToken} />}
-        </Stack.Screen>
+        
       </Stack.Navigator>
 
 

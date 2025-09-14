@@ -26,9 +26,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
 import { useTranslation } from 'react-i18next';
-import '../../src/i18n';
 
 const { width, height } = Dimensions.get('window');
+import '../../src/i18n';
 
 const HolidayScreen = ({ navigation }) => {
     const { t } = useTranslation();
@@ -45,17 +45,7 @@ const HolidayScreen = ({ navigation }) => {
     }, []);
 
     useEffect(() => {
-        // const keyboardDidShowListener = Keyboard.addEventListener('keyboardDidShow', (e) => {
-        //     setKeyboardHeight(e.endCoordinates.height);
-        // });
-        // const keyboardDidHideListener = Keyboard.addEventListener('keyboardDidHide', () => {
-        //     setKeyboardHeight(0);
-        // });
 
-        // return () => {
-        //     keyboardDidShowListener?.remove();
-        //     keyboardDidHideListener?.remove();
-        // };
     }, []);
 
     const loadHolidays = async () => {
@@ -68,7 +58,7 @@ const HolidayScreen = ({ navigation }) => {
                 setHolidays(data.obj);
             }
         } catch (error) {
-            console.error('Tatil günleri yüklenirken hata:', error);
+            console.error(t('holiday.loadError'), error); // 'Tatil günleri yüklenirken hata:'
         } finally {
             setLoading(false);
         }
@@ -77,20 +67,20 @@ const HolidayScreen = ({ navigation }) => {
     const saveHoliday = async () => {
         try {
             if (!newHolidayName.trim()) {
-                Alert.alert('Uyarı', 'Lütfen tatil günü adını giriniz.');
+                Alert.alert(t('holiday.warning'), t('holiday.pleaseEnterHolidayName')); // 'Uyarı', 'Lütfen tatil günü adını giriniz.'
                 return;
             }
 
             const { data } = await api.post(Endpoint.HolidayAdd, { title: newHolidayName, date: selectedDate.toString() });
             console.log(data);
             if (data && data.status) {
-                Alert.alert('Başarılı', 'Tatil günü eklendi.');
+                Alert.alert(t('holiday.success'), t('holiday.holidayAdded')); // 'Başarılı', 'Tatil günü eklendi.'
                 setModalVisible(false);
                 setNewHolidayName('');
                 setSelectedDate(new Date());
                 loadHolidays();
             } else {
-                Alert.alert('Hata', data ? data.message : 'Tatil günü eklenirken bir hata oluştu.');
+                Alert.alert(t('holiday.error'), data ? data.message : t('holiday.addError')); // 'Hata', 'Tatil günü eklenirken bir hata oluştu.'
             }
         } catch (error) {
             console.log(error);
@@ -100,24 +90,24 @@ const HolidayScreen = ({ navigation }) => {
 
     const deleteHoliday = async (id) => {
         Alert.alert(
-            'Sil',
-            'Bu tatil gününü silmek istediğinizden emin misiniz?',
+            t('holiday.delete'), // 'Sil'
+            t('holiday.confirmDelete'), // 'Bu tatil gününü silmek istediğinizden emin misiniz?'
             [
-                { text: 'İptal', style: 'cancel' },
+                { text: t('holiday.cancel'), style: 'cancel' }, // 'İptal'
                 {
-                    text: 'Sil',
+                    text: t('holiday.delete'), // 'Sil'
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             const { data } = await api.post(Endpoint.HolidayDelete, { id: id });
                             if (data && data.status) {
-                                Alert.alert('Başarılı', 'Kayıt başarıyla silindi.');
+                                Alert.alert(t('holiday.success'), t('holiday.recordDeleted')); // 'Başarılı', 'Kayıt başarıyla silindi.'
                                 loadHolidays();
                             } else {
-                                Alert.alert('Hata','İşlem başarısız.')
+                                Alert.alert(t('holiday.error'), t('holiday.operationFailed')) // 'Hata','İşlem başarısız.'
                             }
                         } catch (error) {
-                            Alert.alert('Hata', 'Tatil günü silinirken bir hata oluştu.');
+                            Alert.alert(t('holiday.error'), t('holiday.deleteError')); // 'Hata', 'Tatil günü silinirken bir hata oluştu.'
                         }
                     },
                 },
@@ -125,9 +115,26 @@ const HolidayScreen = ({ navigation }) => {
         );
     };
 
-    const formatDate = (dateString) => {
+    const formatDate = async (dateString) => {
+
+        const active_lang = await AsyncStorage.getItem('selected_lang');
+        let lng = "";
+        switch (active_lang) {
+            case "tr":
+                lng = "tr-TR";
+                break;
+            case "de":
+                lng = "de-DE";
+                break;
+            case "en":
+                lng = "en-US";
+                break;
+        
+            default:
+                break;
+        }
         const date = new Date(dateString);
-        return date.toLocaleDateString('tr-TR', {
+        return date.toLocaleDateString(lng, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -168,7 +175,7 @@ const HolidayScreen = ({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
             >
-                <Text style={styles.headerTitle}>Tatil Günleri</Text>
+                <Text style={styles.headerTitle}>{t('holiday.screenTitle')}</Text>
                 <TouchableOpacity
                     style={styles.addButton}
                     onPress={() => setModalVisible(true)}
@@ -185,22 +192,21 @@ const HolidayScreen = ({ navigation }) => {
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#667eea" />
-                        <Text style={styles.loadingText}>Yükleniyor...</Text>
+                        <Text style={styles.loadingText}>{t('holiday.loading')}</Text>
                     </View>
                 ) : holidays.length > 0 ? (
                     holidays.map(renderHolidayItem)
                 ) : (
                     <View style={styles.emptyContainer}>
                         <Ionicons name="calendar-outline" size={80} color="#ddd" />
-                        <Text style={styles.emptyText}>Henüz tatil günü eklenmemiş</Text>
+                        <Text style={styles.emptyText}>{t('holiday.noHolidayAdded')}</Text>
                         <Text style={styles.emptySubText}>
-                            Yeni tatil günü eklemek için yukarıdaki + butonuna tıklayın
+                            {t('holiday.addHolidayHint')}
                         </Text>
                     </View>
                 )}
             </ScrollView>
 
-            {/* Add Holiday Modal */}
             <Modal
                 visible={modalVisible}
                 animationType="slide"
@@ -225,7 +231,7 @@ const HolidayScreen = ({ navigation }) => {
                         }
                     ]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Yeni Tatil Günü</Text>
+                            <Text style={styles.modalTitle}>{t('holiday.newHoliday')}</Text>
                             <TouchableOpacity
                                 onPress={() => setModalVisible(false)}
                                 style={styles.closeButton}
@@ -236,12 +242,12 @@ const HolidayScreen = ({ navigation }) => {
 
                         <View style={styles.modalBody}>
                             <View style={styles.inputContainer}>
-                                <Text style={styles.inputLabel}>Tatil Günü Adı</Text>
+                                <Text style={styles.inputLabel}>{t('holiday.holidayNameLabel')}</Text>
                                 <TextInput
                                     style={styles.textInput}
                                     value={newHolidayName}
                                     onChangeText={setNewHolidayName}
-                                    placeholder="Örn: Kurban Bayramı"
+                                    placeholder={t('holiday.holidayNamePlaceholder')}
                                     placeholderTextColor="#999"
                                     mode="outlined"
                                     theme={{
@@ -254,7 +260,7 @@ const HolidayScreen = ({ navigation }) => {
                             </View>
 
                             <View style={styles.inputContainer}>
-                                <Text style={styles.inputLabel}>Tarih</Text>
+                                <Text style={styles.inputLabel}>{t('holiday.dateLabel')}</Text>
                                 <TouchableOpacity
                                     style={styles.dateButton}
                                     onPress={() => setShowDatePicker(true)}
@@ -270,6 +276,8 @@ const HolidayScreen = ({ navigation }) => {
                                 <DateTimePicker
                                     value={selectedDate}
                                     mode="date"
+                                    locale="de"
+
                                     display="default"
                                     onChange={onDateChange}
                                 />
@@ -283,7 +291,7 @@ const HolidayScreen = ({ navigation }) => {
                                 style={styles.cancelButton}
                                 labelStyle={styles.cancelButtonText}
                             >
-                                İptal
+                                {t('holiday.cancel')}
                             </Button>
                             <Button
                                 mode="contained"
@@ -291,7 +299,7 @@ const HolidayScreen = ({ navigation }) => {
                                 style={styles.saveButton}
                                 labelStyle={styles.saveButtonText}
                             >
-                                Kaydet
+                                {t('holiday.save')}
                             </Button>
                         </View>
                     </View>

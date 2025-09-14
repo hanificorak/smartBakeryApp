@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Smart Bakery",
+    "name": "MyProject",
     "slug": "MyProject",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -26,8 +26,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.MyProject",
-
+      "package": "com.anonymous.MyProject"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,7 +37,8 @@
       }
     },
     "plugins": [
-      "expo-localization"
+      "expo-localization",
+      "expo-asset"
     ]
   }
 }

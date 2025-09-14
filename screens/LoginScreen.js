@@ -118,11 +118,7 @@ export default function LoginScreen({ navigation, setToken }) {
                 await AsyncStorage.setItem('is_admin', (data.admin_status == 1 ? 'admin' : 'user'));
                 console.log(data.admin_status);
                 setToken(data.access_token);
-                if (data.admin_status == 1) {
                     navigation.replace('Home');
-                } else {
-                    navigation.replace('UserSelectScreen');
-                }
             } else {
                 Alert.alert(t('warning'), t('login.login_error'))
             }

@@ -6,8 +6,7 @@ pluginManagement {
     }.standardOutput.asText.get().trim()
   ).getParentFile().absolutePath
   includeBuild(reactNativeGradlePlugin)
-
-
+  
   def expoPluginsPath = new File(
     providers.exec {
       workingDir(rootDir)
@@ -17,7 +16,6 @@ pluginManagement {
   ).absolutePath
   includeBuild(expoPluginsPath)
 }
-
 
 plugins {
   id("com.facebook.react.settings")

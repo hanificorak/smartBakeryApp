@@ -95,7 +95,7 @@ const FreezerScreen = ({ navigation }) => {
     console.log('dd', data)
     setLoading(false);
     if (data && data.status) {
-      setFreezerRecords(data.obj.data);
+      setFreezerRecords((data.obj.data == null ? [] :data.obj.data));
       setFreezers(data.obj.freezers);
 
     } else {

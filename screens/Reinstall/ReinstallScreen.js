@@ -83,7 +83,6 @@ export default function ReinstallScreen({ navigation, setToken }) {
     }, []);
 
     const processSteps = [
-        t('reinstall.clear_data'),
         t('reinstall.clear_cache'),
         t('reinstall.reset_settings'),
         t('reinstall.repair_system'),
@@ -210,7 +209,6 @@ export default function ReinstallScreen({ navigation, setToken }) {
                             <View style={[styles.warningBox, isDark && styles.warningBoxDark]}>
                                 <Text style={styles.warningIcon}>⚠️</Text>
                                 <Text style={[styles.warningText, isDark && styles.warningTextDark]}>
-                                    • {t('reinstall.clear_data')}{'\n'}
                                     • {t('reinstall.reset_settings')}{'\n'}
                                     • {t('reinstall.restart')}
                                 </Text>

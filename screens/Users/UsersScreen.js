@@ -66,13 +66,13 @@ export default function UsersScreen({ navigation, setToken }) {
     const slideAnim = useRef(new Animated.Value(50)).current;
 
     const data = [
-        { label: "Kullanıcı", value: "0" },
-        { label: "Admin", value: "1" },
+        { label: t('users.p_user'), value: "0" },
+        { label: t('users.p_admin'), value: "1" },
     ];
 
     const dataStatus = [
-        { label: "Pasif", value: "0" },
-        { label: "Aktif", value: "1" },
+        { label: t('users.passive'), value: "0" },
+        { label: t('users.active'), value: "1" },
     ];
 
 

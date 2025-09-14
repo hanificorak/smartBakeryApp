@@ -680,7 +680,7 @@ const ReportsScreen = ({ navigation }) => {
                     </View> : <View></View>}
 
                     <View style={{ marginTop: 20 }}>
-                        <Text>Raporda Gizle/Göster</Text>
+                        <Text>{t('report.views')}</Text>
                         <Switch
                             trackColor={{ false: "#767577", true: "#81b0ff" }}
                             thumbColor={item.is_view ? "#f5dd4b" : "#f4f3f4"}

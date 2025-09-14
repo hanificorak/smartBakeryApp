@@ -5,7 +5,6 @@ import * as Localization from "expo-localization";
 import tr from "./locales/tr.json";
 import de from "./locales/de.json";
 import en from "./locales/en.json";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const resources = {
   tr: { translation: tr },
