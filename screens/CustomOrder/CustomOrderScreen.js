@@ -26,6 +26,9 @@ import api from '../../tools/api';
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
 
+import * as Print from "expo-print";
+import * as FileSystem from "expo-file-system";
+
 const { width } = Dimensions.get('window');
 
 const CustomOrderScreen = ({ navigation }) => {
@@ -39,17 +42,21 @@ const CustomOrderScreen = ({ navigation }) => {
     const [showProductDropdown, setShowProductDropdown] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState('');
     const [products, setProducts] = useState([]);
-    const [loading,setLoading] = useState(false)
+    const [loading, setLoading] = useState(false);
+    const [reportView, setReportView] = useState(false);
+    const [reportViewSingle, setReportViewSingle] = useState(false);
+    const [email, setEmail] = useState('');
+    const [selOrderId, setSelOrderId] = useState(null);
+    const [printing, setPrinting] = useState(false);
 
-    // Modal form state'leri
+    // Modal form state'leri - Çoklu ürün için güncellendi
     const [formData, setFormData] = useState({
         name_surname: '',
         phone: '',
-        product: '',
-        amount: '',
-        id: null
+        selectedProducts: [], // Çoklu ürün için array
+        id: null,
+        desc: ''
     });
-
 
     useEffect(() => {
         loadOrders();
@@ -59,8 +66,7 @@ const CustomOrderScreen = ({ navigation }) => {
     // AsyncStorage'dan siparişleri yükleme
     const loadOrders = async () => {
         try {
-            const { data } = await api.post(Endpoint.CustomOrderData, {date:selectedDate});
-            console.log(data);
+            const { data } = await api.post(Endpoint.CustomOrderData);
             if (data && data.status) {
                 setOrders(data.obj);
             }
@@ -78,8 +84,6 @@ const CustomOrderScreen = ({ navigation }) => {
         }
     };
 
-
-
     // Tarih değişikliği
     const onDateChange = (event, date) => {
         setShowDatePicker(Platform.OS === 'ios');
@@ -96,39 +100,107 @@ const CustomOrderScreen = ({ navigation }) => {
         }));
     };
 
-    // Yeni sipariş ekleme
-    const handleAddOrder = async () => {
-        if (!formData.product) {
+    // Ürün ekleme fonksiyonu
+    const addProduct = () => {
+        if (!selectedProduct || !selectedProduct.id) {
             Alert.alert(t('customord.error'), t('customord.select_product'));
             return;
         }
-        if (!formData.amount.trim() || parseInt(formData.amount) <= 0) {
-            Alert.alert(t('customord.error'), t('customord.enter_valid_amount'));
+
+        // Ürün zaten eklenmiş mi kontrol et
+        const existingProductIndex = formData.selectedProducts.findIndex(
+            p => p.product.id === selectedProduct.id
+        );
+
+        if (existingProductIndex !== -1) {
+            Alert.alert(t('customord.error'), 'Bu ürün zaten eklenmiş!');
             return;
         }
 
-        setLoading(true)
+        const newProduct = {
+            product: selectedProduct,
+            amount: '1'
+        };
 
-        const { data } = await api.post(Endpoint.CustomOrderAdd, {
-            name_surname: formData.name_surname,
-            phone: formData.phone,
-            product_id: formData.product,
-            amount: formData.amount,
-            id:formData.id
-        });
-        setLoading(false)
-        if (data && data.status) {
-            setFormData({
-                name_surname: '',
-                phone: '',
-                product: '',
-                amount: '',
-                id: null
+        setFormData(prev => ({
+            ...prev,
+            selectedProducts: [...prev.selectedProducts, newProduct]
+        }));
+
+        setSelectedProduct('');
+        setShowProductDropdown(false);
+    };
+
+    // Ürün silme fonksiyonu
+    const removeProduct = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            selectedProducts: prev.selectedProducts.filter((_, i) => i !== index)
+        }));
+    };
+
+    // Ürün miktarını güncelleme fonksiyonu
+    const updateProductAmount = (index, amount) => {
+        setFormData(prev => ({
+            ...prev,
+            selectedProducts: prev.selectedProducts.map((item, i) =>
+                i === index ? { ...item, amount } : item
+            )
+        }));
+    };
+
+    // Yeni sipariş ekleme - Çoklu ürün için güncellendi
+    const handleAddOrder = async () => {
+        if (formData.selectedProducts.length === 0) {
+            Alert.alert(t('customord.error'), 'En az bir ürün eklemelisiniz!');
+            return;
+        }
+
+        // Tüm ürünlerin miktarlarını kontrol et
+        const invalidProduct = formData.selectedProducts.find(
+            item => !item.amount.trim() || parseInt(item.amount) <= 0
+        );
+
+        if (invalidProduct) {
+            Alert.alert(t('customord.error'), 'Tüm ürünler için geçerli miktar giriniz!');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+        
+            const { data } = await api.post(Endpoint.CustomOrderAdd, {
+                name_surname: formData.name_surname,
+                phone: formData.phone,
+                products: formData.selectedProducts.map(item => ({
+                    product_id: item.product.id,
+                    amount: item.amount
+                })),
+                id: formData.id,
+                desc: formData.desc,
+                delivery_date: selectedDate
             });
-            setIsModalVisible(false);
-            Alert.alert(t('customord.success'), t('customord.order_added_success'));
-            loadOrders(); // Listeyi yenile
-        } else {
+
+            setLoading(false);
+            console.log(data)
+            if (data && data.status) {
+                setFormData({
+                    name_surname: '',
+                    phone: '',
+                    selectedProducts: [],
+                    id: null
+                });
+
+                
+                setIsModalVisible(false);
+                Alert.alert(t('customord.success'), t('customord.order_added_success'));
+                loadOrders();
+            } else {
+                Alert.alert(t('customord.error'), t('customord.order_add_error'));
+            }
+        } catch (error) {
+            setLoading(false);
             Alert.alert(t('customord.error'), t('customord.order_add_error'));
         }
     };
@@ -144,11 +216,11 @@ const CustomOrderScreen = ({ navigation }) => {
                     text: t('customord.delete'),
                     style: 'destructive',
                     onPress: async () => {
-                        const {data} = await api.post(Endpoint.CustomOrderDelete, {id: orderId});
-                        if(data && data.status){    
+                        const { data } = await api.post(Endpoint.CustomOrderDelete, { id: orderId });
+                        if (data && data.status) {
                             Alert.alert(t('customord.success'), t('customord.order_deleted_success'));
-                            loadOrders(); // Listeyi yenile
-                        }else{
+                            loadOrders();
+                        } else {
                             Alert.alert(t('customord.error'), t('customord.order_delete_error'));
                         }
                     }
@@ -166,19 +238,101 @@ const CustomOrderScreen = ({ navigation }) => {
         });
     };
 
+    const sendReport = () => {
+        setReportView(true);
+    };
+
+    const sendReportMail = async () => {
+        const lang = await AsyncStorage.getItem('selected_lang');
+        const { data } = await api.post(Endpoint.CustomOrderReportSend, { lang: lang, print: 0, mail: email });
+        if (data && data.status) {
+            setReportView(false);
+            Alert.alert(t('common.success'), t('report_order.report_sent_success'));
+        } else {
+            Alert.alert(t('common.error'), t('report_order.report_sent_error'));
+        }
+    };
+
+    const sendReportMailSingle = async (print = false, id = null) => {
+        const lang = await AsyncStorage.getItem('selected_lang');
+        const { data } = await api.post(Endpoint.CustomOrderPrint, { lang: lang, print: (print == false ? 0 : 1), mail: email, id: id });
+        setSelOrderId(null);
+        console.log(data)
+        if (data && data.status) {
+            if (print) {
+                printReportData(data.obj)
+                return;
+            }
+            setReportViewSingle(false);
+            setReportView(false);
+            Alert.alert(t('common.success'), t('report_order.report_sent_success'));
+        } else {
+            Alert.alert(t('common.error'), t('report_order.report_sent_error'));
+        }
+    };
+
+    const printOrder = async (sel_id = null) => {
+        sendReportMailSingle(true, sel_id);
+    };
+
+    const mailAllData = async (sel_id = null) => {
+        setSelOrderId(null);
+        setReportViewSingle(true)
+    };
+
+    const allPrint = async (sel_id = null) => {
+        setSelOrderId(null);
+        sendReportMailSingle(true)
+    };
+
+    async function printReportData(pdfUrl) {
+        if (printing) return; 
+
+        setPrinting(true);
+        try {
+            const localPath = FileSystem.documentDirectory + "temp.pdf";
+            const downloadResumable = FileSystem.createDownloadResumable(
+                pdfUrl,
+                localPath
+            );
+
+            const { uri } = await downloadResumable.downloadAsync();
+
+            await Print.printAsync({ uri });
+
+            setSendLoading(false);
+
+        } catch (error) {
+            setSendLoading(false);
+
+            // Kullanıcı iptal ettiyse, bunu konsola hata olarak yazma
+            if (error?.message?.includes("did not complete")) {
+                console.log("Kullanıcı yazdırma ekranını iptal etti.");
+                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+
+            } else {
+                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+
+                console.error("PDF açılırken hata:", error);
+            }
+        } finally {
+
+            setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+        }
+    }
+
     const editOrder = (item) => {
-        console.log("item_id,", item.id)
+        console.log("item_id,", item.id);
         setFormData({
             name_surname: item.name_surname,
             phone: item.phone,
-            product: item.product.id,
-            amount: item.amount.toString(),
+            selectedProducts: [{
+                product: item.product,
+                amount: item.amount.toString()
+            }],
             id: item.id
         });
-
-        setSelectedProduct(item.product)
         setIsModalVisible(true);
-
     };
 
     const renderProductItem = ({ item }) => (
@@ -186,7 +340,6 @@ const CustomOrderScreen = ({ navigation }) => {
             style={styles.dropdownItem}
             onPress={() => {
                 setSelectedProduct(item);
-                setFormData(prev => ({ ...prev, product: item.id }));
                 setShowProductDropdown(false);
                 Keyboard.dismiss();
             }}
@@ -204,7 +357,48 @@ const CustomOrderScreen = ({ navigation }) => {
         </TouchableOpacity>
     );
 
-    // Modern Order Item Component
+    // Seçili ürünleri render eden component
+    const renderSelectedProduct = ({ item, index }) => (
+        <View style={styles.selectedProductItem}>
+            <LinearGradient
+                colors={['#F8F9FA', '#E9ECEF']}
+                style={styles.selectedProductGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+            >
+                <View style={styles.selectedProductInfo}>
+                    <View style={styles.selectedProductIcon}>
+                        <Text>📦</Text>
+                    </View>
+                    <View style={styles.selectedProductDetails}>
+                        <Text style={styles.selectedProductName}>{item.product.name}</Text>
+                        <Text style={styles.selectedProductId}>ID: {item.product.id}</Text>
+                    </View>
+                </View>
+
+                <View style={styles.selectedProductControls}>
+                    <View style={styles.amountInputContainer}>
+                        <Text style={styles.amountLabel}>{t('stock.unit')}:</Text>
+                        <TextInput
+                            style={styles.amountInput}
+                            value={item.amount}
+                            onChangeText={(text) => updateProductAmount(index, text)}
+                            keyboardType="numeric"
+                            placeholder="1"
+                        />
+                    </View>
+                    <TouchableOpacity
+                        style={styles.removeProductButton}
+                        onPress={() => removeProduct(index)}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.removeProductText}>🗑️</Text>
+                    </TouchableOpacity>
+                </View>
+            </LinearGradient>
+        </View>
+    );
+
     const renderOrderItem = ({ item, index }) => (
         <View style={[styles.modernOrderItem, {
             transform: [{ scale: 1 }],
@@ -226,30 +420,55 @@ const CustomOrderScreen = ({ navigation }) => {
                     <View style={styles.customerInfo}>
                         <Text style={styles.customerName}>{item.name_surname || t('customord.name_not_specified')}</Text>
                         <Text style={styles.customerPhone}>{item.phone || t('customord.phone_not_specified')}</Text>
+                        <Text style={styles.customerPhone}>{t('customord.pay_desc')}: {(item.desc == null ? '-' : item.desc)}</Text>
                     </View>
+                    <Text>
+                        {new Date(item.delivery_date).toLocaleDateString("tr-TR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                        })}
+                    </Text>
                 </View>
-                {/* Product Info */}
-                <View style={styles.productSection}>
-                    <View style={styles.productIcon}>
-                        <Text style={styles.productEmoji}>📦</Text>
-                    </View>
-                    <View style={styles.productDetails}>
-                        <Text style={styles.productName}>{item.product?.name || t('customord.product_not_specified')}</Text>
-                        <View style={styles.quantityContainer}>
-                            <Text style={styles.quantityLabel}>{t('customord.quantity')}:</Text>
-                            <View style={styles.quantityBadge}>
-                                <Text style={styles.quantityText}>{item.amount}</Text>
+
+                {item.order_products?.map((op, idx) => (
+                    <View key={idx} style={styles.productSection}>
+                        <View style={styles.productIcon}>
+                            <Text style={styles.productEmoji}>📦</Text>
+                        </View>
+                        <View style={styles.productDetails}>
+                            <Text style={styles.productName}>
+                                {op.product?.name || t('customord.product_not_specified')}
+                            </Text>
+                            <View style={styles.quantityContainer}>
+                                <Text style={styles.quantityLabel}>{t('customord.quantity')}:</Text>
+                                <View style={styles.quantityBadge}>
+                                    <Text style={styles.quantityText}>{op.amount}</Text>
+                                </View>
                             </View>
                         </View>
                     </View>
-                </View>
+                ))}
 
                 {/* Action Buttons */}
                 <View style={styles.actionButtons}>
+                    {/* <TouchableOpacity
+                    onPress={() => { editOrder(item); }}
+                    style={styles.editButton}
+                    activeOpacity={0.7}
+                >
+                    <LinearGradient
+                        colors={['#667EEA', '#764BA2']}
+                        style={styles.editButtonGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                    >
+                        <Text style={styles.editButtonText}>✏️</Text>
+                    </LinearGradient>
+                </TouchableOpacity> */}
+
                     <TouchableOpacity
-                        onPress={() => {
-                            editOrder(item)
-                        }}
+                        onPress={() => { printOrder(item.id); }}
                         style={styles.editButton}
                         activeOpacity={0.7}
                     >
@@ -259,7 +478,7 @@ const CustomOrderScreen = ({ navigation }) => {
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                         >
-                            <Text style={styles.editButtonText}>✏️</Text>
+                            <Text style={styles.editButtonText}>🖨️</Text>
                         </LinearGradient>
                     </TouchableOpacity>
 
@@ -292,9 +511,8 @@ const CustomOrderScreen = ({ navigation }) => {
 
             {/* Header */}
             <LinearGradient colors={['#4B6CB7', '#182848']} style={styles.header}>
-                  <Text style={{ fontSize:20,marginBottom:20,color:'white',fontWeight:'bold' }}>{t('customord.title')}</Text>
+                <Text style={{ fontSize: 20, marginBottom: 20, color: 'white', fontWeight: 'bold' }}>{t('customord.title')}</Text>
                 <View style={styles.headerContent}>
-                  
                     {/* Tarih Seçimi */}
                     <TouchableOpacity
                         style={styles.dateSelector}
@@ -314,7 +532,7 @@ const CustomOrderScreen = ({ navigation }) => {
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                         >
-                            <Text style={styles.saveButtonText}>{t('customord.add_new')}</Text>
+                            <Text style={[styles.saveButtonText, { fontSize: 14 }]}>+ {t('customord.add_new')}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -330,6 +548,15 @@ const CustomOrderScreen = ({ navigation }) => {
                     onChange={onDateChange}
                 />
             )}
+
+            <View style={{ padding: 10 }}>
+                <TouchableOpacity style={{ backgroundColor: '#4B6CB7', padding: 10, borderRadius: 10 }} onPress={() => mailAllData()}>
+                    <Text style={{ textAlign: 'center', fontSize: 15, color: 'white' }}>{t('report.send_report')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ backgroundColor: '#4B6CB7', padding: 10, borderRadius: 10, marginTop: 7 }} onPress={() => allPrint()}>
+                    <Text style={{ textAlign: 'center', fontSize: 15, color: 'white' }}>{t('customord.all_print')}</Text>
+                </TouchableOpacity>
+            </View>
 
             {/* Modern Sipariş Listesi */}
             <View style={styles.listContainer}>
@@ -365,8 +592,9 @@ const CustomOrderScreen = ({ navigation }) => {
                 )}
             </View>
 
+            {/* Ana Modal - Çoklu Ürün Seçimi ile Güncellendi */}
             <Modal
-                animationType="slide"
+
                 transparent={true}
                 visible={isModalVisible}
                 onRequestClose={() => setIsModalVisible(false)}
@@ -388,7 +616,7 @@ const CustomOrderScreen = ({ navigation }) => {
                                 </TouchableOpacity>
                             </View>
 
-                            <ScrollView style={styles.modalForm}>
+                            <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
                                 {/* Ad Soyad */}
                                 <View style={styles.inputGroup}>
                                     <Text style={styles.inputLabel}>{t('customord.full_name')} *</Text>
@@ -400,7 +628,7 @@ const CustomOrderScreen = ({ navigation }) => {
                                     />
                                 </View>
 
-                                {/* phone */}
+                                {/* Telefon */}
                                 <View style={styles.inputGroup}>
                                     <Text style={styles.inputLabel}>{t('customord.phone_number')}</Text>
                                     <TextInput
@@ -411,6 +639,17 @@ const CustomOrderScreen = ({ navigation }) => {
                                         onChangeText={(text) => updateFormData('phone', text)}
                                     />
                                 </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>{t('customord.pay_desc')}</Text>
+                                    <TextInput
+                                        style={styles.textInput}
+                                        placeholder={t('customord.pay_desc')}
+                                        value={formData.desc}
+                                        onChangeText={(text) => updateFormData('desc', text)}
+                                    />
+                                </View>
+
 
                                 {/* Ürün Seçimi */}
                                 <View style={styles.inputGroup}>
@@ -457,19 +696,37 @@ const CustomOrderScreen = ({ navigation }) => {
                                             />
                                         </Animated.View>
                                     )}
+
+                                    {/* Ürün Ekle Butonu */}
+                                    <TouchableOpacity
+                                        style={styles.addProductButton}
+                                        onPress={addProduct}
+                                        activeOpacity={0.7}
+                                    >
+                                        <LinearGradient
+                                            colors={['#28A745', '#20C997']}
+                                            style={styles.addProductGradient}
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 0 }}
+                                        >
+                                            <Text style={styles.addProductText}>+ {t('stock.product_sel')}</Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
                                 </View>
 
-                                {/* amount */}
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>{t('customord.product_quantity')} *</Text>
-                                    <TextInput
-                                        style={styles.textInput}
-                                        placeholder={t('customord.enter_quantity')}
-                                        keyboardType="numeric"
-                                        value={formData.amount}
-                                        onChangeText={(text) => updateFormData('amount', text)}
-                                    />
-                                </View>
+                                {/* Seçili Ürünler Listesi */}
+                                {formData.selectedProducts.length > 0 && (
+                                    <View style={styles.selectedProductsContainer}>
+                                        <Text style={styles.selectedProductsTitle}> ({formData.selectedProducts.length})</Text>
+                                        <FlatList
+                                            data={formData.selectedProducts}
+                                            renderItem={renderSelectedProduct}
+                                            keyExtractor={(item, index) => `${item.product.id}_${index}`}
+                                            scrollEnabled={false}
+                                            showsVerticalScrollIndicator={false}
+                                        />
+                                    </View>
+                                )}
 
                                 {/* Butonlar */}
                                 <View style={styles.modalButtons}>
@@ -491,7 +748,140 @@ const CustomOrderScreen = ({ navigation }) => {
                                             start={{ x: 0, y: 0 }}
                                             end={{ x: 1, y: 0 }}
                                         >
-                                            <Text style={styles.saveButtonTextModal}>{loading ? t('customord.saving') : t('customord.save')}</Text>
+                                            <Text style={styles.saveButtonTextModal}>
+                                                {loading ? t('customord.saving') : t('customord.save')}
+                                            </Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                </View>
+                            </ScrollView>
+                        </View>
+                    </KeyboardAvoidingView>
+                </View>
+            </Modal>
+
+            {/* Rapor Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={reportView}
+                onRequestClose={() => setReportView(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <KeyboardAvoidingView
+                        style={{ flex: 1 }}
+                        behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    >
+                        <View style={styles.modalContent}>
+                            {/* Modal Header */}
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>{t('report.send_report')}</Text>
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={() => setReportView(false)}
+                                >
+                                    <Text style={styles.closeButtonText}>✕</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <ScrollView style={styles.modalForm}>
+                                <View>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>{t('login.email')} *</Text>
+                                        <TextInput
+                                            style={styles.textInput}
+                                            placeholder={t('login.email')}
+                                            value={email}
+                                            onChangeText={(text) => setEmail(text)}
+                                        />
+                                    </View>
+                                </View>
+                                {/* Butonlar */}
+                                <View style={styles.modalButtons}>
+                                    <TouchableOpacity
+                                        style={styles.cancelButton}
+                                        onPress={() => setReportView(false)}
+                                    >
+                                        <Text style={styles.cancelButtonText}>İptal</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.saveButtonModal}
+                                        activeOpacity={0.8}
+                                        onPress={() => sendReportMail()}
+                                    >
+                                        <LinearGradient
+                                            colors={['#FF6A00', '#FF8E53']}
+                                            style={styles.saveButtonGradientModal}
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 0 }}
+                                        >
+                                            <Text style={styles.saveButtonTextModal}>{t('report.send')}</Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                </View>
+                            </ScrollView>
+                        </View>
+                    </KeyboardAvoidingView>
+                </View>
+            </Modal>
+
+            {/* Yeni Rapor tekli */}
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={reportViewSingle}
+                onRequestClose={() => setReportViewSingle(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <KeyboardAvoidingView
+                        style={{ flex: 1 }}
+                        behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    >
+                        <View style={styles.modalContent}>
+                            {/* Modal Header */}
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>{t('report.send_report')}</Text>
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={() => setReportViewSingle(false)}
+                                >
+                                    <Text style={styles.closeButtonText}>✕</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <ScrollView style={styles.modalForm}>
+                                <View>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>{t('login.email')} *</Text>
+                                        <TextInput
+                                            style={styles.textInput}
+                                            placeholder={t('login.email')}
+                                            value={email}
+                                            onChangeText={(text) => setEmail(text)}
+                                        />
+                                    </View>
+                                </View>
+                                {/* Butonlar */}
+                                <View style={styles.modalButtons}>
+                                    <TouchableOpacity
+                                        style={styles.cancelButton}
+                                        onPress={() => setReportViewSingle(false)}
+                                    >
+                                        <Text style={styles.cancelButtonText}>{t('customord.cancel')}</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.saveButtonModal}
+                                        activeOpacity={0.8}
+                                        onPress={() => sendReportMailSingle()}
+                                    >
+                                        <LinearGradient
+                                            colors={['#FF6A00', '#FF8E53']}
+                                            style={styles.saveButtonGradientModal}
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 0 }}
+                                        >
+                                            <Text style={styles.saveButtonTextModal}>{t('report.send')}</Text>
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
@@ -837,7 +1227,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        maxHeight: '85%',
+        maxHeight: '100%',
         paddingBottom: Platform.OS === 'ios' ? 20 : 0,
         flex: 1,
         marginTop: 100,
@@ -895,7 +1285,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         gap: 15,
         marginTop: 30,
-        paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+        marginBottom:30,
+        paddingBottom: Platform.OS === 'ios' ? 20 : 40,
     },
     cancelButton: {
         flex: 1,
@@ -1018,5 +1409,93 @@ const styles = StyleSheet.create({
         color: '#9CA3AF',
         fontWeight: '500',
         marginTop: 2,
+    },
+
+    addProductGradient: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    addProductText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
+
+    selectedProductGradient: {
+        padding: 15,
+        borderRadius: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    selectedProductInfo: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    selectedProductIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#E3F2FD',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    selectedProductDetails: {
+        flex: 1,
+    },
+    selectedProductName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#2C3E50',
+        marginBottom: 2,
+    },
+    selectedProductId: {
+        fontSize: 12,
+        color: '#7F8C8D',
+    },
+    selectedProductControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
+    amountInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#E9ECEF',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+    },
+    amountLabel: {
+        fontSize: 12,
+        color: '#6C757D',
+        marginRight: 5,
+    },
+    amountInput: {
+        width: 50,
+        height: 50,
+        textAlign: 'center',
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#495057',
+    },
+    removeProductButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#FFE6E6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#FFCDD2',
+    },
+    removeProductText: {
+        fontSize: 14,
     },
 });

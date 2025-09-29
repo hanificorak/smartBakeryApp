@@ -34,6 +34,8 @@ import axios from 'axios';
 
 import * as Print from "expo-print";
 import * as FileSystem from "expo-file-system";
+import { WebView } from "react-native-webview";
+import PdfViewer from '../Reports/WebView';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -56,7 +58,14 @@ const GuessScreen = ({ navigation }) => {
     const [mailModalVisible, setMailModalVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [printLoading, setPrintLoading] = useState(false);
-    
+    const [allVisible, setAllVisible] = useState(false);
+    const [productionData, setProductionData] = useState([]);
+    const [pdfPath, setPdfPath] = useState("");
+    const [pdfView, setPdfView] = useState(false);
+    const [printing, setPrinting] = useState(false);
+    const [pdfPrewLoading, setPdfPrewLoading] = useState(false);
+    const [mailLoading, setMailLoading] = useState(false);
+
     useEffect(() => {
         getWeatherInfo();
         getProducts();
@@ -67,9 +76,12 @@ const GuessScreen = ({ navigation }) => {
 
 
     const getProducts = async () => {
-        const { data } = await api.post(Endpoint.StockParams);
+        const lang = await AsyncStorage.getItem('selected_lang');
+        const { data } = await api.post(Endpoint.StockParams, { lang: lang });
         if (data && data.status) {
-            setProducts(data.obj.products);
+            let arr = data.obj.products;
+            arr.unshift({ id: -99, name: t('common.all') });
+            setProducts(arr);
             setWeatherOptions(data.obj.weather)
         }
     };
@@ -99,7 +111,7 @@ const GuessScreen = ({ navigation }) => {
                 let now = new Date();            // şu anki zaman
                 let diffMs = now - date;
 
-                console.log(weather_item_response.weathercode)
+
                 let diffHours = diffMs / (1000 * 60 * 60);
                 if (diffHours >= 2) {
                     getWeatherDataApi(latitude, longitude);
@@ -141,7 +153,8 @@ const GuessScreen = ({ navigation }) => {
     };
 
     const setWdata = async (temp, condi, id = 1) => {
-        const { data } = await api.post(Endpoint.WeatherItem, { code: condi });
+        const lang = await AsyncStorage.getItem('selected_lang');
+        const { data } = await api.post(Endpoint.WeatherItem, { code: condi, lang: lang });
         if (data && data.status) {
             setWeatherData({
                 temperature: temp,
@@ -199,6 +212,10 @@ const GuessScreen = ({ navigation }) => {
     };
 
     const handleProductPress = (product) => {
+        if (product.id == -99) {
+            allGuest();
+            return;
+        }
         Alert.alert(
             product.name,
             `${(product.short_desc == null ? '' : product.short_desc)}\n\n${t('guess.product_calc_confirm')}`,
@@ -209,14 +226,38 @@ const GuessScreen = ({ navigation }) => {
         );
     };
 
-    const sendMail = async (print = false) => {
+    const allGuest = async () => {
         const lang = await AsyncStorage.getItem('selected_lang');
-        const { data } = await api.post(Endpoint.GuessMail, {lang:lang, weather: weatherData.conditionId, email: email, print: (print ? 1 : 0) });
-        console.log(data)
+
+        const { data } = await api.post(Endpoint.TotalGuessList, { lang: lang, weather: weatherData.conditionId });
+        if (data && data.status) {
+            console.log(data.obj)
+            setProductionData(data.obj)
+        }
+        setAllVisible(true);
+
+    };
+
+    const sendMail = async (print = false, preview = false) => {
+        setMailLoading(true);
+        const lang = await AsyncStorage.getItem('selected_lang');
+        const { data } = await api.post(Endpoint.GuessMail, { lang: lang, weather: weatherData.conditionId, email: email, print: (print ? 1 : 0), prev: (preview ? 1 : 0) });
+        setMailLoading(false);
+
         if (data && data.status) {
             if (print) {
                 printReportData(data.obj)
                 setPrintLoading(false)
+                return;
+            }
+
+            if (preview && print == false) {
+
+                
+                setPdfPath(data.sub_info);
+
+                setPdfView(true);
+                setPdfPrewLoading(false)
                 return;
             }
             setMailModalVisible(false);
@@ -226,8 +267,21 @@ const GuessScreen = ({ navigation }) => {
         }
     };
 
+    const downloadPdf = async (pdfUrl) => {
+        try {
+            const localPath = FileSystem.documentDirectory + "temp.pdf";
+            await FileSystem.downloadAsync(pdfUrl, localPath);
+            // setLocalUri(localPath);
+            return localPath;
+        } catch (e) {
+            console.error("PDF indirme hatası", e);
+        }
+    };
+
     const calcDay = async (product) => {
-        const { data } = await api.post(Endpoint.GuessData, { weather_code: weatherData.conditionId, product_id: product.id });
+        const lang = await AsyncStorage.getItem('selected_lang');
+        const { data } = await api.post(Endpoint.GuessData, { weather_code: weatherData.conditionId, product_id: product.id, lang: lang });
+        console.log(data)
         if (data && data.status) {
             setDetailText(t('guess.detail_text', { day: data.obj.day, weather: data.obj.weather, avgProduced: data.obj.average_produced, avgSold: data.obj.average_sold }))
             setWaitMessage(t('guess.wait_message', { suggested: data.obj.suggested_production }))
@@ -240,9 +294,23 @@ const GuessScreen = ({ navigation }) => {
 
     const print = async () => {
         setPrintLoading(true)
-        sendMail(true);
+        sendMail(true, false)
     };
+
+    const preview = async () => {
+        setPdfPrewLoading(true);
+        sendMail(false, true);
+
+    };
+
+    const closepdfModal = async () => {
+        setPdfView(false)
+    };
+
     async function printReportData(pdfUrl) {
+        if (printing) return; // Zaten baskı işlemi varsa tekrar çağırma
+
+        setPrinting(true);
         try {
             const localPath = FileSystem.documentDirectory + "temp.pdf";
             const downloadResumable = FileSystem.createDownloadResumable(
@@ -251,13 +319,28 @@ const GuessScreen = ({ navigation }) => {
             );
 
             const { uri } = await downloadResumable.downloadAsync();
+
             await Print.printAsync({ uri });
 
-            setPrintLoading(false);
+
         } catch (error) {
-            console.error("PDF açılırken hata:", error);
+
+            // Kullanıcı iptal ettiyse, bunu konsola hata olarak yazma
+            if (error?.message?.includes("did not complete")) {
+                console.log("Kullanıcı yazdırma ekranını iptal etti.");
+                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+
+            } else {
+                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+
+                console.error("PDF açılırken hata:", error);
+            }
+        } finally {
+
+            setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
         }
     }
+
 
 
     const renderProductItem = ({ item, index }) => (
@@ -274,6 +357,16 @@ const GuessScreen = ({ navigation }) => {
                 <Text style={styles.productDescription}>{item.short_desc}</Text>
             </View>
         </TouchableOpacity>
+    );
+
+    const ProductCard = ({ item }) => (
+        <View style={styles2.productCard}>
+            <View style={styles2.productHeader}>
+                <Text style={styles2.productName}>{item.prod_name}</Text>
+            </View>
+            <Text style={styles2.productDescription}>{item.msg}</Text>
+
+        </View>
     );
 
     return (
@@ -333,7 +426,20 @@ const GuessScreen = ({ navigation }) => {
                     }}
                     onPress={() => print()}  // Modal açılır
                 >
-                    <Text style={{ color: 'white', textAlign: 'center' }}>{(printLoading ? t('print_loading'): t('print'))}</Text>
+                    <Text style={{ color: 'white', textAlign: 'center' }}>{(printLoading ? t('print_loading') : t('print'))}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    disabled={pdfPrewLoading}
+                    style={{
+                        padding: 10,
+                        backgroundColor: '#667eea',
+                        borderRadius: 10,
+                        marginTop: 10,
+                    }}
+                    onPress={() => preview()}  // Modal açılır
+                >
+                    <Text style={{ color: 'white', textAlign: 'center' }}>{(pdfPrewLoading ? t('report.loading') : t('report.pdf_preview'))}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -532,6 +638,7 @@ const GuessScreen = ({ navigation }) => {
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.mailButton, styles.sendButton]}
+                                disabled={mailLoading}
                                 onPress={() => {
                                     if (!email.includes('@')) {
                                         Alert.alert(t('guess.error'), t('guess.invalid_email'));
@@ -541,13 +648,100 @@ const GuessScreen = ({ navigation }) => {
                                     sendMail();
                                 }}
                             >
-                                <Text style={styles.sendText}>{t('guess.send')}</Text>
+                                <Text style={styles.sendText}>{(mailLoading ? t('common.sending') : t('guess.send'))}</Text>
                             </TouchableOpacity>
 
                         </View>
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
+
+            <Modal
+                transparent
+                visible={allVisible}
+                onRequestClose={() => setAllVisible(false)}
+                animationType="fade"
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles2.centeredOverlay}
+                >
+                    <View style={styles2.modalContainer}>
+                        {/* Header */}
+                        <View style={styles2.modalHeader}>
+                            <View style={styles2.headerContent}>
+                                <Text style={styles2.modalTitle}>{t('common.all')}</Text>
+                                <Text style={styles2.modalSubtitle}>
+                                    {productionData.length}
+                                </Text>
+                            </View>
+                            <TouchableOpacity
+                                style={styles2.closeButton}
+                                onPress={() => setAllVisible(false)}
+                            >
+                                <Text style={styles2.closeButtonText}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Product List */}
+                        <ScrollView
+                            style={styles2.listContainer}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            {productionData.map((item, index) => (
+                                <ProductCard key={index} item={item} />
+                            ))}
+                        </ScrollView>
+
+
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+
+            <Modal
+                transparent
+                visible={pdfView}
+                onRequestClose={() => setPdfView(false)}
+                animationType="fade"
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles2.centeredOverlay}
+                >
+                    <View style={styles2.modalContainer}>
+                        {/* Header */}
+                        <View style={styles2.modalHeader}>
+                            <View style={styles2.headerContent}>
+                                <Text style={styles2.modalTitle}>{t('report.pdf_preview')}</Text>
+
+                            </View>
+                            <TouchableOpacity
+                                style={styles2.closeButton}
+                                onPress={() => closepdfModal()}
+                            >
+                                <Text style={styles2.closeButtonText}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Product List */}
+                        <View
+                            style={styles2.listContainer}
+
+                        >
+                            {pdfView && <PdfViewer key={pdfPath} pdfUrl={pdfPath} />}
+
+
+
+                        </View>
+
+
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+
+
         </ScrollView>
     );
 };
@@ -802,6 +996,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#ffffff',
     },
+    modalBody: {
+        flex: 1,
+        padding: 20,
+    },
     headerSubtitle: {
         color: '#e2e8f0',
         fontSize: 16,
@@ -1051,5 +1249,169 @@ const styles = StyleSheet.create({
     confirmButtonText: {
         color: '#ffffff',
         fontWeight: '500',
+    },
+});
+
+const styles2 = StyleSheet.create({
+    centeredOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    modalContainer: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        width: '100%',
+        maxHeight: '85%',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 10,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 25,
+        elevation: 25,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 24,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+        backgroundColor: '#fafafa',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+    },
+    headerContent: {
+        flex: 1,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#2c3e50',
+        marginBottom: 4,
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        color: '#7f8c8d',
+    },
+    closeButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#ecf0f1',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 16,
+    },
+    closeButtonText: {
+        fontSize: 18,
+        color: '#7f8c8d',
+        fontWeight: 'bold',
+    },
+    listContainer: {
+        padding: 16,
+        height: 450
+    },
+    productCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#e8e8e8',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    productHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 12,
+    },
+    productName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#2c3e50',
+        flex: 1,
+        marginRight: 12,
+        lineHeight: 24,
+    },
+    statusBadge: {
+        backgroundColor: '#27ae60',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    statusText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    productDescription: {
+        fontSize: 15,
+        color: '#7f8c8d',
+        lineHeight: 22,
+        marginBottom: 16,
+    },
+    cardFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#f8f9fa',
+    },
+    productId: {
+        fontSize: 14,
+        color: '#95a5a6',
+        fontWeight: '600',
+    },
+    detailButton: {
+        backgroundColor: '#3498db',
+        paddingHorizontal: 20,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    detailButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    modalFooter: {
+        padding: 20,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+        backgroundColor: '#fafafa',
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    addButton: {
+        backgroundColor: '#2ecc71',
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        shadowColor: '#2ecc71',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    addButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });

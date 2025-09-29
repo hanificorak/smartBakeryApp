@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
     View,
     Text,
@@ -19,21 +19,22 @@ import {
     SafeAreaView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
+import {LinearGradient} from 'expo-linear-gradient';
 import axios from 'axios';
 import Endpoint from '../../tools/endpoint';
 import api from '../../tools/api';
-import { ActivityIndicator, Button } from 'react-native-paper';
+import {ActivityIndicator, Button} from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useColorScheme } from 'react-native';
-import { useTranslation } from "react-i18next";
+import {useColorScheme} from 'react-native';
+import {useTranslation} from "react-i18next";
 import "../../src/i18n";
-import { Image } from 'react-native';
+import {Image} from 'react-native';
+import endpoint from "../../tools/endpoint";
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
-export default function StockScreen({ navigation, setToken }) {
-    const { t, i18n } = useTranslation();
+export default function StockScreen({navigation, setToken}) {
+    const {t, i18n} = useTranslation();
 
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [stockEntries, setStockEntries] = useState([]);
@@ -52,7 +53,6 @@ export default function StockScreen({ navigation, setToken }) {
     const [loading, setLoading] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
     const colorScheme = useColorScheme();
-
 
 
     useEffect(() => {
@@ -77,7 +77,7 @@ export default function StockScreen({ navigation, setToken }) {
 
     const getParam = async () => {
         try {
-            const { data } = await api.post(Endpoint.StockParams);
+            const {data} = await api.post(Endpoint.StockParams);
             setProducts(data.obj.products);
         } catch (error) {
             console.error('Veriler yüklenirken hata:', error);
@@ -134,7 +134,7 @@ export default function StockScreen({ navigation, setToken }) {
         }
 
         setSaveLoading(true);
-        const { data } = await api.post(Endpoint.AddStock, {
+        const {data} = await api.post(Endpoint.AddStock, {
             product_id: selectedProduct.id,
             amount: quantity,
             desc: description,
@@ -157,7 +157,7 @@ export default function StockScreen({ navigation, setToken }) {
 
     const getStockData = async () => {
         setLoading(true);
-        const { data } = await api.post(Endpoint.StockData, { date: date });
+        const {data} = await api.post(Endpoint.StockData, {date: date});
         setLoading(false);
         if (data && data.status) setStockEntries(data.obj);
     };
@@ -183,13 +183,13 @@ export default function StockScreen({ navigation, setToken }) {
             t('stock.delete_title'),
             t('stock.delete_msg'),
             [
-                { text: t('cancel'), style: 'cancel' },
+                {text: t('cancel'), style: 'cancel'},
                 {
                     text: t('delete'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            const { data } = await api.post(Endpoint.StockDelete, { stock_id: id.id });
+                            const {data} = await api.post(Endpoint.StockDelete, {stock_id: id.id});
                             if (data && data.status) {
                                 Alert.alert(t('info'), t('stock.delete_success'));
                                 getStockData();
@@ -209,6 +209,24 @@ export default function StockScreen({ navigation, setToken }) {
         );
     };
 
+    const handleAmountChange = async (item, value) => {
+
+        if (value == 0) {
+            return;
+        }
+
+        const {data} = await api.post(endpoint.ProductAmountUpdate, {id:item.id,amount:value});
+        console.log(data)
+
+
+        setStockEntries(prevEntries =>
+            prevEntries.map(entry =>
+                entry.id === item.id
+                    ? {...entry, amount: value} // sadece ilgili kaydı güncelle
+                    : entry
+            )
+        );
+    };
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('tr-TR', {
@@ -219,7 +237,7 @@ export default function StockScreen({ navigation, setToken }) {
     };
 
     const openLastScreen = () => {
-        navigation.replace('LastStockScreen')
+        navigation.replace('AllStockScreen')
     };
 
     const formatDateTime = (dateString) => {
@@ -227,16 +245,9 @@ export default function StockScreen({ navigation, setToken }) {
         return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     };
 
-    const renderStockEntry = ({ item, index }) => {
+    const renderStockEntry = ({item, index}) => {
         return (
-            <Animated.View
-                style={[
-                    styles.entryCard,
-                    {
-
-                    }
-                ]}
-            >
+            <Animated.View style={styles.entryCard}>
                 <View style={styles.cardHeader}>
                     <View style={styles.productBadge}>
                         <View style={styles.productIcon}>
@@ -265,20 +276,29 @@ export default function StockScreen({ navigation, setToken }) {
                             <Text style={styles.statIcon}>📊</Text>
                         </View>
                         <View>
-                            <Text style={styles.statValue}>{item.amount}</Text>
+                            <TextInput
+                                style={styles.amountInput}
+                                keyboardType="numeric"
+                                value={item.amount.toString()}
+                                onChangeText={(value) => handleAmountChange(item, value)}
+
+                            />
+
                             <Text style={styles.statLabel}>{t('stock.amount')}</Text>
                         </View>
                     </View>
 
-                    <View style={styles.statDivider} />
+                    <View style={styles.statDivider}/>
 
                     <View style={styles.statItem}>
                         <View style={styles.statIconContainer}>
                             <Text style={styles.statIcon}>🕒</Text>
                         </View>
                         <View>
-                            <Text style={styles.statValue}>{formatDateTime(item.created_at).split(' ')[1]}</Text>
-                            <Text style={styles.statLabel}>{t('stock.time')}</Text>
+                            <Text style={styles.statValue}>
+                                {formatDateTime(item.created_at).split(" ")[1]}
+                            </Text>
+                            <Text style={styles.statLabel}>{t("stock.time")}</Text>
                         </View>
                     </View>
                 </View>
@@ -287,9 +307,13 @@ export default function StockScreen({ navigation, setToken }) {
                     <View style={styles.descriptionCard}>
                         <View style={styles.descriptionHeader}>
                             <Text style={styles.descriptionIcon}>💬</Text>
-                            <Text style={styles.descriptionTitle}>{t('stock.desc')}</Text>
+                            <Text style={styles.descriptionTitle}>{t("stock.desc")}</Text>
                         </View>
-                        <Text style={styles.descriptionText}>{item.desc}</Text>
+                        <Text style={styles.descriptionText}>
+                            {item.desc === "Ertesi günden aktarılan kayıt."
+                                ? t(item.desc)
+                                : item.desc}
+                        </Text>
                     </View>
                 )}
 
@@ -302,7 +326,7 @@ export default function StockScreen({ navigation, setToken }) {
         );
     };
 
-    const renderProductItem = ({ item }) => (
+    const renderProductItem = ({item}) => (
         <TouchableOpacity
             style={styles.dropdownItem}
             onPress={() => {
@@ -326,15 +350,15 @@ export default function StockScreen({ navigation, setToken }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent/>
 
             {/* Modern Header with Glassmorphism */}
             <View style={styles.headerContainer}>
                 <LinearGradient
                     colors={['#4B6CB7', '#182848']}
                     style={styles.headerGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}
                 >
                     <View style={styles.headerBlur}>
                         <Animated.View
@@ -364,11 +388,12 @@ export default function StockScreen({ navigation, setToken }) {
                                     <LinearGradient
                                         colors={['#182848', '#182848']}
                                         style={styles.buttonGradient}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 0 }}
+                                        start={{x: 0, y: 0}}
+                                        end={{x: 1, y: 0}}
                                     >
                                         <Text style={styles.primaryButtonIcon}> </Text>
-                                        <Text style={styles.primaryButtonText}>{t('stock.last_btn')}</Text>
+                                        <Text
+                                            style={[styles.primaryButtonText, {fontSize: 14}]}>+ {t('all_product')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
                                 <TouchableOpacity
@@ -377,16 +402,16 @@ export default function StockScreen({ navigation, setToken }) {
                                     activeOpacity={0.8}
                                 >
                                     <LinearGradient
-                                        colors={['#FF6A00', '#FF8E53']} // turuncu → şeftali
+                                        colors={['#FF6A00', '#FF8E53']}
                                         style={styles.buttonGradient}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 0 }}
+                                        start={{x: 0, y: 0}}
+                                        end={{x: 1, y: 0}}
                                     >
                                         <Text style={styles.primaryButtonIcon}>+</Text>
                                         <Text style={styles.primaryButtonText}>{t('stock.new_rec')}</Text>
                                     </LinearGradient>
                                 </TouchableOpacity>
-                                {/* 
+                                {/*
                                 <TouchableOpacity
                                     style={styles.secondaryButton}
                                     onPress={() => setShowdateSelect(true)}
@@ -408,7 +433,7 @@ export default function StockScreen({ navigation, setToken }) {
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <View style={styles.loadingCard}>
-                            <ActivityIndicator size="large" color="#667eea" />
+                            <ActivityIndicator size="large" color="#667eea"/>
                             <Text style={styles.loadingText}>{t('loading')}</Text>
                             <Text style={styles.loadingSubtext}>{t('stock.loading')}</Text>
                         </View>
@@ -417,7 +442,8 @@ export default function StockScreen({ navigation, setToken }) {
                     <View style={styles.emptyState}>
                         <View style={styles.emptyStateCard}>
                             <Text style={styles.emptyIcon}>
-                                <Image source={require('./../../assets/not_data.png')} style={{ width: 120, height: 120 }} />
+                                <Image source={require('./../../assets/not_data.png')}
+                                       style={{width: 120, height: 120}}/>
 
                             </Text>
                             <Text style={styles.emptyTitle}>{t('no_record')}</Text>
@@ -433,7 +459,7 @@ export default function StockScreen({ navigation, setToken }) {
                         keyExtractor={(item) => item.id.toString()}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={styles.listContainer}
-                        ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+                        ItemSeparatorComponent={() => <View style={{height: 16}}/>}
                     />
                 )}
             </View>
@@ -450,7 +476,7 @@ export default function StockScreen({ navigation, setToken }) {
                     style={styles.modalKeyboard}
                 >
                     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                        <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
+                        <Animated.View style={[styles.modalOverlay, {opacity: fadeAnim}]}>
                             <TouchableOpacity
                                 style={styles.modalBackground}
                                 activeOpacity={1}
@@ -460,11 +486,11 @@ export default function StockScreen({ navigation, setToken }) {
                             <Animated.View
                                 style={[
                                     styles.modalContainer,
-                                    { transform: [{ translateY: slideAnim }] }
+                                    {transform: [{translateY: slideAnim}]}
                                 ]}
                             >
                                 <View style={styles.modalHeader}>
-                                    <View style={styles.modalHandle} />
+                                    <View style={styles.modalHandle}/>
                                     <View style={styles.modalTitleContainer}>
                                         <Text style={styles.modalTitle}>{t('stock.add_title')}</Text>
                                         <Text style={styles.modalSubtitle}>{t('stock.add_sub')}</Text>
@@ -582,10 +608,11 @@ export default function StockScreen({ navigation, setToken }) {
                                         <LinearGradient
                                             colors={['#667eea', '#764ba2']}
                                             style={styles.saveButtonGradient}
-                                            start={{ x: 0, y: 0 }}
-                                            end={{ x: 1, y: 0 }}
+                                            start={{x: 0, y: 0}}
+                                            end={{x: 1, y: 0}}
                                         >
-                                            <Text style={styles.saveButtonText}>{saveLoading ? t('saving') : t('save')}</Text>
+                                            <Text
+                                                style={styles.saveButtonText}>{saveLoading ? t('saving') : t('save')}</Text>
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
@@ -648,8 +675,7 @@ const styles = StyleSheet.create({
     },
 
     // Header Styles
-    headerContainer: {
-    },
+    headerContainer: {},
     headerGradient: {
         paddingBottom: 10,
     },
@@ -673,7 +699,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         letterSpacing: -0.5,
         textShadowColor: 'rgba(0, 0, 0, 0.2)',
-        textShadowOffset: { width: 0, height: 2 },
+        textShadowOffset: {width: 0, height: 2},
         textShadowRadius: 4,
     },
     headerSubtitle: {
@@ -713,7 +739,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         overflow: 'hidden',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: {width: 0, height: 6},
         shadowOpacity: 0.3,
         elevation: 1,
     },
@@ -774,7 +800,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
+        shadowOffset: {width: 0, height: 10},
         shadowOpacity: 0.1,
         shadowRadius: 20,
         elevation: 10,
@@ -801,7 +827,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
+        shadowOffset: {width: 0, height: 10},
         shadowOpacity: 0.1,
         shadowRadius: 20,
         elevation: 10,
@@ -835,12 +861,25 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: {width: 0, height: 6},
         shadowOpacity: 0.08,
         shadowRadius: 16,
         elevation: 8,
         borderWidth: 1,
         borderColor: 'rgba(229, 231, 235, 0.5)',
+    },
+    amountInput: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        minWidth: 60,
+        textAlign: "center",
+        fontSize: 16,
+        height: 40,
+        marginTop: 10,
+        marginBottom: 10,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -922,7 +961,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.05,
         shadowRadius: 4,
         elevation: 2,
@@ -1011,7 +1050,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 30,
         maxHeight: height * 0.9,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -8 },
+        shadowOffset: {width: 0, height: -8},
         shadowOpacity: 0.25,
         shadowRadius: 24,
         elevation: 20,
@@ -1089,7 +1128,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         backgroundColor: '#FFFFFF',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 4,
@@ -1131,7 +1170,7 @@ const styles = StyleSheet.create({
         borderColor: '#E5E7EB',
         maxHeight: 200,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
+        shadowOffset: {width: 0, height: 8},
         shadowOpacity: 0.15,
         shadowRadius: 16,
         elevation: 12,
@@ -1181,7 +1220,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         paddingHorizontal: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 4,
@@ -1210,7 +1249,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         padding: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 4,
@@ -1234,7 +1273,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: {width: 0, height: 6},
         shadowOpacity: 0.2,
         shadowRadius: 12,
         elevation: 8,
@@ -1265,7 +1304,7 @@ const styles = StyleSheet.create({
         width: '100%',
         maxWidth: 340,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 12 },
+        shadowOffset: {width: 0, height: 12},
         shadowOpacity: 0.3,
         shadowRadius: 24,
         elevation: 20,

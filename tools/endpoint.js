@@ -1,11 +1,12 @@
-  const BASE_URL = "http://127.0.0.1:8000";
-  // const BASE_URL = "https://smartbakery.nubifysoftware.com";
-  // const BASE_URL = "https://smartbakerytest.nubifysoftware.com";
+const BASE_URL = "http://127.0.0.1:8000";
+// const BASE_URL = "https://smartbakery.nubifysoftware.com";
+// const BASE_URL = "https://smartbakerytest.nubifysoftware.com";
 
-  const Endpoint = {
+const Endpoint = {
     Login: `${BASE_URL}/api/auth/login`,
     Register: `${BASE_URL}/api/auth/register`,
     AddToken: `${BASE_URL}/api/addToken`,
+    DataCheck: `${BASE_URL}/api/dataCheck`,
     ProductList: `${BASE_URL}/api/products/getData`,
     AddProduct: `${BASE_URL}/api/products/addProduct`,
     ProductDelete: `${BASE_URL}/api/products/productDelete`,
@@ -33,7 +34,7 @@
     GetCompanyInfo: `${BASE_URL}/api/company/getData`,
     SaveSettings: `${BASE_URL}/api/company/save`,
     ReinstallStart: `${BASE_URL}/api/reinstall/start`,
-    UserChange: `${BASE_URL}/api/user/userChange`,  
+    UserChange: `${BASE_URL}/api/user/userChange`,
     FreezerList: `${BASE_URL}/api/freezer/getData`,
     FreeSave: `${BASE_URL}/api/freezer/save`,
     FreeDelete: `${BASE_URL}/api/freezer/delete`,
@@ -46,12 +47,17 @@
     CustomOrderData: `${BASE_URL}/api/customorders/getCustomOrders`,
     CustomOrderAdd: `${BASE_URL}/api/customorders/add`,
     CustomOrderDelete: `${BASE_URL}/api/customorders/delete`,
+    CustomOrderPrint: `${BASE_URL}/api/customorders/printOrder`,
     CustomOrderReportData: `${BASE_URL}/api/customordersReport/getReportData`,
     CustomOrderReportSend: `${BASE_URL}/api/customordersReport/createReportMail`,
     ReportViewChange: `${BASE_URL}/api/reports/reportViewChange`,
     FreezerDefList: `${BASE_URL}/api/freezerdef/getData`,
     FreezerDefSave: `${BASE_URL}/api/freezerdef/save`,
     FreezerDefDelete: `${BASE_URL}/api/freezerdef/delete`,
-  };
+    TotalGuessList: `${BASE_URL}/api/guess/totalGuessList`,
+    AllProductData: `${BASE_URL}/api/stocks/allProductData`,
+    AllProductSave: `${BASE_URL}/api/stocks/allProductsSave`,
+    ProductAmountUpdate: `${BASE_URL}/api/stocks/amountUpdate`
+};
 
-  export default Endpoint;
+export default Endpoint;

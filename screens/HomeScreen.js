@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,21 +9,26 @@ import {
   StatusBar,
   StyleSheet,
   Image,
-  Modal,
   Dimensions,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons'; // veya başka bir icon kütüphanesi
 import { useTranslation } from "react-i18next";
 import "../src/i18n"; // sadece import etmen yeterli
 import api from '../tools/api';
 import Endpoint from '../tools/endpoint';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const [admin, setAdmin] = useState(null);
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [datachk, setDatachk] = useState(null);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
   const { t, i18n } = useTranslation();
+
+  // Animasyon değeri
+  const dropdownAnim = useRef(new Animated.Value(0)).current;
 
   // Dil seçenekleri
   const languages = [
@@ -40,7 +45,7 @@ const HomeScreen = ({ navigation }) => {
     {
       code: 'en',
       name: 'English',
-      flag: '🇺🇸'
+      flag: '🇬🇧'
     }
   ];
 
@@ -111,16 +116,7 @@ const HomeScreen = ({ navigation }) => {
       is_user: true,
       image: require('../assets/menu/custor.png')
     },
-    {
-      id: 7,
-      title: t('menu.custom_order_report'),
-      subtitle: t('menu.custom_order_report_msg'),
-      icon: 'description',  // veya insert-chart
-      color: '#3B82F6',     // Mavi (analiz vurgusu)
-      bgColor: '#EFF6FF',
-      screen: 'CustomOrderReportScreen',
-      is_user: true
-    },
+
     {
       id: 8,
       title: t('menu.def'),
@@ -132,7 +128,7 @@ const HomeScreen = ({ navigation }) => {
       is_user: true,
       image: require('../assets/menu/datenbank.png')
     },
-  
+
     {
       id: 10,
       title: t('menu.holiday'),
@@ -190,28 +186,70 @@ const HomeScreen = ({ navigation }) => {
     }
   ];
 
-  useEffect(() => {
-    checkAdmin();
-    setNotToken();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      dataControl();
+
+      checkAdmin();
+      setNotToken();
+    }, [])
+  );
 
   const checkAdmin = async () => {
     const admin = await AsyncStorage.getItem('is_admin');
     setAdmin(admin);
-    console.log("asd", admin);
+  };
+
+  const dataControl = async () => {
+    const { data } = await api.post(Endpoint.DataCheck);
+    setDatachk(data)
+
+    // if (data.status) {
+    // } else {
+    //   setDatachk(null)
+    // }
   };
 
   const setNotToken = async () => {
     const token = await AsyncStorage.getItem('not_token');
     let n_tk = token.split('[')[1].split(']')[0];
 
-    const {data} = await api.post(Endpoint.AddToken,{token:n_tk});
+    const { data } = await api.post(Endpoint.AddToken, { token: n_tk });
     console.log("token", n_tk)
   };
 
   const handleMenuPress = async (item) => {
     navigation.navigate(item.screen);
   };
+
+  const getNotInfo = async (item) => {
+
+    if (datachk == null) {
+      return;
+    }
+    if (item.id == 1) {
+      if (datachk.product == false) {
+        return <View style={styles.notificationDot}></View>
+      } else {
+        return <View style={[styles.notificationDot, { backgroundColor: '#198754' }]}></View>
+      }
+    }
+    if (item.id == 2) {
+      if (datachk.end_of_days == false) {
+        return <View style={styles.notificationDot}></View>
+      } else {
+        return <View style={[styles.notificationDot, { backgroundColor: '#198754' }]}></View>
+      }
+    }
+    if (item.id == 5) {
+      if (datachk.freezer == false) {
+        return <View style={styles.notificationDot}></View>
+      } else {
+        return <View style={[styles.notificationDot, { backgroundColor: '#198754' }]}></View>
+      }
+    }
+  };
+
 
   const handleLogout = () => {
     navigation.reset({
@@ -220,13 +258,25 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
+  const toggleDropdown = () => {
+    const toValue = dropdownVisible ? 0 : 1;
+
+    Animated.timing(dropdownAnim, {
+      toValue: toValue,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+
+    setDropdownVisible(!dropdownVisible);
+  };
+
   // Dil değiştirme fonksiyonu
   const changeLanguage = async (languageCode) => {
     try {
       await i18n.changeLanguage(languageCode);
-      await AsyncStorage.setItem('selected_lang',languageCode);
-      setLanguageModalVisible(false);
-      // AsyncStorage kaydetme işlemi i18n konfigürasyonunda otomatik yapılıyor
+      await AsyncStorage.setItem('selected_lang', languageCode);
+      toggleDropdown();
+      // AsyncStorage kaydetme işlemi i18n konfigürayonunda otomatik yapılıyor
     } catch (error) {
       console.log('Dil değiştirme hatası:', error);
     }
@@ -250,14 +300,50 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.headerButtons}>
-          {/* Dil Değiştirme Butonu */}
-          <TouchableOpacity
-            onPress={() => setLanguageModalVisible(true)}
-            style={styles.languageButton}
-          >
-            <Text style={styles.flagText}>{getCurrentLanguageFlag()}</Text>
-            <Icon name="keyboard-arrow-down" size={16} color="#6B7280" />
-          </TouchableOpacity>
+          {/* Dil Değiştirme Butonu ve Dropdown */}
+          <View style={styles.languageContainer}>
+            <TouchableOpacity
+              onPress={toggleDropdown}
+              style={styles.languageButton}
+            >
+              <Text style={styles.flagText}>{getCurrentLanguageFlag()}</Text>
+            </TouchableOpacity>
+
+            <Animated.View
+              style={[
+                styles.dropdownContainer,
+                {
+                  opacity: dropdownAnim,
+                  maxHeight: dropdownAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 150]
+                  }),
+                  transform: [{
+                    translateY: dropdownAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-10, 0]
+                    })
+                  }]
+                }
+              ]}
+            >
+              {languages.map((language, index) => (
+                <TouchableOpacity
+                  key={language.code}
+                  style={[
+                    styles.dropdownItem,
+                    i18n.language === language.code && styles.selectedDropdownItem,
+                    index === 0 && styles.firstDropdownItem,
+                    index === languages.length - 1 && styles.lastDropdownItem
+                  ]}
+                  onPress={() => changeLanguage(language.code)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.dropdownItemFlag}>{language.flag}</Text>
+                </TouchableOpacity>
+              ))}
+            </Animated.View>
+          </View>
 
           {/* Logout Butonu */}
           <TouchableOpacity
@@ -269,61 +355,12 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Dil Seçimi Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={languageModalVisible}
-        onRequestClose={() => setLanguageModalVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setLanguageModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{t('selectLanguage', 'Dil Seçin')}</Text>
-              
-              {languages.map((language) => (
-                <TouchableOpacity
-                  key={language.code}
-                  style={[
-                    styles.languageOption,
-                    (i18n && i18n.language === language.code) && styles.selectedLanguage
-                  ]}
-                  onPress={() => changeLanguage(language.code)}
-                >
-                  <Text style={styles.flagEmoji}>{language.flag}</Text>
-                  <Text style={[
-                    styles.languageName,
-                    (i18n && i18n.language === language.code) && styles.selectedLanguageName
-                  ]}>
-                    {language.name}
-                  </Text>
-                  {(i18n && i18n.language === language.code) && (
-                    <Icon name="check" size={20} color="#10B981" />
-                  )}
-                </TouchableOpacity>
-              ))}
-              
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setLanguageModalVisible(false)}
-              >
-                <Text style={styles.closeButtonText}>{t('cancel', 'İptal')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.menuContainer}>
+        <View style={styles.menuContainer} >
           {menuItems
             .filter(item => admin === "admin" ? true : item.is_user)
             .map((item) => (
@@ -333,6 +370,9 @@ const HomeScreen = ({ navigation }) => {
                 onPress={() => handleMenuPress(item)}
                 activeOpacity={0.7}
               >
+
+                {getNotInfo(item)}
+
                 <View style={[styles.iconContainer, { backgroundColor: item.bgColor }]}>
                   {item.image ? (
                     <Image
@@ -358,6 +398,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    marginBottom: 20
   },
   header: {
     flexDirection: 'row',
@@ -371,6 +412,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    zIndex: 1000,
   },
   headerTitle: {
     fontSize: 24,
@@ -386,10 +428,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    zIndex: 1001,
+  },
+  languageContainer: {
+    position: 'relative',
+    zIndex: 1002,
   },
   languageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -399,7 +444,47 @@ const styles = StyleSheet.create({
   },
   flagText: {
     fontSize: 18,
-    marginRight: 4,
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 45,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    zIndex: 1003,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4.65,
+    elevation: 15,
+    overflow: 'hidden',
+    minWidth: 50,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  dropdownItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  firstDropdownItem: {
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+  lastDropdownItem: {
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  selectedDropdownItem: {
+    backgroundColor: '#F0FDF4',
+  },
+  dropdownItemFlag: {
+    fontSize: 18,
   },
   logoutButton: {
     padding: 8,
@@ -448,72 +533,15 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     lineHeight: 16,
   },
-  // Modal Stilleri
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: width * 0.8,
-    maxWidth: 300,
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  languageOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  selectedLanguage: {
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1,
-    borderColor: '#10B981',
-  },
-  flagEmoji: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  languageName: {
-    fontSize: 16,
-    color: '#374151',
-    flex: 1,
-  },
-  selectedLanguageName: {
-    color: '#10B981',
-    fontWeight: '600',
-  },
-  closeButton: {
-    marginTop: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontSize: 16,
-    color: '#6B7280',
-    fontWeight: '500',
+  notificationDot: {
+    width: 15,
+    height: 15,
+    backgroundColor: 'red',
+    position: 'absolute',
+    zIndex: 10,
+    right: 15,
+    top: 10,
+    borderRadius: 7.5,
   },
 });
 

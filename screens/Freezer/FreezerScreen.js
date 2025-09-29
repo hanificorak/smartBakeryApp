@@ -32,6 +32,7 @@ import * as Print from "expo-print";
 import * as FileSystem from "expo-file-system";
 import WebView from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PdfViewer from '../Reports/WebView';
 
 const FreezerScreen = ({ navigation }) => {
   const { t } = useTranslation();
@@ -95,7 +96,7 @@ const FreezerScreen = ({ navigation }) => {
     console.log('dd', data)
     setLoading(false);
     if (data && data.status) {
-      setFreezerRecords((data.obj.data == null ? [] :data.obj.data));
+      setFreezerRecords((data.obj.data == null ? [] : data.obj.data));
       setFreezers(data.obj.freezers);
 
     } else {
@@ -241,7 +242,7 @@ const FreezerScreen = ({ navigation }) => {
     setReportLoading(true);
 
     try {
-        const lang = await AsyncStorage.getItem('selected_lang');
+      const lang = await AsyncStorage.getItem('selected_lang');
 
       const param = {
         startDate: startDate,
@@ -250,7 +251,7 @@ const FreezerScreen = ({ navigation }) => {
         print: (print ? 1 : 0),
         prew: (prew ? 1 : 0),
         mail: (sendMail ? 1 : 0),
-        lang:lang
+        lang: lang
       };
 
       const formatLocalISODate = (date) => {
@@ -264,7 +265,7 @@ const FreezerScreen = ({ navigation }) => {
       param.endDate = formatLocalISODate(endDate);
       // Replace with your report endpoint
       const { data } = await api.post(Endpoint.FreeReportSend, param);
-      console.log("data",data)
+      console.log("data", data)
       setReportLoading(false);
 
       if (data && data.status) {
@@ -276,6 +277,7 @@ const FreezerScreen = ({ navigation }) => {
         if (prew && !sendMail) {
           setReportModalVisible(false);
           setPdfView(true);
+
           setpdfPath(data.obj)
           return;
         }
@@ -290,6 +292,17 @@ const FreezerScreen = ({ navigation }) => {
       Alert.alert(t('warning'), t('freezer.report_failed'));
     } finally {
       setReportLoading(false);
+    }
+  };
+
+  const downloadPdf = async (pdfUrl) => {
+    try {
+      const localPath = FileSystem.documentDirectory + "temp.pdf";
+      await FileSystem.downloadAsync(pdfUrl, localPath);
+      // setLocalUri(localPath);
+      return localPath;
+    } catch (e) {
+      console.error("PDF indirme hatası", e);
     }
   };
 
@@ -834,15 +847,9 @@ const FreezerScreen = ({ navigation }) => {
 
               {/* Body */}
               <View style={styles.modalBodyPrew}>
-                {/* Buraya PDF gösterimi */}
-                {/* Örneğin react-native-pdf ile */}
 
-                <WebView
-                  source={{
-                    uri: pdfPath,
-                  }}
-                  style={{ flex: 1 }}
-                />
+                {pdfView && <PdfViewer key={pdfPath} pdfUrl={pdfPath} />}
+
 
               </View>
 
@@ -1033,7 +1040,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    marginBottom:20
+    marginBottom: 20
   },
   listHeader: {
     backgroundColor: '#f8f9fa',

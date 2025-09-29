@@ -17,8 +17,10 @@ import {
     Platform,
     useColorScheme,
     Switch,
+    Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+
 import {
     Button,
     ActivityIndicator,
@@ -39,6 +41,7 @@ import * as FileSystem from "expo-file-system";
 
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
+import PdfViewer from './WebView';
 
 const ReportsScreen = ({ navigation }) => {
     const { t, i18n } = useTranslation();
@@ -81,10 +84,11 @@ const ReportsScreen = ({ navigation }) => {
     const [showdateSelect, setShowdateSelect] = useState(false);
     const [tempDate, setTempDate] = useState(new Date());
     const [dateType, setDateType] = useState(null);
+    const [printing, setPrinting] = useState(false);
 
     const [selectedProd, setSelectedProd] = useState([]);
     const [pdfView, setPdfView] = useState(false);
-    const [pdfPath, setpdfPath] = useState('');
+    const [pdfPath, setPdfPath] = useState('');
 
 
     const dateRanges = [
@@ -238,17 +242,19 @@ const ReportsScreen = ({ navigation }) => {
     const getReportData = async (clear = false) => {
         try {
             // setLoading(true);
-           
+
+            const lang = await AsyncStorage.getItem('selected_lang');
             let params = {
                 product: (selectedProduct == "all" ? null : (selectedProduct == null ? null : selectedProduct.id)),
                 weather: (selectedWeather == null ? null : selectedWeather.id),
                 date: dateRange,
                 startDate: startDate,
                 endDate: endDate,
+                lang: lang
             }
 
-       
-           
+
+
             // Add custom date range if selected
             if (dateRange === 'custom' && hasCustomDateRange) {
 
@@ -271,6 +277,8 @@ const ReportsScreen = ({ navigation }) => {
                     date: 'today',
                     startDate: null,
                     endDate: null,
+                    lang: lang
+
                 }
             }
 
@@ -434,7 +442,7 @@ const ReportsScreen = ({ navigation }) => {
                 hiddenProd: selectedProd,
                 weatherView: WeatherView,
                 type_dt: type,
-                lang_code:lang
+                lang_code: lang
             }
 
             // Add custom date range if selected
@@ -453,37 +461,45 @@ const ReportsScreen = ({ navigation }) => {
             }
 
             const { data } = await api.post(Endpoint.ReportSend, params);
-            setSendLoading(false);
-            console.log(data)
             if (data && data.status) {
+
                 if (type == "mail") {
                     Alert.alert(t('info'), t('report.mail_success', { email: reportMail }));
                     setMailModal(false);
                     setReportMail('');
+                    setSendLoading(false);
 
                 } else {
                     if (print) {
-                        setMailModal(false);
-                        printReportData(data.obj);
-
+                        // setMailModal(false);
+                        setTimeout(() => {
+                            printReportData(data.obj);
+                        }, 1000);
                         return;
                     }
-                    setpdfPath(data.sub_info)
-                    // console.log(data.sub_info)
+
+                    let pd = await downloadPdf(data.sub_info);
+                    await setPdfPath(data.sub_info)
                     setMailModal(false);
-                    setTimeout(() => {
-                        setPdfView(true);
-                    }, 1000);
+                    setPdfView(true);
+                    setSendLoading(false);
                 }
             } else {
+                setSendLoading(false);
+
                 Alert.alert(t('warning'), t('report.operation_failed'));
             }
         } catch (error) {
+            setSendLoading(false);
+
             console.log(error)
         }
     };
 
     async function printReportData(pdfUrl) {
+        if (printing) return; // Zaten baskı işlemi varsa tekrar çağırma
+
+        setPrinting(true);
         try {
             const localPath = FileSystem.documentDirectory + "temp.pdf";
             const downloadResumable = FileSystem.createDownloadResumable(
@@ -492,9 +508,28 @@ const ReportsScreen = ({ navigation }) => {
             );
 
             const { uri } = await downloadResumable.downloadAsync();
+
             await Print.printAsync({ uri });
+
+            setSendLoading(false);
+
         } catch (error) {
-            console.error("PDF açılırken hata:", error);
+            setSendLoading(false);
+
+            // Kullanıcı iptal ettiyse, bunu konsola hata olarak yazma
+            if (error?.message?.includes("did not complete")) {
+                console.log("Kullanıcı yazdırma ekranını iptal etti.");
+                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+
+            } else {
+                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+
+                console.error("PDF açılırken hata:", error);
+            }
+        } finally {
+            setSendLoading(false);
+
+            setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
         }
     }
 
@@ -730,8 +765,32 @@ const ReportsScreen = ({ navigation }) => {
     };
 
     const closepdfModal = () => {
+        setPdfPath(null);
         setPdfView(false);
         setMailModal(true)
+    };
+
+    const downloadPdf = async (pdfUrl) => {
+        try {
+            const fileUri = FileSystem.documentDirectory + 'temp.pdf';
+            const { uri } = await FileSystem.downloadAsync(pdfUrl, fileUri);
+            return uri;
+        } catch (e) {
+            console.log('PDF download error:', e);
+        } finally {
+        }
+    };
+
+    const downloadAndConvertPdf = async (pdfUrl) => {
+        try {
+            const localUri = FileSystem.documentDirectory + 'temp.pdf';
+            const { uri } = await FileSystem.downloadAsync(pdfUrl, localUri);
+            console.log('PDF indirildi: ', uri);
+            return uri; // Bu local path’i WebView veya PDF viewer’da kullanacağız
+        } catch (err) {
+            console.error('PDF indirme hatası:', err);
+            return null;
+        }
     };
 
     const checkMail = () => {
@@ -816,7 +875,7 @@ const ReportsScreen = ({ navigation }) => {
                 {reportData.length == 0 && !loading ?
                     <View style={styles.emptyState}>
                         <View style={styles.emptyStateCard}>
-                            <Text style={styles.emptyIcon}>📦</Text>
+                            <Image source={require('./../../assets/not_data.png')} style={{ width: 120, height: 120 }} />
                             <Text style={styles.emptyTitle}>{t('report.empty_title')}</Text>
                             <Text style={styles.emptySubtitle}>
                                 {t('report.empty_subtitle')}
@@ -853,6 +912,7 @@ const ReportsScreen = ({ navigation }) => {
                 visible={pdfView}
                 transparent={true}
                 animationType="none"
+                key={pdfPath}
 
             >
                 <View style={styles.modalOverlay}>
@@ -890,13 +950,14 @@ const ReportsScreen = ({ navigation }) => {
                         <View style={styles.modalBody}>
                             {/* Buraya PDF gösterimi */}
                             {/* Örneğin react-native-pdf ile */}
-
-                            <WebView
-                                source={{
-                                    uri: pdfPath,
-                                }}
-                                style={{ flex: 1 }}
-                            />
+                            {/* <WebView
+                                source={{ uri: pdfPath }}
+                                style={styles.webview}
+                                originWhitelist={['*']}
+                                javaScriptEnabled
+                                domStorageEnabled
+                            /> */}
+                            {pdfView && <PdfViewer key={pdfPath} pdfUrl={pdfPath} />}
 
 
                         </View>
@@ -1652,6 +1713,8 @@ const styles = StyleSheet.create({
         marginVertical: 16,
         backgroundColor: '#e5e7eb',
     },
+    pdf: { flex: 1, width: '100%', height: '100%' },
+
     cardBody: {
         marginBottom: 16,
     },

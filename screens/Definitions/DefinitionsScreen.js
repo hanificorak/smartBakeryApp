@@ -40,8 +40,8 @@ export default function DefinitionsScreen({ navigation, setToken }) {
     const slideAnim = useRef(new Animated.Value(0)).current;
 
     const tabs = [
-        { id: 0, title: 'Ürün Tanımı' },
-        { id: 1, title: 'Buzdolabı Tanımı' }
+        { id: 0, title: t('pr_def') },
+        { id: 1, title: t('free_def') }
     ];
 
     const handleTabPress = (tabIndex) => {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(33, 150, 243, 0.1)',
     },
     tabText: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '500',
         color: '#666',
     },

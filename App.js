@@ -31,6 +31,7 @@ import CustomOrderScreen from './screens/CustomOrder/CustomOrderScreen';
 import CustomOrderReportScreen from './screens/CustomOrderReport/CustomOrderReportScreen';
 import FreezerDefScreen from './screens/Definitions/FreezerDefScreen';
 import i18n from './src/i18n';
+import AllStockScreen from './screens/Stock/AllProductScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -155,6 +156,7 @@ export default function App() {
         <Stack.Screen name="CustomOrderScreen" component={CustomOrderScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="CustomOrderReportScreen" component={CustomOrderReportScreen} options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="FreezerDefScreen" component={FreezerDefScreen} options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="AllStockScreen" component={AllStockScreen} options={{ headerShown: true, title: '' }} />
         
       </Stack.Navigator>
 

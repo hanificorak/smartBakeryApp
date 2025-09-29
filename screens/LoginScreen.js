@@ -12,7 +12,7 @@ import {
     Platform,
     ScrollView,
     Alert,
-    Modal,
+    Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,18 +29,19 @@ export default function LoginScreen({ navigation, setToken }) {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [languageModalVisible, setLanguageModalVisible] = useState(false);
+    const [dropdownVisible, setDropdownVisible] = useState(false);
     const [currentLanguage, setCurrentLanguage] = useState('tr');
 
     // Animasyon değerleri
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(50)).current;
     const buttonScale = useRef(new Animated.Value(1)).current;
+    const dropdownAnim = useRef(new Animated.Value(0)).current;
 
     // Dil seçenekleri
     const languages = [
         { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
-        { code: 'en', name: 'English', flag: '🇺🇸' },
+        { code: 'en', name: 'English', flag: '🇬🇧' },
         { code: 'de', name: 'Deutsch', flag: '🇩🇪' }
     ];
 
@@ -75,12 +76,24 @@ export default function LoginScreen({ navigation, setToken }) {
         await AsyncStorage.setItem('selected_lang', lang);
 
         setCurrentLanguage(lang);
-        setLanguageModalVisible(false);
+        toggleDropdown();
     };
 
     const getCurrentLanguageFlag = () => {
         const currentLang = languages.find(lang => lang.code === currentLanguage);
         return currentLang ? currentLang.flag : '🇹🇷';
+    };
+
+    const toggleDropdown = () => {
+        const toValue = dropdownVisible ? 0 : 1;
+
+        Animated.timing(dropdownAnim, {
+            toValue: toValue,
+            duration: 200,
+            useNativeDriver: false,
+        }).start();
+
+        setDropdownVisible(!dropdownVisible);
     };
 
     const handleLogin = async () => {
@@ -118,7 +131,7 @@ export default function LoginScreen({ navigation, setToken }) {
                 await AsyncStorage.setItem('is_admin', (data.admin_status == 1 ? 'admin' : 'user'));
                 console.log(data.admin_status);
                 setToken(data.access_token);
-                    navigation.replace('Home');
+                navigation.replace('Home');
             } else {
                 Alert.alert(t('warning'), t('login.login_error'))
             }
@@ -146,30 +159,70 @@ export default function LoginScreen({ navigation, setToken }) {
     const { t, i18n } = useTranslation();
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <LinearGradient LinearGradient
+            colors={['#667eea', '#764ba2', '#f093fb']}
+            style={styles.gradient}
+            start={{ x: 0, y: 0 }
+            }
+            end={{ x: 1, y: 1 }}
         >
-            <StatusBar barStyle="light-content" />
 
-            {/* Gradyan Arka Plan */}
-            <LinearGradient
-                colors={['#667eea', '#764ba2', '#f093fb']}
-                style={styles.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
 
-                {/* Dil Seçici Butonu */}
-                <TouchableOpacity
-                    style={styles.languageButton}
-                    onPress={() => setLanguageModalVisible(true)}
-                    activeOpacity={0.8}
-                >
-                    <View style={styles.languageFlagContainer}>
-                        <Text style={styles.languageFlag}>{getCurrentLanguageFlag()}</Text>
-                    </View>
-                </TouchableOpacity>
+                {/* Gradyan Arka Plan */}
+
+                {/* Dil Seçici Butonu ve Dropdown */}
+                <View style={styles.languageContainer}>
+                    <TouchableOpacity
+                        style={styles.languageButton}
+                        onPress={toggleDropdown}
+                        activeOpacity={0.8}
+                    >
+                        <View style={styles.languageFlagContainer}>
+                            <Text style={styles.languageFlag}>{getCurrentLanguageFlag()}</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    {/* Dropdown Liste */}
+                    <Animated.View
+                        style={[
+                            styles.dropdownContainer,
+                            {
+                                opacity: dropdownAnim,
+                                maxHeight: dropdownAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0, 200]
+                                }),
+                                transform: [{
+                                    translateY: dropdownAnim.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [-10, 0]
+                                    })
+                                }]
+                            }
+                        ]}
+                    >
+                        {languages.map((language, index) => (
+                            <TouchableOpacity
+                                key={language.code}
+                                style={[
+                                    styles.dropdownItem,
+                                    currentLanguage === language.code && styles.selectedDropdownItem,
+                                    index === 0 && styles.firstDropdownItem,
+                                    index === languages.length - 1 && styles.lastDropdownItem
+                                ]}
+                                onPress={() => changeLanguage(language.code)}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.dropdownItemFlag}>{language.flag}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </Animated.View>
+                </View>
 
                 {/* Dekoratif Circles */}
                 <View style={[styles.circle, styles.circle1]} />
@@ -192,11 +245,11 @@ export default function LoginScreen({ navigation, setToken }) {
 
                         {/* Logo/Title Area */}
                         <View style={styles.headerContainer}>
-                            <View style={styles.logoContainer}>
-                                <Text style={styles.logoText}>🚀</Text>
+                            <Image style={{ height: 140, width: 140, borderRadius: 70 }} source={require('../assets/logo.jpeg')}></Image>
+                            <View style={{ marginTop: 20, alignItems: 'center' }}>
+                                <Text style={styles.welcomeText}>{t('login.welcome')}</Text>
+                                <Text style={styles.subtitleText}>{t('login.sub_message')}</Text>
                             </View>
-                            <Text style={styles.welcomeText}>{t('login.welcome')}</Text>
-                            <Text style={styles.subtitleText}>{t('login.sub_message')}</Text>
                         </View>
 
                         {/* Form Container */}
@@ -280,57 +333,12 @@ export default function LoginScreen({ navigation, setToken }) {
 
                         </View>
                     </Animated.View>
+
                 </ScrollView>
 
-                {/* Dil Seçim Modal */}
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={languageModalVisible}
-                    onRequestClose={() => setLanguageModalVisible(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContainer}>
-                            <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Dil Seçin / Choose Language</Text>
-                                <TouchableOpacity
-                                    style={styles.closeButton}
-                                    onPress={() => setLanguageModalVisible(false)}
-                                >
-                                    <Text style={styles.closeButtonText}>✕</Text>
-                                </TouchableOpacity>
-                            </View>
+            </KeyboardAvoidingView>
+        </LinearGradient>
 
-                            <View style={styles.languageList}>
-                                {languages.map((language) => (
-                                    <TouchableOpacity
-                                        key={language.code}
-                                        style={[
-                                            styles.languageOption,
-                                            currentLanguage === language.code && styles.selectedLanguageOption
-                                        ]}
-                                        onPress={() => changeLanguage(language.code)}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text style={styles.languageOptionFlag}>{language.flag}</Text>
-                                        <Text style={[
-                                            styles.languageOptionText,
-                                            currentLanguage === language.code && styles.selectedLanguageText
-                                        ]}>
-                                            {language.name}
-                                        </Text>
-                                        {currentLanguage === language.code && (
-                                            <Text style={styles.checkmark}>✓</Text>
-                                        )}
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
-
-            </LinearGradient>
-        </KeyboardAvoidingView>
     );
 }
 
@@ -341,18 +349,18 @@ const styles = StyleSheet.create({
     gradient: {
         flex: 1,
     },
-    languageButton: {
+    languageContainer: {
         position: 'absolute',
         top: Platform.OS === 'ios' ? 50 : 30,
         right: 20,
         zIndex: 1000,
     },
+    languageButton: {
+        alignItems: 'flex-end',
+    },
     languageFlagContainer: {
-        width: 70,
         marginTop: 10,
-        height: 70,
         borderRadius: 22.5,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
@@ -366,6 +374,58 @@ const styles = StyleSheet.create({
     },
     languageFlag: {
         fontSize: 45,
+    },
+    dropdownContainer: {
+        marginTop: 5,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: 15,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
+        overflow: 'hidden',
+        minWidth: 60,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 15,
+        paddingVertical: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    },
+    firstDropdownItem: {
+        borderTopLeftRadius: 15,
+        borderTopRightRadius: 15,
+    },
+    lastDropdownItem: {
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
+    },
+    selectedDropdownItem: {
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    },
+    dropdownItemFlag: {
+        fontSize: 24,
+    },
+    dropdownItemText: {
+        flex: 1,
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#333',
+    },
+    selectedDropdownText: {
+        color: '#667eea',
+        fontWeight: 'bold',
+    },
+    dropdownCheckmark: {
+        fontSize: 14,
+        color: '#667eea',
+        fontWeight: 'bold',
     },
     circle: {
         position: 'absolute',
@@ -403,19 +463,18 @@ const styles = StyleSheet.create({
     headerContainer: {
         alignItems: 'center',
         marginBottom: 40,
+        marginTop:85
     },
     logoContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+        width: 130,
+        height: 130,
+        borderRadius: 60,
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 20,
     },
-    logoText: {
-        fontSize: 40,
-    },
+
     welcomeText: {
         fontSize: 27,
         fontWeight: 'bold',
@@ -507,91 +566,6 @@ const styles = StyleSheet.create({
     signupLink: {
         color: '#667eea',
         fontSize: 14,
-        fontWeight: 'bold',
-    },
-    // Modal Styles
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        backgroundColor: 'white',
-        borderRadius: 20,
-        padding: 20,
-        margin: 20,
-        minWidth: 300,
-        maxWidth: width * 0.9,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-        paddingBottom: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E9ECEF',
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    closeButton: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: '#F8F9FA',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    closeButtonText: {
-        fontSize: 16,
-        color: '#6C757D',
-        fontWeight: 'bold',
-    },
-    languageList: {
-        gap: 10,
-    },
-    languageOption: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        borderRadius: 12,
-        backgroundColor: '#F8F9FA',
-        borderWidth: 2,
-        borderColor: 'transparent',
-    },
-    selectedLanguageOption: {
-        backgroundColor: '#667eea',
-        borderColor: '#5a67d8',
-    },
-    languageOptionFlag: {
-        fontSize: 24,
-        marginRight: 15,
-    },
-    languageOptionText: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#333',
-    },
-    selectedLanguageText: {
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    checkmark: {
-        fontSize: 18,
-        color: 'white',
         fontWeight: 'bold',
     },
 });
