@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import "../../src/i18n";
 
 import * as Print from "expo-print";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 
 const { width } = Dimensions.get('window');
 
@@ -286,11 +286,12 @@ const CustomOrderScreen = ({ navigation }) => {
     };
 
     async function printReportData(pdfUrl) {
-        if (printing) return; 
+        if (printing) return;
 
         setPrinting(true);
         try {
             const localPath = FileSystem.documentDirectory + "temp.pdf";
+
             const downloadResumable = FileSystem.createDownloadResumable(
                 pdfUrl,
                 localPath
@@ -299,25 +300,14 @@ const CustomOrderScreen = ({ navigation }) => {
             const { uri } = await downloadResumable.downloadAsync();
 
             await Print.printAsync({ uri });
-
-            setSendLoading(false);
-
         } catch (error) {
-            setSendLoading(false);
-
-            // Kullanıcı iptal ettiyse, bunu konsola hata olarak yazma
             if (error?.message?.includes("did not complete")) {
-                console.log("Kullanıcı yazdırma ekranını iptal etti.");
-                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
-
+                console.log("Kullanıcı yazdırmayı iptal etti.");
             } else {
-                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
-
                 console.error("PDF açılırken hata:", error);
             }
         } finally {
-
-            setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+            setPrinting(false);
         }
     }
 

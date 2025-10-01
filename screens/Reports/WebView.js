@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import Pdf from 'react-native-pdf';
+import RNBlobUtil from 'react-native-blob-util';
 
 export default function PdfViewer({ pdfUrl }) {
     const [base64Data, setBase64Data] = useState(null);
@@ -8,9 +10,22 @@ export default function PdfViewer({ pdfUrl }) {
     useEffect(() => {
         if (!pdfUrl) return;
 
-   
+        setLoading(true);
 
-        
+        RNBlobUtil.config({ fileCache: true })
+            .fetch('GET', pdfUrl, {
+                // API token veya header gerekiyorsa buraya ekle:
+                // Authorization: `Bearer ${token}`
+            })
+            .then((res) => res.base64())
+            .then((base64) => {
+                setBase64Data(base64);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.log('PDF indirme hatası:', err);
+                setLoading(false);
+            });
     }, [pdfUrl]);
 
     if (loading) {
@@ -27,7 +42,11 @@ export default function PdfViewer({ pdfUrl }) {
 
     return (
         <View style={styles.container}>
-           
+            <Pdf
+                source={source}
+
+                style={styles.pdf}
+            />
         </View>
     );
 }

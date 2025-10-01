@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     View,
     Text,
@@ -17,7 +17,8 @@ import {
     Platform,
     TextInput,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import {LinearGradient} from 'expo-linear-gradient';
+
 import {
     Button,
     ActivityIndicator,
@@ -25,22 +26,21 @@ import {
     Chip,
     Divider,
 } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
+import {Ionicons} from '@expo/vector-icons';
 import api from '../../tools/api';
 import Endpoint from '../../tools/endpoint';
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
 import '../../src/i18n';
 import axios from 'axios';
 
 import * as Print from "expo-print";
-import * as FileSystem from "expo-file-system";
-import { WebView } from "react-native-webview";
+import * as FileSystem from "expo-file-system/legacy";
 import PdfViewer from '../Reports/WebView';
 
-const { height: screenHeight } = Dimensions.get('window');
+const {height: screenHeight} = Dimensions.get('window');
 
-const GuessScreen = ({ navigation }) => {
-    const { t } = useTranslation();
+const GuessScreen = ({navigation}) => {
+    const {t} = useTranslation();
     const [weatherData, setWeatherData] = useState({
         temperature: 24,
         condition: 'Açık (Clear)',
@@ -74,13 +74,12 @@ const GuessScreen = ({ navigation }) => {
     // Hava durumu seçenekleri (ikon olmadan)
 
 
-
     const getProducts = async () => {
         const lang = await AsyncStorage.getItem('selected_lang');
-        const { data } = await api.post(Endpoint.StockParams, { lang: lang });
+        const {data} = await api.post(Endpoint.StockParams, {lang: lang});
         if (data && data.status) {
             let arr = data.obj.products;
-            arr.unshift({ id: -99, name: t('common.all') });
+            arr.unshift({id: -99, name: t('common.all')});
             setProducts(arr);
             setWeatherOptions(data.obj.weather)
         }
@@ -120,7 +119,6 @@ const GuessScreen = ({ navigation }) => {
                 }
 
 
-
             }
         } catch (error) {
             console.log('Hava Durumu Hatası', error.message);
@@ -139,7 +137,7 @@ const GuessScreen = ({ navigation }) => {
             });
 
             if (response && response.data) {
-                AsyncStorage.setItem('weather_data', JSON.stringify({ data: response, time: new Date().toISOString() }));
+                AsyncStorage.setItem('weather_data', JSON.stringify({data: response, time: new Date().toISOString()}));
                 const currentWeather = response?.data?.current_weather;
                 setWdata(currentWeather.temperature, currentWeather.weathercode)
                 console.log("apii", currentWeather.weathercode)
@@ -154,7 +152,7 @@ const GuessScreen = ({ navigation }) => {
 
     const setWdata = async (temp, condi, id = 1) => {
         const lang = await AsyncStorage.getItem('selected_lang');
-        const { data } = await api.post(Endpoint.WeatherItem, { code: condi, lang: lang });
+        const {data} = await api.post(Endpoint.WeatherItem, {code: condi, lang: lang});
         if (data && data.status) {
             setWeatherData({
                 temperature: temp,
@@ -220,8 +218,8 @@ const GuessScreen = ({ navigation }) => {
             product.name,
             `${(product.short_desc == null ? '' : product.short_desc)}\n\n${t('guess.product_calc_confirm')}`,
             [
-                { text: t('guess.cancel'), style: 'cancel' },
-                { text: t('guess.continue'), onPress: () => calcDay(product) }
+                {text: t('guess.cancel'), style: 'cancel'},
+                {text: t('guess.continue'), onPress: () => calcDay(product)}
             ]
         );
     };
@@ -229,7 +227,7 @@ const GuessScreen = ({ navigation }) => {
     const allGuest = async () => {
         const lang = await AsyncStorage.getItem('selected_lang');
 
-        const { data } = await api.post(Endpoint.TotalGuessList, { lang: lang, weather: weatherData.conditionId });
+        const {data} = await api.post(Endpoint.TotalGuessList, {lang: lang, weather: weatherData.conditionId});
         if (data && data.status) {
             console.log(data.obj)
             setProductionData(data.obj)
@@ -241,8 +239,15 @@ const GuessScreen = ({ navigation }) => {
     const sendMail = async (print = false, preview = false) => {
         setMailLoading(true);
         const lang = await AsyncStorage.getItem('selected_lang');
-        const { data } = await api.post(Endpoint.GuessMail, { lang: lang, weather: weatherData.conditionId, email: email, print: (print ? 1 : 0), prev: (preview ? 1 : 0) });
+        const {data} = await api.post(Endpoint.GuessMail, {
+            lang: lang,
+            weather: weatherData.conditionId,
+            email: email,
+            print: (print ? 1 : 0),
+            prev: (preview ? 1 : 0)
+        });
         setMailLoading(false);
+        console.log(data)
 
         if (data && data.status) {
             if (print) {
@@ -253,7 +258,7 @@ const GuessScreen = ({ navigation }) => {
 
             if (preview && print == false) {
 
-                
+
                 setPdfPath(data.sub_info);
 
                 setPdfView(true);
@@ -280,11 +285,20 @@ const GuessScreen = ({ navigation }) => {
 
     const calcDay = async (product) => {
         const lang = await AsyncStorage.getItem('selected_lang');
-        const { data } = await api.post(Endpoint.GuessData, { weather_code: weatherData.conditionId, product_id: product.id, lang: lang });
+        const {data} = await api.post(Endpoint.GuessData, {
+            weather_code: weatherData.conditionId,
+            product_id: product.id,
+            lang: lang
+        });
         console.log(data)
         if (data && data.status) {
-            setDetailText(t('guess.detail_text', { day: data.obj.day, weather: data.obj.weather, avgProduced: data.obj.average_produced, avgSold: data.obj.average_sold }))
-            setWaitMessage(t('guess.wait_message', { suggested: data.obj.suggested_production }))
+            setDetailText(t('guess.detail_text', {
+                day: data.obj.day,
+                weather: data.obj.weather,
+                avgProduced: data.obj.average_produced,
+                avgSold: data.obj.average_sold
+            }))
+            setWaitMessage(t('guess.wait_message', {suggested: data.obj.suggested_production}))
         } else {
             Alert.alert(t('warning'), t('guess.no_history'));
             return;
@@ -308,42 +322,32 @@ const GuessScreen = ({ navigation }) => {
     };
 
     async function printReportData(pdfUrl) {
-        if (printing) return; // Zaten baskı işlemi varsa tekrar çağırma
+        if (printing) return;
 
         setPrinting(true);
         try {
             const localPath = FileSystem.documentDirectory + "temp.pdf";
+
             const downloadResumable = FileSystem.createDownloadResumable(
                 pdfUrl,
                 localPath
             );
 
-            const { uri } = await downloadResumable.downloadAsync();
+            const {uri} = await downloadResumable.downloadAsync();
 
-            await Print.printAsync({ uri });
-
-
+            await Print.printAsync({uri});
         } catch (error) {
-
-            // Kullanıcı iptal ettiyse, bunu konsola hata olarak yazma
             if (error?.message?.includes("did not complete")) {
-                console.log("Kullanıcı yazdırma ekranını iptal etti.");
-                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
-
+                console.log("Kullanıcı yazdırmayı iptal etti.");
             } else {
-                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
-
                 console.error("PDF açılırken hata:", error);
             }
         } finally {
-
-            setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
+            setPrinting(false);
         }
     }
 
-
-
-    const renderProductItem = ({ item, index }) => (
+    const renderProductItem = ({item, index}) => (
         <TouchableOpacity
             style={[
                 styles.productCard,
@@ -359,7 +363,7 @@ const GuessScreen = ({ navigation }) => {
         </TouchableOpacity>
     );
 
-    const ProductCard = ({ item }) => (
+    const ProductCard = ({item}) => (
         <View style={styles2.productCard}>
             <View style={styles2.productHeader}>
                 <Text style={styles2.productName}>{item.prod_name}</Text>
@@ -371,12 +375,12 @@ const GuessScreen = ({ navigation }) => {
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
+            <StatusBar barStyle="light-content" backgroundColor="#1e3a8a"/>
             <LinearGradient
                 colors={['#4B6CB7', '#182848']}
                 style={styles.header}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
             >
                 <SafeAreaView>
                     <View style={styles.headerContent}>
@@ -397,7 +401,7 @@ const GuessScreen = ({ navigation }) => {
                     <Text style={styles.tempChangeText}>{t('guess.change_temp')}</Text>
                 </TouchableOpacity>
 
-                <View style={styles.divider} />
+                <View style={styles.divider}/>
 
                 <TouchableOpacity style={styles.weatherSection} onPress={showModal}>
                     <Text style={styles.condition}>{weatherData.condition}</Text>
@@ -406,7 +410,7 @@ const GuessScreen = ({ navigation }) => {
             </View>
 
 
-            <View style={{ marginLeft: 20, marginRight: 20, marginTop: 10 }}>
+            <View style={{marginLeft: 20, marginRight: 20, marginTop: 10}}>
                 <TouchableOpacity
                     style={{
                         padding: 10,
@@ -415,7 +419,7 @@ const GuessScreen = ({ navigation }) => {
                     }}
                     onPress={() => setMailModalVisible(true)}  // Modal açılır
                 >
-                    <Text style={{ color: 'white', textAlign: 'center' }}>{t('guess.send_mail')}</Text>
+                    <Text style={{color: 'white', textAlign: 'center'}}>{t('guess.send_mail')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={{
@@ -426,7 +430,10 @@ const GuessScreen = ({ navigation }) => {
                     }}
                     onPress={() => print()}  // Modal açılır
                 >
-                    <Text style={{ color: 'white', textAlign: 'center' }}>{(printLoading ? t('print_loading') : t('print'))}</Text>
+                    <Text style={{
+                        color: 'white',
+                        textAlign: 'center'
+                    }}>{(printLoading ? t('print_loading') : t('print'))}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -439,7 +446,10 @@ const GuessScreen = ({ navigation }) => {
                     }}
                     onPress={() => preview()}  // Modal açılır
                 >
-                    <Text style={{ color: 'white', textAlign: 'center' }}>{(pdfPrewLoading ? t('report.loading') : t('report.pdf_preview'))}</Text>
+                    <Text style={{
+                        color: 'white',
+                        textAlign: 'center'
+                    }}>{(pdfPrewLoading ? t('report.loading') : t('report.pdf_preview'))}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -475,13 +485,13 @@ const GuessScreen = ({ navigation }) => {
                         activeOpacity={1}
                     />
                     <View style={styles.modalContainer}>
-                        <View style={styles.modalHandle} />
+                        <View style={styles.modalHandle}/>
                         <Text style={styles.modalTitle}>{t('guess.select_weather')}</Text>
 
                         <FlatList
                             data={weatherOptions}
                             keyExtractor={(item) => item.id.toString()}
-                            renderItem={({ item }) => (
+                            renderItem={({item}) => (
                                 <TouchableOpacity
                                     style={[
                                         styles.optionItem,
@@ -549,7 +559,7 @@ const GuessScreen = ({ navigation }) => {
                 animationType="fade"
                 statusBarTranslucent
             >
-                <StatusBar backgroundColor="rgba(0,0,0,0.5)" barStyle="light-content" />
+                <StatusBar backgroundColor="rgba(0,0,0,0.5)" barStyle="light-content"/>
 
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -577,7 +587,8 @@ const GuessScreen = ({ navigation }) => {
                                 <View style={styles.recommendationCard}>
                                     <View style={styles.recommendationHeader}>
                                         <Text style={styles.recommendationIcon}>🎯</Text>
-                                        <Text style={styles.recommendationTitle}>{t('guess.daily_recommendation')}</Text>
+                                        <Text
+                                            style={styles.recommendationTitle}>{t('guess.daily_recommendation')}</Text>
                                     </View>
                                     <Text style={styles.recommendationText}>
                                         {detail_text}
@@ -586,7 +597,7 @@ const GuessScreen = ({ navigation }) => {
                                     <Text style={styles.wait_ok_count}>{wait_message}</Text>
 
                                     <View style={styles.progressBar}>
-                                        <View style={styles.progressFill} />
+                                        <View style={styles.progressFill}/>
                                     </View>
                                 </View>
                             </View>
@@ -648,7 +659,8 @@ const GuessScreen = ({ navigation }) => {
                                     sendMail();
                                 }}
                             >
-                                <Text style={styles.sendText}>{(mailLoading ? t('common.sending') : t('guess.send'))}</Text>
+                                <Text
+                                    style={styles.sendText}>{(mailLoading ? t('common.sending') : t('guess.send'))}</Text>
                             </TouchableOpacity>
 
                         </View>
@@ -689,7 +701,7 @@ const GuessScreen = ({ navigation }) => {
                             showsVerticalScrollIndicator={false}
                         >
                             {productionData.map((item, index) => (
-                                <ProductCard key={index} item={item} />
+                                <ProductCard key={index} item={item}/>
                             ))}
                         </ScrollView>
 
@@ -729,8 +741,7 @@ const GuessScreen = ({ navigation }) => {
                             style={styles2.listContainer}
 
                         >
-                            {pdfView && <PdfViewer key={pdfPath} pdfUrl={pdfPath} />}
-
+                            {pdfView && <PdfViewer key={pdfPath} pdfUrl={pdfPath}/>}
 
 
                         </View>
@@ -739,7 +750,6 @@ const GuessScreen = ({ navigation }) => {
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
-
 
 
         </ScrollView>
@@ -797,7 +807,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: {width: 0, height: 4},
         shadowOpacity: 0.25,
         shadowRadius: 6,
         elevation: 5,

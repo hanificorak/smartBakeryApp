@@ -29,7 +29,7 @@ import '../../src/i18n';
 const { height } = Dimensions.get('window');
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Print from "expo-print";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import WebView from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PdfViewer from '../Reports/WebView';
@@ -310,23 +310,29 @@ const FreezerScreen = ({ navigation }) => {
     sendReport(true);
   };
 
-  async function printReportData(pdfUrl) {
-    try {
-      const localPath = FileSystem.documentDirectory + "temp.pdf";
-      const downloadResumable = FileSystem.createDownloadResumable(
-        pdfUrl,
-        localPath
-      );
+    async function printReportData(pdfUrl) {
 
-      const { uri } = await downloadResumable.downloadAsync();
-      await Print.printAsync({ uri });
+        try {
+            const localPath = FileSystem.documentDirectory + "temp.pdf";
 
-      setPrintLoading(false);
-    } catch (error) {
-      console.error("PDF açılırken hata:", error);
+            const downloadResumable = FileSystem.createDownloadResumable(
+                pdfUrl,
+                localPath
+            );
+
+            const { uri } = await downloadResumable.downloadAsync();
+
+            await Print.printAsync({ uri });
+        } catch (error) {
+
+            if (error?.message?.includes("did not complete")) {
+                console.log("Kullanıcı yazdırmayı iptal etti.");
+            } else {
+                console.error("PDF açılırken hata:", error);
+            }
+        } finally {
+        }
     }
-  }
-
   const getselectedFreezerName = () => {
     if (!selectedFreezer) return t('freezer.select_freezer');
     return selectedFreezer.name;

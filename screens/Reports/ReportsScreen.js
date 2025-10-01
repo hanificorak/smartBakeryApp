@@ -37,7 +37,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { WebView } from "react-native-webview";
 
 import * as Print from "expo-print";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
@@ -460,7 +460,9 @@ const ReportsScreen = ({ navigation }) => {
                 params.endDate = formatLocalISODate(endDate);
             }
 
+            console.log(params);
             const { data } = await api.post(Endpoint.ReportSend, params);
+            console.log(data)
             if (data && data.status) {
 
                 if (type == "mail") {
@@ -497,11 +499,12 @@ const ReportsScreen = ({ navigation }) => {
     };
 
     async function printReportData(pdfUrl) {
-        if (printing) return; // Zaten baskı işlemi varsa tekrar çağırma
+        if (printing) return;
 
-        setPrinting(true);
+        setSendLoading(true);
         try {
             const localPath = FileSystem.documentDirectory + "temp.pdf";
+
             const downloadResumable = FileSystem.createDownloadResumable(
                 pdfUrl,
                 localPath
@@ -510,26 +513,16 @@ const ReportsScreen = ({ navigation }) => {
             const { uri } = await downloadResumable.downloadAsync();
 
             await Print.printAsync({ uri });
-
-            setSendLoading(false);
-
         } catch (error) {
             setSendLoading(false);
 
-            // Kullanıcı iptal ettiyse, bunu konsola hata olarak yazma
             if (error?.message?.includes("did not complete")) {
-                console.log("Kullanıcı yazdırma ekranını iptal etti.");
-                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
-
+                console.log("Kullanıcı yazdırmayı iptal etti.");
             } else {
-                setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
-
                 console.error("PDF açılırken hata:", error);
             }
         } finally {
             setSendLoading(false);
-
-            setPrinting(false); // Hata olsa da olmasa da printing durumunu sıfırla
         }
     }
 
@@ -948,15 +941,7 @@ const ReportsScreen = ({ navigation }) => {
 
                         {/* Body */}
                         <View style={styles.modalBody}>
-                            {/* Buraya PDF gösterimi */}
-                            {/* Örneğin react-native-pdf ile */}
-                            {/* <WebView
-                                source={{ uri: pdfPath }}
-                                style={styles.webview}
-                                originWhitelist={['*']}
-                                javaScriptEnabled
-                                domStorageEnabled
-                            /> */}
+
                             {pdfView && <PdfViewer key={pdfPath} pdfUrl={pdfPath} />}
 
 
@@ -1350,7 +1335,6 @@ const ReportsScreen = ({ navigation }) => {
                                             placeholderStyle={styles.placeholderStyle}
                                             selectedTextStyle={styles.selectedTextStyle}
                                             inputSearchStyle={styles.inputSearchStyle}
-                                            iconStyle={styles.iconStyle}
                                             search
                                             data={products}
                                             labelField="name"
@@ -1361,14 +1345,7 @@ const ReportsScreen = ({ navigation }) => {
                                             onChange={item => {
                                                 setSelectedProd(item);
                                             }}
-                                            renderLeftIcon={() => (
-                                                <AntDesign
-                                                    style={styles.icon}
-                                                    color="black"
-                                                    name="Safety"
-                                                    size={20}
-                                                />
-                                            )}
+
                                             selectedStyle={styles.selectedStyle}
                                         />
                                     </View>

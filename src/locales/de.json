@@ -409,7 +409,7 @@
     "success": "App erfolgreich neu installiert. Sie werden zum Anmeldebildschirm weitergeleitet.",
     "error": "Fehler während der Neuinstallation.",
     "title": "App neu installieren",
-    "description": "Dieser Vorgang repariert die Anwendung vollständig und löscht Daten für heute.",
+    "description": "Dieser Vorgang repariert die Anwendung vollständig und die löscht nur die Daten von heute.",
     "restart": "Sie müssen sich erneut anmelden",
     "reset_settings": "App-Einstellungen werden zurückgesetzt",
     "start": "Vorgang starten",

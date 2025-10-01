@@ -474,9 +474,11 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         padding: 20,
+        marginBottom:20
     },
     productsList: {
         gap: 16,
+        marginBottom:50
     },
     productCard: {
         backgroundColor: '#ffffff',

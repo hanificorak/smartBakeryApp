@@ -409,7 +409,7 @@
     "success": "Uygulama başarıyla yeniden yüklendi. Giriş ekranına yönlendiriliyorsunuz.",
     "error": "Yeniden yükleme işlemi sırasında bir hata oluştu.",
     "title": "Uygulama Yeniden Yükle",
-    "description": "Bu işlem uygulamayı tamamen tamir edecek ve bugüne ait tüm verilerinizi temizleyecektir.",
+    "description": "Bu işlem uygulamayı tamamen tamir edecek ve sadece bugüne ait tüm verilerinizi silecektir.",
     "restart": "Yeniden giriş yapmanız gerekecek",
     "reset_settings": "Uygulama ayarları sıfırlanacak",
     "start": "İşlemi Başlat",

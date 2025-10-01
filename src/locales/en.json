@@ -409,7 +409,7 @@
     "success": "App reinstalled successfully. Redirecting to login screen.",
     "error": "An error occurred during reinstallation.",
     "title": "Reinstall App",
-    "description": "This process will fully repair the app and clear all your data for today.",
+    "description": "This process will completely repair the application and only delete all your data from today.",
     "restart": "You will need to log in again",
     "reset_settings": "App settings will be reset",
     "start": "Start Process",

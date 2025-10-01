@@ -211,13 +211,6 @@ export default function StockScreen({navigation, setToken}) {
 
     const handleAmountChange = async (item, value) => {
 
-        if (value == 0) {
-            return;
-        }
-
-        const {data} = await api.post(endpoint.ProductAmountUpdate, {id:item.id,amount:value});
-        console.log(data)
-
 
         setStockEntries(prevEntries =>
             prevEntries.map(entry =>
@@ -226,6 +219,14 @@ export default function StockScreen({navigation, setToken}) {
                     : entry
             )
         );
+
+        if(value == 0){
+            return;
+        }
+        const {data} = await api.post(endpoint.ProductAmountUpdate, {id:item.id,amount:value});
+
+
+
     };
     const formatDate = (dateString) => {
         const date = new Date(dateString);

@@ -12,7 +12,8 @@ import {
     Platform,
     FlatList,
     Alert,
-    SafeAreaView
+    SafeAreaView,
+    ScrollView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../tools/api';
@@ -23,6 +24,7 @@ import endpoint from "../../tools/endpoint";
 import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 export default function AllStockScreen({ navigation }) {
     const [products, setProducts] = useState([]);
@@ -69,11 +71,13 @@ export default function AllStockScreen({ navigation }) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
             >
-                <Text style={styles.productName}>{item.name}</Text>
-                <Text style={{marginBottom:7,fontSize:10}}>
+                <Text style={styles.productName} numberOfLines={2} ellipsizeMode="tail">
+                    {item.name}
+                </Text>
+                <Text style={styles.salesText} numberOfLines={1} ellipsizeMode="tail">
                     {t('all_products.last_day_sales')}: {item.last_quantity}
                 </Text>
-                <View style={styles.quantitySection}>
+                <View style={styles.quantitySection} pointerEvents="box-none">
                     <TextInput
                         style={styles.quantityInput}
                         value={item.quantity.toString()}
@@ -132,6 +136,8 @@ export default function AllStockScreen({ navigation }) {
                     keyboardShouldPersistTaps="handled"
                     numColumns={2}
                     columnWrapperStyle={styles.row}
+                    removeClippedSubviews={false}
+                    scrollEventThrottle={16}
                 />
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -159,21 +165,27 @@ const styles = StyleSheet.create({
     saveButton: { borderRadius: 12, overflow: 'hidden', elevation: 3 },
     saveButtonGradient: { paddingHorizontal: 24, paddingVertical: 12 },
     saveButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
-    listContent: { padding: 12, paddingBottom: 30 },
+    listContent: { padding: 12, paddingBottom: 80 },
     row: { justifyContent: 'space-between' },
     productCard: {
         width: (width - 36) / 2,
         marginBottom: 12,
         borderRadius: 18,
         overflow: 'hidden',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
     },
-    cardGradient: { padding: 18 },
-    productName: { fontSize: 17, fontWeight: '700', color: '#1a1a1a', marginBottom: 0 },
+    cardGradient: { padding: 15 },
+    productName: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#1a1a1a',
+        marginBottom: 4,
+        minHeight: 34,
+    },
+    salesText: {
+        marginBottom: 7,
+        fontSize: 10,
+        color: '#64748b',
+    },
     quantitySection: {
         backgroundColor: '#f8fafc',
         borderRadius: 12,
